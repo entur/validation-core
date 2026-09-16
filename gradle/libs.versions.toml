@@ -1,0 +1,16 @@
+[versions]
+kotlin = "2.4.10"
+protobuf = "4.36.1"
+proto-google-common-protos = "2.76.0"
+assertj = "3.27.6"
+
+[libraries]
+protobuf-java = { group = "com.google.protobuf", name = "protobuf-java", version.ref = "protobuf" }
+protobuf-kotlin = { group = "com.google.protobuf", name = "protobuf-kotlin", version.ref = "protobuf" }
+protobuf-java-util = { group = "com.google.protobuf", name = "protobuf-java-util", version.ref = "protobuf" }
+proto-google-common-protos = { group = "com.google.api.grpc", name = "proto-google-common-protos", version.ref = "proto-google-common-protos" }
+assertj-core = { group = "org.assertj", name = "assertj-core", version.ref = "assertj" }
+kotlin-test = { group = "org.jetbrains.kotlin", name = "kotlin-test", version.ref = "kotlin" }
+
+[bundles]
+protobuf = ["protobuf-java", "protobuf-kotlin", "protobuf-java-util", "proto-google-common-protos"]

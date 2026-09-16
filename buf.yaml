@@ -1,0 +1,13 @@
+version: v2
+modules:
+  - path: validation-model/src/main/proto
+    lint:
+      use: [STANDARD]
+      except:
+        # Enum values are frequently used in API URLs, and buf's idiomatic enum type prefix would
+        # make them longer than necessary
+        - ENUM_VALUE_PREFIX
+deps:
+  - buf.build/googleapis/googleapis
+breaking:
+  use: [FILE]
