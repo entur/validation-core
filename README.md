@@ -32,10 +32,11 @@ so a consumer that needs the raw schema  can get it from the same published arti
 
 ### Prerequisites
 
-* Java 25
-* Gradle (wrapper included)
-* [buf](https://buf.build/) and `protoc` - pinned in [`.mise.toml`](.mise.toml); install both
-  directly or use [mise](https://mise.jdx.dev/) to match the pinned versions automatically
+- Java 25
+- Gradle (wrapper included)
+- `buf` (the Buf CLI, from Buf Technologies) and `protoc` (the Protocol Buffers compiler, from
+  Google) - both pinned in [`.mise.toml`](.mise.toml); install them directly, or run `mise install`
+  to get the pinned versions automatically
 
 ### Schema changes
 
@@ -53,3 +54,8 @@ On every push to `main`, CD ([`.github/workflows/cd.yml`](.github/workflows/cd.y
 patch version in [`gradle.properties`](gradle.properties) and publishes all modules to Entur's
 JFrog Artifactory (`entur-release-standard`) via
 [`entur/gha-artifactory`](https://github.com/entur/gha-artifactory).
+
+## Contact
+
+Owned by **team-validering**. Reach the team on Slack at `#talk-validering`, or open an issue on
+this repository.
