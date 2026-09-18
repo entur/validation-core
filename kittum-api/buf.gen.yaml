@@ -1,0 +1,21 @@
+version: v2
+plugins:
+  # See validation-model/buf.gen.yaml for why protoc_builtin is used here
+  # instead of a standalone plugin binary.
+  - protoc_builtin: java
+    protoc_path: protoc
+    out: kittum-api/build/generated/source/proto/main/java
+  - protoc_builtin: kotlin
+    protoc_path: protoc
+    out: kittum-api/build/generated/source/proto/main/kotlin
+  # Generates the OpenAPI 3 contract from the `google.api.http` bindings on the
+  # rpcs above. `version` is the API contract version and is deliberately NOT
+  # gradle.properties' library version.
+  - remote: buf.build/community/google-gnostic-openapi:v0.7.0
+    out: kittum-api/build/generated/openapi
+    opt:
+      - title=kittum
+      - version=0.0.1
+      - description=OpenAPI contract for kittum - the NeTEx validation rules storage.
+      - enum_type=string
+      - default_response=false
