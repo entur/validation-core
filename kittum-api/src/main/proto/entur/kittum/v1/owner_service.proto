@@ -1,0 +1,44 @@
+syntax = "proto3";
+
+package entur.kittum.v1;
+
+import "google/api/annotations.proto";
+import "google/api/field_behavior.proto";
+import "entur/validation/v1/owner.proto";
+
+option java_package = "no.entur.kittum.proto.v1";
+option java_multiple_files = true;
+option go_package = "github.com/entur/validation-core/gen/entur/kittum/v1;kittumv1";
+
+// The gRPC service to view and administrate owners.
+service OwnerService {
+  // List all existing owners.
+  rpc ListOwners(ListOwnersRequest) returns (ListOwnersResponse) {
+    option (google.api.http) = {
+      get: "/v1/owners"
+      response_body: "owners"
+    };
+  }
+
+  // Get one owner by its id.
+  rpc GetOwner(GetOwnerRequest) returns (entur.validation.v1.Owner) {
+    option (google.api.http) = {
+      get: "/v1/owners/{id}"
+    };
+  }
+}
+
+// Request for ListOwners.
+message ListOwnersRequest {}
+
+// Response for ListOwners.
+message ListOwnersResponse {
+  // All existing owners.
+  repeated entur.validation.v1.Owner owners = 1;
+}
+
+// Request for GetOwner.
+message GetOwnerRequest {
+  // The id of the owner to lookup.
+  int64 id = 1 [(google.api.field_behavior) = REQUIRED];
+}

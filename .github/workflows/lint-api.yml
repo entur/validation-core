@@ -1,0 +1,33 @@
+name: lint-api
+
+# Lints the generated OpenAPI specs against Entur's API guidelines
+# (entur/api-guidelines, applied by entur/gha-api via spectral).
+#
+# The specs under specs/ are generated from the .proto files, so a guideline
+# problem reported here is a problem in the schema: fix the .proto and rebuild.
+# Never edit specs/*.yaml to silence a finding - the next build overwrites it.
+on:
+  pull_request:
+    paths: ["specs/**"]
+
+jobs:
+  api-lint:
+    if: github.actor != 'dependabot[bot]'
+    strategy:
+      # gha-api's `path` input takes no globs, so each spec needs its own matrix
+      # entry. Add a line here when a new API module starts producing a spec.
+      matrix:
+        spec: ["specs/kittum.yaml"]
+      fail-fast: false
+    uses: entur/gha-api/.github/workflows/lint.yml@v6
+    secrets: inherit
+    with:
+      path: ${{ matrix.spec }}
+      # Report findings as annotations and a job summary without failing the
+      # build, while we see what the guidelines say about a spec generated from
+      # protobuf. Raise to "warn" or "error" once the findings are triaged.
+      fail_threshold: never
+      # This repository publishes libraries; it does not serve an API. The
+      # service that actually serves entur.kittum.v1 - entur/kittum - owns that
+      # spec in the central registry, so don't upload a competing copy here.
+      upload_to_bucket: false

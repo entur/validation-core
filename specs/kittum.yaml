@@ -1,0 +1,71 @@
+# Generated with protoc-gen-openapi
+# https://github.com/google/gnostic/tree/master/cmd/protoc-gen-openapi
+
+openapi: 3.0.3
+info:
+    title: kittum
+    description: OpenAPI contract for kittum - the NeTEx validation rules storage.
+    version: 0.0.1
+paths:
+    /v1/owners:
+        get:
+            tags:
+                - OwnerService
+            description: List all existing owners.
+            operationId: OwnerService_ListOwners
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ListOwnersResponse'
+    /v1/owners/{id}:
+        get:
+            tags:
+                - OwnerService
+            description: Get one owner by its id.
+            operationId: OwnerService_GetOwner
+            parameters:
+                - name: id
+                  in: path
+                  description: The id of the owner to lookup.
+                  required: true
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Owner'
+components:
+    schemas:
+        ListOwnersResponse:
+            type: object
+            properties:
+                owners:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/Owner'
+                    description: All existing owners.
+            description: Response for ListOwners.
+        Owner:
+            required:
+                - name
+            type: object
+            properties:
+                id:
+                    type: string
+                    description: The id of the owner.
+                name:
+                    type: string
+                    description: The name of the owner.
+                updatedAt:
+                    type: string
+                    description: The timestamp of the owner.
+                    format: date-time
+            description: An owner of deliveries and areas, for example an Entur team.
+tags:
+    - name: OwnerService

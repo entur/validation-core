@@ -9,4 +9,4 @@ plugins {
 
 rootProject.name = "validation-core"
 
-include("validation-model")
+include("validation-model", "kittum-api")
