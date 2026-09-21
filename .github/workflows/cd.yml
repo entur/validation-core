@@ -1,18 +1,51 @@
 name: CD
 
-# Publishes libraries to Entur's JFrog Artifactory on every push to main.
-# entur/gha-artifactory's update-version action bumps the patch version in
-# gradle.properties and pushes that back to main before publishing, so every
-# merge gets a new released version. See https://github.com/entur/gha-artifactory.
+# Publishes libraries to Entur's JFrog Artifactory.
+#
+#   bump:    runs on every push to main EXCEPT a version-bump merge itself.
+#            Computes the next patch version and opens a PR for it via
+#            entur/gha-artifactory's update-version action.
+#   publish: runs only when the head commit IS a version-bump merge.
+#            Publishes whatever version is now in gradle.properties.
 on:
   push:
     branches: [main]
 
 jobs:
-  publish:
+  bump:
+    if: ${{ !startsWith(github.event.head_commit.message, 'chore(bump):') }}
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Update version
+        uses: entur/gha-artifactory/.github/actions/update-version@v1
+        with:
+          push-back-to-repo: "false"
+
+      - name: Open PR for version bump
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          branch="chore/bump-version-$VERSION"
+          git checkout -b "$branch"
+          git add gradle.properties
+          git commit -m "chore(bump): from version to $VERSION"
+          git push origin "$branch"
+          gh pr create \
+            --base main \
+            --head "$branch" \
+            --title "chore(bump): from version to $VERSION" \
+            --body "Automated version bump, opened by the CD workflow after a merge to main."
+
+  publish:
+    if: ${{ startsWith(github.event.head_commit.message, 'chore(bump):') }}
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
 
@@ -29,9 +62,6 @@ jobs:
         with:
           version: "36.1"
           repo-token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Update version
-        uses: entur/gha-artifactory/.github/actions/update-version@v1
 
       - name: Publish to JFrog Artifactory
         uses: entur/gha-artifactory/.github/actions/maven-publish@v1
