@@ -91,10 +91,18 @@ Copy the pattern from [`kittum-api`](kittum-api):
 
 ## Versioning and publishing
 
-On every push to `main`, CD ([`.github/workflows/cd.yml`](.github/workflows/cd.yml)) bumps the
-patch version in [`gradle.properties`](gradle.properties) and publishes all modules to Entur's
-JFrog Artifactory (`entur-release-standard`) via
-[`entur/gha-artifactory`](https://github.com/entur/gha-artifactory).
+Publishing is manual and tag-triggered. To release, push a `v<major>.<minor>.<patch>` tag (e.g. `v0.1.0`)
+at the commit on `main` you want released:
+
+```bash
+git tag v0.1.0
+git push origin v0.1.0
+```
+
+That tag push triggers CD ([`.github/workflows/cd.yml`](.github/workflows/cd.yml)), which extracts
+the version from the tag name and publishes all modules at that version to Entur's JFrog Artifactory
+(`entur-release-standard`) via [`entur/gha-artifactory`](https://github.com/entur/gha-artifactory)'s
+`maven-publish` action.
 
 ## Contact
 

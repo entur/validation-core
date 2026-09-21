@@ -18,8 +18,10 @@ https://github.com/entur/ai/blob/main/AGENTS.md
 
 - Owning team: `team-validering`
 - Artifacts: `no.entur.validation:validation-model`, `no.entur.validation:kittum-api`
-- Published to Entur's JFrog Artifactory (`entur-release-standard`) via `entur/gha-artifactory`,
-  which patch-bumps `gradle.properties` on every push to `main`
+- Published to Entur's JFrog Artifactory (`entur-release-standard`) via `entur/gha-artifactory`.
+  Publishing is manual and tag-triggered: pushing a `v<major>.<minor>.<patch>` tag runs CD, which
+  publishes that exact version. Merging to `main` does not publish by itself. See "Versioning and
+  publishing" in `README.md`.
 - Source of truth: `.proto` files under `<module>/src/main/proto`. Generated Java/Kotlin classes are
   build output and are never committed.
 - `buf` and `protoc` are pinned in `.mise.toml`. Gradle's `Exec` resolves an executable against the

@@ -1,20 +1,22 @@
 name: CD
 
-# Publishes libraries to Entur's JFrog Artifactory on every push to main.
-# entur/gha-artifactory's update-version action bumps the patch version in
-# gradle.properties and pushes that back to main before publishing, so every
-# merge gets a new released version. See https://github.com/entur/gha-artifactory.
+# Publishes libraries to Entur's JFrog Artifactory when a v<major>.<minor>.<patch> tag is pushed.
 on:
   push:
-    branches: [main]
+    tags:
+      - "v*"
 
 jobs:
   publish:
     runs-on: ubuntu-latest
     permissions:
-      contents: write
+      contents: read
     steps:
       - uses: actions/checkout@v7
+
+      - name: Extract version from tag
+        id: version
+        run: echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
 
       - uses: actions/setup-java@v6
         with:
@@ -30,11 +32,10 @@ jobs:
           version: "36.1"
           repo-token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Update version
-        uses: entur/gha-artifactory/.github/actions/update-version@v1
-
       - name: Publish to JFrog Artifactory
         uses: entur/gha-artifactory/.github/actions/maven-publish@v1
+        with:
+          version: ${{ steps.version.outputs.version }}
         env:
           ARTIFACTORY_AUTH_USER: ${{ secrets.ARTIFACTORY_AUTH_USER }}
           ARTIFACTORY_AUTH_TOKEN: ${{ secrets.ARTIFACTORY_AUTH_TOKEN }}
