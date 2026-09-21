@@ -16,5 +16,6 @@ modules:
         - RPC_REQUEST_RESPONSE_UNIQUE
 deps:
   - buf.build/googleapis/googleapis
+  - buf.build/gnostic/gnostic
 breaking:
   use: [FILE]

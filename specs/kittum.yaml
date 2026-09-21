@@ -6,11 +6,18 @@ info:
     title: kittum
     description: OpenAPI contract for kittum - the NeTEx validation rules storage.
     version: 0.0.1
+    x-entur-metadata:
+        id: kittum
+        audience: internal
+        owner: team-validering
+servers:
+    - url: https://kittum.entur.io
 paths:
     /v1/owners:
         get:
             tags:
                 - OwnerService
+            summary: List all existing owners.
             description: List all existing owners.
             operationId: OwnerService_ListOwners
             responses:
@@ -24,6 +31,7 @@ paths:
         get:
             tags:
                 - OwnerService
+            summary: Get one owner by its id.
             description: Get one owner by its id.
             operationId: OwnerService_GetOwner
             parameters:
@@ -57,12 +65,15 @@ components:
             type: object
             properties:
                 id:
+                    example: "1"
                     type: string
                     description: The id of the owner.
                 name:
+                    example: "team-validering"
                     type: string
                     description: The name of the owner.
                 updatedAt:
+                    example: "2024-01-01T00:00:00Z"
                     type: string
                     description: The timestamp of the owner.
                     format: date-time
