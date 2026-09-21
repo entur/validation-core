@@ -3,7 +3,7 @@
 ## Description
 
 This repository contains shared code for Entur's validation platform and its APIs, published as
-Java libraries. It contains schema generated code only.
+Java libraries. It contains schema and generated code only.
 
 ## Modules
 

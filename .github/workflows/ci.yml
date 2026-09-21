@@ -43,3 +43,6 @@ jobs:
         # this regenerates every committed spec under specs/ from the
         # current .proto files.
         run: ./gradlew build
+
+      - name: Verify generated OpenAPI specs are committed
+        run: git diff --exit-code -- specs/

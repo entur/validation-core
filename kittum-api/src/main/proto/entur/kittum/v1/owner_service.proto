@@ -33,7 +33,6 @@ service OwnerService {
   rpc ListOwners(ListOwnersRequest) returns (ListOwnersResponse) {
     option (google.api.http) = {
       get: "/v1/owners"
-      response_body: "owners"
     };
     option (gnostic.openapi.v3.operation) = {
       summary: "List all existing owners."

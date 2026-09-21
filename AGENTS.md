@@ -33,7 +33,7 @@ https://github.com/entur/ai/blob/main/AGENTS.md
   the home of contract-first OpenAPI specs. Here the `.proto` files are the contract and
   `specs/*.yaml` is generated from them by `buf generate`, then copied into the source tree so a
   schema change produces a reviewable diff of the resulting HTTP contract. The location matches the
-  standard; the direction of authorship is inverted. See `doc/adr/0001-generated-openapi-specs.adoc`.
+  standard; the direction of authorship is inverted.
 - **No tests.** Both modules report `test NO-SOURCE`; there is no hand-written code to exercise.
   This is a known gap rather than a decision - a smoke test proving the generated classes load and
   round-trip would be cheap insurance that codegen actually produces working output.
