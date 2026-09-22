@@ -44,7 +44,7 @@ jobs:
         uses: bufbuild/buf-breaking-action@v1
         with:
           input: "."
-          against: "https://github.com/${{ github.repository }}.git#branch=main"
+          against: "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git#branch=main"
 
       - name: Build and test
         # Each API module's processResources depends on its copyOpenApiSpec, so
