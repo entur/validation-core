@@ -2,28 +2,32 @@ syntax = "proto3";
 
 package entur.validation.v1;
 
+import "gnostic/openapi/v3/annotations.proto";
 import "google/api/field_behavior.proto";
 import "google/protobuf/timestamp.proto";
-import "gnostic/openapi/v3/annotations.proto";
 
-option java_package = "no.entur.validation.proto.v1";
-option java_multiple_files = true;
 option go_package = "github.com/entur/validation-core/gen/entur/validation/v1;validationv1";
+option java_multiple_files = true;
+option java_package = "no.entur.validation.proto.v1";
 
 // An owner of deliveries and areas, for example an Entur team.
 message Owner {
   // The id of the owner.
   int32 id = 1 [
     (google.api.field_behavior) = IDENTIFIER,
-    (gnostic.openapi.v3.property) = { example: { yaml: "1" } }
+    (gnostic.openapi.v3.property) = {
+      example: {yaml: "1"}
+    }
   ];
   // The name of the owner.
   string name = 2 [
     (google.api.field_behavior) = REQUIRED,
-    (gnostic.openapi.v3.property) = { example: { yaml: "\"team-validering\"" } }
+    (gnostic.openapi.v3.property) = {
+      example: {yaml: "\"team-validering\""}
+    }
   ];
   // The timestamp of the owner.
-  google.protobuf.Timestamp updated_at = 100 [
-    (gnostic.openapi.v3.property) = { example: { yaml: "\"2026-01-01T00:00:00Z\"" } }
-  ];
+  google.protobuf.Timestamp updated_at = 100 [(gnostic.openapi.v3.property) = {
+    example: {yaml: "\"2026-01-01T00:00:00Z\""}
+  }];
 }

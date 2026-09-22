@@ -49,3 +49,5 @@ https://github.com/entur/ai/blob/main/AGENTS.md
   rebuild.
 - `.proto` changes are wire-compatibility changes. Run `buf breaking` against `main` before
   proposing one; never renumber or remove an existing field.
+- Run `buf format -w` on any `.proto` change before proposing one. CI fails the build (`buf format
+  --diff --exit-code`) if a file isn't formatted.
