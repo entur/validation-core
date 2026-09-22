@@ -44,14 +44,13 @@ so a consumer that needs the raw schema  can get it from the same published arti
 `.proto` files under `<module>/src/main/proto` are the source of truth. After editing one:
 
 ```shell
-buf format -w
 buf lint
 buf breaking --against 'https://github.com/entur/validation-core.git#branch=main'
 ./gradlew build
 ```
 
-Commit whatever the build changes under [`specs/`](specs) along with the `.proto` change - see
-below.
+`./gradlew build` runs `buf format -w` on the whole workspace to format `.proto` files before
+generating anything.
 
 ## OpenAPI 3
 

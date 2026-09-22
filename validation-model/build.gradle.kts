@@ -14,15 +14,7 @@ val bufGenerate = tasks.register<Exec>("bufGenerate") {
     inputs.files(rootProject.file("buf.yaml"), rootProject.file("buf.lock"), rootProject.file(".mise.toml"), "buf.gen.yaml")
     outputs.dir("build/generated/source/proto/main/java")
     outputs.dir("build/generated/source/proto/main/kotlin")
-    // `buf` and `protoc` are managed by mise (../.mise.toml) via shims in
-    // ~/.local/share/mise/shims.
-    val miseShims = File(System.getProperty("user.home"), ".local/share/mise/shims")
-    val bufExecutable = File(miseShims, "buf").let { if (it.canExecute()) it.absolutePath else "buf" }
-    environment(
-        "PATH",
-        "$miseShims${System.getProperty("path.separator")}${System.getenv("PATH")}",
-    )
-    commandLine(bufExecutable, "generate", "validation-model/src/main/proto", "--template", "validation-model/buf.gen.yaml", "--clean")
+    commandLine(miseExecutable("buf"), "generate", "validation-model/src/main/proto", "--template", "validation-model/buf.gen.yaml", "--clean")
 }
 
 // Download gnostic proto files to generate Java/Kotlin classes for these, as protoc always embeds a reference to the
@@ -41,15 +33,9 @@ val bufGenerateGnosticAnnotations = tasks.register<Exec>("bufGenerateGnosticAnno
     inputs.files(rootProject.file("buf.yaml"), rootProject.file("buf.lock"), rootProject.file(".mise.toml"), "buf.gen.gnostic.yaml")
     outputs.dir("build/generated/source/gnostic/main/java")
     outputs.dir("build/generated/source/gnostic/main/kotlin")
-    val miseShims = File(System.getProperty("user.home"), ".local/share/mise/shims")
-    val bufExecutable = File(miseShims, "buf").let { if (it.canExecute()) it.absolutePath else "buf" }
-    environment(
-        "PATH",
-        "$miseShims${System.getProperty("path.separator")}${System.getenv("PATH")}",
-    )
     // Pinned to buf.lock's resolved commit. Use "buf dep update" to update.
     commandLine(
-        bufExecutable, "generate", "buf.build/gnostic/gnostic:$gnosticCommit",
+        miseExecutable("buf"), "generate", "buf.build/gnostic/gnostic:$gnosticCommit",
         "--path", "gnostic/openapi/v3", "--template", "validation-model/buf.gen.gnostic.yaml", "--clean",
     )
 }

@@ -10,6 +10,15 @@ allprojects {
     }
 }
 
+// Root-level: `buf format` rewrites the whole workspace in one shot.
+val bufFormat = tasks.register<Exec>("bufFormat") {
+    description = "Formats all .proto files in place via `buf format -w`."
+    group = "build"
+    inputs.files(fileTree(rootDir) { include("*/src/main/proto/**/*.proto") })
+    inputs.files("buf.yaml", "buf.lock")
+    commandLine(miseExecutable("buf"), "format", "-w")
+}
+
 subprojects {
     apply(plugin = "org.jetbrains.kotlin.jvm")
     apply(plugin = "java-library")
@@ -25,6 +34,8 @@ subprojects {
     tasks.withType<Test> {
         useJUnitPlatform()
     }
+
+    tasks.matching { it.name == "bufGenerate" }.configureEach { dependsOn(bufFormat) }
 
     extensions.configure<PublishingExtension> {
         publications {

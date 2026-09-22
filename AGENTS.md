@@ -49,5 +49,6 @@ https://github.com/entur/ai/blob/main/AGENTS.md
   rebuild.
 - `.proto` changes are wire-compatibility changes. Run `buf breaking` against `main` before
   proposing one; never renumber or remove an existing field.
-- Run `buf format -w` on any `.proto` change before proposing one. CI fails the build (`buf format
-  --diff --exit-code`) if a file isn't formatted.
+- `.proto` formatting is enforced by `./gradlew build` itself (the root `bufFormat` task runs
+  `buf format -w` before codegen), not by a separate lint step - it rewrites files rather than
+  failing. CI still fails if the rewrite produces a diff, meaning an unformatted file was committed.

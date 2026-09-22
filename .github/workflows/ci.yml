@@ -32,8 +32,7 @@ jobs:
         run: buf lint
 
       - name: buf format
-        # Fails if any .proto file isn't formatted per `buf format -w`, without
-        # writing changes back - run `buf format -w` locally to fix.
+        # Fails if any .proto file isn't formatted per `buf format -w`.
         run: buf format --diff --exit-code
 
       - name: buf breaking
