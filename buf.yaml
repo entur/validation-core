@@ -1,25 +1,19 @@
 version: v2
 lint:
-    use:
-      - COMMENTS
+  use:
+    - STANDARD
+    - COMMENTS
+    - UNARY_RPC
+  except:
+    # Enum values are frequently used in API URLs, and buf's idiomatic enum type prefix would
+    # make them longer than necessary
+    - ENUM_VALUE_PREFIX
+    # Simple get RPCs are allowed to return simple data objects.
+    - RPC_RESPONSE_STANDARD_NAME
+    - RPC_REQUEST_RESPONSE_UNIQUE
 modules:
   - path: validation-model/src/main/proto
-    lint:
-      use:
-       - STANDARD
-      except:
-        # Enum values are frequently used in API URLs, and buf's idiomatic enum type prefix would
-        # make them longer than necessary
-        - ENUM_VALUE_PREFIX
   - path: kittum-api/src/main/proto
-    lint:
-      use:
-        - STANDARD
-        - UNARY_RPC
-      except:
-        # Simple get RPCs are allowed to return simple data objects.
-        - RPC_RESPONSE_STANDARD_NAME
-        - RPC_REQUEST_RESPONSE_UNIQUE
 deps:
   - buf.build/googleapis/googleapis
   - buf.build/gnostic/gnostic
