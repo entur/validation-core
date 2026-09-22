@@ -1,15 +1,21 @@
 version: v2
+lint:
+    use:
+      - COMMENTS
 modules:
   - path: validation-model/src/main/proto
     lint:
-      use: [STANDARD]
+      use:
+       - STANDARD
       except:
         # Enum values are frequently used in API URLs, and buf's idiomatic enum type prefix would
         # make them longer than necessary
         - ENUM_VALUE_PREFIX
   - path: kittum-api/src/main/proto
     lint:
-      use: [STANDARD]
+      use:
+        - STANDARD
+        - UNARY_RPC
       except:
         # Simple get RPCs are allowed to return simple data objects.
         - RPC_RESPONSE_STANDARD_NAME

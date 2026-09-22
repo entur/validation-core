@@ -31,9 +31,13 @@ jobs:
       - name: buf lint
         run: buf lint
 
-      - uses: bufbuild/buf-breaking-action@v1
+      - name: buf breaking
         # Catches field renumbering/removal in either module immediately.
         # No-ops on a push to main (comparing a ref against itself).
+        # Skip by adding the 'buf-breaking-change' label to the PR when the
+        # break is intentional and consumers are coordinated.
+        if: "!contains(github.event.pull_request.labels.*.name, 'buf-breaking-change')"
+        uses: bufbuild/buf-breaking-action@v1
         with:
           input: "."
           against: "https://github.com/${{ github.repository }}.git#branch=main"
