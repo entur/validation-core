@@ -52,7 +52,7 @@ message ListValidationFlowsRequest {
   }];
   // The maximum number of flows to return. The default page size is 20.
   optional int32 page_size = 2 [(gnostic.openapi.v3.property) = {
-    example: {yaml: "20"}
+    example: {yaml: "10"}
   }];
   // A comma-separated list of fields to order by, each optionally suffixed with " desc"
   // for descending order (ascending is the default). See https://google.aip.dev/132.
