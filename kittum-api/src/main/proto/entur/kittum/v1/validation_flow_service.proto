@@ -1,0 +1,111 @@
+syntax = "proto3";
+
+package entur.kittum.v1;
+
+import "entur/validation/v1/enum.proto";
+import "entur/validation/v1/validation_flow.proto";
+import "gnostic/openapi/v3/annotations.proto";
+import "google/api/annotations.proto";
+import "google/api/client.proto";
+import "google/api/field_behavior.proto";
+
+option go_package = "github.com/entur/validation-core/gen/entur/kittum/v1;kittumv1";
+option java_multiple_files = true;
+option java_package = "no.entur.kittum.proto.v1";
+
+// The gRPC service to view and administrate flows.
+service ValidationFlowService {
+  option (google.api.default_host) = "kittum.entur.io";
+
+  // List existing validation flows. The request is paginated with a default
+  // page size of 20. The flows are returned shallow: their rule and
+  // sub-flow items carry only the database id of what they refer to.
+  rpc ListValidationFlows(ListValidationFlowsRequest) returns (ListValidationFlowsResponse) {
+    option (google.api.http) = {get: "/v1/flows"};
+    option (gnostic.openapi.v3.operation) = {summary: "List all existing flows."};
+  }
+
+  // Get one validation flow by its id. The returned flow is deep: every
+  // rule and sub-flow item it contains, recursively, carries both the
+  // database id of what it refers to and the referred-to
+  // ValidationRule/ValidationFlow itself.
+  rpc GetValidationFlow(GetValidationFlowRequest) returns (entur.validation.v1.ValidationFlow) {
+    option (google.api.http) = {get: "/v1/flows/{id}"};
+    option (gnostic.openapi.v3.operation) = {summary: "Get one flow by its id."};
+  }
+
+  // Get the validation flow connected to a source, for one stage and area.
+  // The returned flow is deep: every rule and sub-flow item it contains,
+  // recursively, carries both the database id of what it refers to and the
+  // referred-to ValidationRule/ValidationFlow itself.
+  rpc GetSourceFlow(GetSourceFlowRequest) returns (entur.validation.v1.ValidationFlow) {
+    option (google.api.http) = {get: "/v1/sources/{source}/flows/{stage}/{area}"};
+    option (gnostic.openapi.v3.operation) = {summary: "Get the flow connected to a source, for one stage and area."};
+  }
+}
+
+// Request for ListValidationFlows.
+message ListValidationFlowsRequest {
+  // The cursor to resume listing from, as returned by a previous call's cursor.
+  string cursor = 1 [(gnostic.openapi.v3.property) = {
+    example: {yaml: "\"eyJpZCI6NDJ9\""}
+  }];
+  // The maximum number of flows to return. The default page size is 20.
+  optional int32 page_size = 2 [(gnostic.openapi.v3.property) = {
+    example: {yaml: "20"}
+  }];
+  // A comma-separated list of fields to order by, each optionally suffixed with " desc"
+  // for descending order (ascending is the default). See https://google.aip.dev/132.
+  string order_by = 3 [(gnostic.openapi.v3.property) = {
+    example: {yaml: "\"name\""}
+  }];
+}
+
+// Response for ListValidationFlows.
+message ListValidationFlowsResponse {
+  // The (shallow) flows in this page of results.
+  repeated entur.validation.v1.ValidationFlow items = 1;
+  // The cursor to pass to a subsequent call to continue listing. Absent
+  // when there are no more results.
+  string cursor = 2 [(gnostic.openapi.v3.property) = {
+    example: {yaml: "\"eyJpZCI6NjJ9\""}
+  }];
+}
+
+// Request for GetValidationFlow.
+message GetValidationFlowRequest {
+  // The database id of the flow to lookup.
+  int32 id = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (gnostic.openapi.v3.property) = {
+      example: {yaml: "1"}
+    }
+  ];
+}
+
+// Request for GetSourceFlow.
+message GetSourceFlowRequest {
+  // The name of the source to lookup.
+  string source = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (gnostic.openapi.v3.property) = {
+      example: {yaml: "\"rutedata\""}
+    }
+  ];
+  // The stage of the flow to lookup.
+  //
+  // This field is case insensitive.
+  entur.validation.v1.ValidationStage stage = 2 [
+    (google.api.field_behavior) = REQUIRED,
+    (gnostic.openapi.v3.property) = {
+      example: {yaml: "\"STRUCTURAL\""}
+    }
+  ];
+  // The name of the area to lookup.
+  string area = 3 [
+    (google.api.field_behavior) = REQUIRED,
+    (gnostic.openapi.v3.property) = {
+      example: {yaml: "\"Personalisering\""}
+    }
+  ];
+}

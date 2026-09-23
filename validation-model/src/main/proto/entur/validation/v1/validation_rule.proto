@@ -1,0 +1,84 @@
+syntax = "proto3";
+
+package entur.validation.v1;
+
+import "entur/validation/v1/enum.proto";
+import "gnostic/openapi/v3/annotations.proto";
+import "google/api/field_behavior.proto";
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/entur/validation-core/gen/entur/validation/v1;validationv1";
+option java_multiple_files = true;
+option java_package = "no.entur.validation.proto.v1";
+
+// A single validation rule, owned by one Area.
+message ValidationRule {
+  // The database id of the validation rule.
+  int32 id = 1 [
+    (google.api.field_behavior) = IDENTIFIER,
+    (gnostic.openapi.v3.property) = {
+      example: {yaml: "1"}
+    }
+  ];
+  // The database id of the area that owns the validation rule.
+  int32 area = 2 [
+    (google.api.field_behavior) = REQUIRED,
+    (gnostic.openapi.v3.property) = {
+      example: {yaml: "7"}
+    }
+  ];
+  // The default severity of the validation rule.
+  Severity default_severity = 3 [
+    (google.api.field_behavior) = REQUIRED,
+    (gnostic.openapi.v3.property) = {
+      example: {yaml: "\"ERROR\""}
+    }
+  ];
+  // The stage the validation rule runs in.
+  ValidationStage stage = 4 [
+    (google.api.field_behavior) = REQUIRED,
+    (gnostic.openapi.v3.property) = {
+      example: {yaml: "\"STRUCTURAL\""}
+    }
+  ];
+  // A textual description of the validation rule.
+  string description = 5 [
+    (google.api.field_behavior) = REQUIRED,
+    (gnostic.openapi.v3.property) = {
+      example: {yaml: "\"Validates the file against its XSD.\""}
+    }
+  ];
+
+  // The concrete instances of this validation rule, with specialized fields.
+  oneof rule {
+    // An XSD rule.
+    XsdRule xsd_rule = 6;
+  }
+
+  // The timestamp of the validation rule.
+  google.protobuf.Timestamp updated_at = 100 [(gnostic.openapi.v3.property) = {
+    example: {yaml: "\"2026-01-01T00:00:00Z\""}
+  }];
+}
+
+// A validation rule that checks a file against an XSD. Always stage STRUCTURAL.
+message XsdRule {
+  // The message to print if the validation rule fails.
+  string message = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (gnostic.openapi.v3.property) = {
+      example: {yaml: "\"File does not match its XSD.\""}
+    }
+  ];
+  // The path to the XSD, relative to some externally configured root.
+  string xsd_path = 2 [
+    (google.api.field_behavior) = REQUIRED,
+    (gnostic.openapi.v3.property) = {
+      example: {yaml: "\"xsd/netex/NeTEx_publication.xsd\""}
+    }
+  ];
+  // A regexp a file's name must match to be processed by this rule. Runs against every file when absent.
+  optional string file_filter = 3 [(gnostic.openapi.v3.property) = {
+    example: {yaml: "\".*\\\\.xml\""}
+  }];
+}

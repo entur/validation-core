@@ -19,3 +19,15 @@ enum Severity {
   // Informational only, e.g. missing recommended data or a future WARNING.
   INFO = 4;
 }
+
+// A validation stage a rule or flow applies to.
+enum ValidationStage {
+  // Unspecified validation stage. This is an invalid value.
+  VALIDATION_STAGE_UNSPECIFIED = 0;
+  // Validates a file's structure, e.g. against an XSD, before any other stage runs.
+  STRUCTURAL = 1;
+  // Checks a file against only its own, local data context.
+  LOCAL = 2;
+  // Cross-validates a file against other data, e.g. references and integrity across the dataset.
+  GLOBAL = 3;
+}

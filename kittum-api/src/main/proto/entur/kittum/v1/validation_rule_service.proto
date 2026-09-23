@@ -1,0 +1,71 @@
+syntax = "proto3";
+
+package entur.kittum.v1;
+
+import "entur/validation/v1/validation_rule.proto";
+import "gnostic/openapi/v3/annotations.proto";
+import "google/api/annotations.proto";
+import "google/api/client.proto";
+import "google/api/field_behavior.proto";
+
+option go_package = "github.com/entur/validation-core/gen/entur/kittum/v1;kittumv1";
+option java_multiple_files = true;
+option java_package = "no.entur.kittum.proto.v1";
+
+// The gRPC service to view and administrate validation rules.
+service ValidationRuleService {
+  option (google.api.default_host) = "kittum.entur.io";
+
+  // List existing validation rules.
+  //
+  // The request is paginated with a default page size of 100.
+  rpc ListValidationRules(ListValidationRulesRequest) returns (ListValidationRulesResponse) {
+    option (google.api.http) = {get: "/v1/rules"};
+    option (gnostic.openapi.v3.operation) = {summary: "List existing validation rules."};
+  }
+
+  // Get one validation rule by its id.
+  rpc GetValidationRule(GetValidationRuleRequest) returns (entur.validation.v1.ValidationRule) {
+    option (google.api.http) = {get: "/v1/rules/{id}"};
+    option (gnostic.openapi.v3.operation) = {summary: "Get one validation rule by its id."};
+  }
+}
+
+// Request for ListValidationRules.
+message ListValidationRulesRequest {
+  // The cursor to resume listing from, as returned by a previous call's cursor.
+  string cursor = 1 [(gnostic.openapi.v3.property) = {
+    example: {yaml: "\"eyJpZCI6NDJ9\""}
+  }];
+  // The maximum number of validation rules to return. The default page size is 100.
+  optional int32 page_size = 2 [(gnostic.openapi.v3.property) = {
+    example: {yaml: "20"}
+  }];
+  // A comma-separated list of fields to order by, each optionally suffixed with " desc"
+  // for descending order (ascending is the default). See https://google.aip.dev/132.
+  string order_by = 3 [(gnostic.openapi.v3.property) = {
+    example: {yaml: "\"description\""}
+  }];
+}
+
+// Response for ListValidationRules.
+message ListValidationRulesResponse {
+  // The validation rules in this page of results.
+  repeated entur.validation.v1.ValidationRule items = 1;
+  // The cursor to pass to a subsequent call to continue listing. Empty
+  // when there are no more results.
+  string cursor = 2 [(gnostic.openapi.v3.property) = {
+    example: {yaml: "\"eyJpZCI6NjJ9\""}
+  }];
+}
+
+// Request for GetValidationRule.
+message GetValidationRuleRequest {
+  // The database id of the validation rule to lookup.
+  int32 id = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (gnostic.openapi.v3.property) = {
+      example: {yaml: "1"}
+    }
+  ];
+}

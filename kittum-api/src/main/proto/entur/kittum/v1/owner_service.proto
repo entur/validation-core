@@ -35,11 +35,16 @@ message ListOwnersRequest {}
 // Response for ListOwners.
 message ListOwnersResponse {
   // All existing owners.
-  repeated entur.validation.v1.Owner owners = 1;
+  repeated entur.validation.v1.Owner items = 1;
 }
 
 // Request for GetOwner.
 message GetOwnerRequest {
   // The database id of the owner to lookup.
-  int32 id = 1 [(google.api.field_behavior) = REQUIRED];
+  int32 id = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (gnostic.openapi.v3.property) = {
+      example: {yaml: "1"}
+    }
+  ];
 }

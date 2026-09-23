@@ -35,11 +35,16 @@ message ListSourcesRequest {}
 // Response for ListSources.
 message ListSourcesResponse {
   // All existing sources.
-  repeated entur.validation.v1.Source sources = 1;
+  repeated entur.validation.v1.Source items = 1;
 }
 
 // Request for GetSource.
 message GetSourceRequest {
   // The name of the source to lookup.
-  string name = 1 [(google.api.field_behavior) = REQUIRED];
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (gnostic.openapi.v3.property) = {
+      example: {yaml: "\"rutedata\""}
+    }
+  ];
 }

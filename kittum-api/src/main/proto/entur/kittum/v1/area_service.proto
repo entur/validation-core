@@ -35,11 +35,16 @@ message ListAreasRequest {}
 // Response for ListAreas.
 message ListAreasResponse {
   // All existing areas.
-  repeated entur.validation.v1.Area areas = 1;
+  repeated entur.validation.v1.Area items = 1;
 }
 
 // Request for GetArea.
 message GetAreaRequest {
   // The database id of the area to lookup.
-  int32 id = 1 [(google.api.field_behavior) = REQUIRED];
+  int32 id = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (gnostic.openapi.v3.property) = {
+      example: {yaml: "1"}
+    }
+  ];
 }

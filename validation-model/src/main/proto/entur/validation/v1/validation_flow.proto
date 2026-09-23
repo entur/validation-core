@@ -1,0 +1,113 @@
+syntax = "proto3";
+
+package entur.validation.v1;
+
+import "entur/validation/v1/enum.proto";
+import "entur/validation/v1/validation_rule.proto";
+import "gnostic/openapi/v3/annotations.proto";
+import "google/api/field_behavior.proto";
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/entur/validation-core/gen/entur/validation/v1;validationv1";
+option java_multiple_files = true;
+option java_package = "no.entur.validation.proto.v1";
+
+// A named, ordered tree of validation rules. A validation flow belongs to
+// exactly one validation stage; every rule and sub-flow it contains must
+// belong to that same stage.
+message ValidationFlow {
+  // The database id of the validation flow.
+  int32 id = 1 [
+    (google.api.field_behavior) = IDENTIFIER,
+    (gnostic.openapi.v3.property) = {
+      example: {yaml: "1"}
+    }
+  ];
+  // The name of the validation flow.
+  string name = 2 [
+    (google.api.field_behavior) = REQUIRED,
+    (gnostic.openapi.v3.property) = {
+      example: {yaml: "\"netex-structural\""}
+    }
+  ];
+  // A textual description of the validation flow.
+  string description = 3 [
+    (google.api.field_behavior) = REQUIRED,
+    (gnostic.openapi.v3.property) = {
+      example: {yaml: "\"Runs structural checks for NeTEx deliveries.\""}
+    }
+  ];
+  // The stage the validation flow runs in. All items in the validation
+  // flow must have the same stage.
+  ValidationStage stage = 4 [
+    (google.api.field_behavior) = REQUIRED,
+    (gnostic.openapi.v3.property) = {
+      example: {yaml: "\"STRUCTURAL\""}
+    }
+  ];
+  // The validation flow's items, in execution order.
+  repeated FlowItem items = 5;
+  // The timestamp of the validation flow.
+  google.protobuf.Timestamp updated_at = 100 [(gnostic.openapi.v3.property) = {
+    example: {yaml: "\"2026-01-01T00:00:00Z\""}
+  }];
+}
+
+// One item in a ValidationFlow's ordered list.
+message FlowItem {
+  // The database id of the flow item.
+  int32 id = 1 [
+    (google.api.field_behavior) = IDENTIFIER,
+    (gnostic.openapi.v3.property) = {
+      example: {yaml: "1"}
+    }
+  ];
+
+  // The type of item this flow item consists of.
+  oneof item {
+    // A rule inside the flow.
+    RuleFlowItem rule_flow_item = 2;
+    // A flow inside the flow.
+    SubFlowItem sub_flow_item = 3;
+  }
+
+  // The timestamp of the flow item.
+  google.protobuf.Timestamp updated_at = 100 [(gnostic.openapi.v3.property) = {
+    example: {yaml: "\"2026-01-01T00:00:00Z\""}
+  }];
+}
+
+// A flow item that runs one concrete ValidationRule, optionally overriding
+// its default severity for this inclusion only.
+message RuleFlowItem {
+  // The database id of the ValidationRule this item runs.
+  int32 id = 1 [
+    (google.api.field_behavior) = IDENTIFIER,
+    (gnostic.openapi.v3.property) = {
+      example: {yaml: "1"}
+    }
+  ];
+  // The full validation rule. Populated on a deep read (GetValidationFlow,
+  // GetSourceFlow); absent on a shallow listing (ListValidationFlows).
+  optional ValidationRule validation_rule = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
+  // If present, overrides the rule's own default_severity for this inclusion only.
+  optional Severity severity_override = 3 [(gnostic.openapi.v3.property) = {
+    example: {yaml: "\"WARNING\""}
+  }];
+}
+
+// A flow item that runs another ValidationFlow in its entirety, letting
+// flows be composed into a tree.
+message SubFlowItem {
+  // The database id of the flow to run.
+  int32 id = 1 [
+    (google.api.field_behavior) = IDENTIFIER,
+    (gnostic.openapi.v3.property) = {
+      example: {yaml: "1"}
+    }
+  ];
+  // The full flow. Populated on a deep read (GetValidationFlow,
+  // GetSourceFlow), recursively for every sub-flow it contains in turn;
+  // absent on a shallow listing (ListValidationFlows).
+  optional ValidationFlow flow = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
+}
