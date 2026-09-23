@@ -65,7 +65,7 @@ message ListValidationFlowsRequest {
 message ListValidationFlowsResponse {
   // The (shallow) flows in this page of results.
   repeated entur.validation.v1.ValidationFlow items = 1;
-  // The cursor to pass to a subsequent call to continue listing. Absent
+  // The cursor to pass to a subsequent call to continue listing. Empty
   // when there are no more results.
   string cursor = 2 [(gnostic.openapi.v3.property) = {
     example: {yaml: "\"eyJpZCI6NjJ9\""}

@@ -375,7 +375,7 @@ components:
                     example: "eyJpZCI6NjJ9"
                     type: string
                     description: |-
-                        The cursor to pass to a subsequent call to continue listing. Absent
+                        The cursor to pass to a subsequent call to continue listing. Empty
                          when there are no more results.
             description: Response for ListValidationFlows.
         ListValidationRulesResponse:
