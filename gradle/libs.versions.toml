@@ -1,6 +1,6 @@
 [versions]
 kotlin = "2.4.10"
-protobuf = "4.36.1"
+protobuf = "4.36.2"
 proto-google-common-protos = "2.76.0"
 assertj = "3.27.6"
 
