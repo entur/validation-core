@@ -40,3 +40,15 @@ jobs:
         env:
           ARTIFACTORY_AUTH_USER: ${{ secrets.ARTIFACTORY_AUTH_USER }}
           ARTIFACTORY_AUTH_TOKEN: ${{ secrets.ARTIFACTORY_AUTH_TOKEN }}
+
+  notify:
+    needs: [publish]
+    if: always() && github.repository == 'entur/validation-core'
+    uses: entur/gha-slack/.github/workflows/post.yml@v3
+    with:
+      channel_id: "C0BMR0ZJ8RH"
+      message: >-
+        ${{ needs.publish.result == 'success'
+        && format(':white_check_mark: validation-core {0} published to Artifactory', github.ref_name)
+        || format(':x: validation-core {0} publish failed: {1}/{2}/actions/runs/{3}', github.ref_name, github.server_url, github.repository, github.run_id) }}
+    secrets: inherit
