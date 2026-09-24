@@ -32,8 +32,9 @@ service ValidationRuleService {
     option (gnostic.openapi.v3.operation) = {summary: "Get one validation rule by its id."};
   }
 
-  // Create a new validation rule. Returns the full created rule, including its
-  // server-assigned `id` and `updated_at`.
+  // Create a new validation rule. Exactly one field of its `rule` oneof must be set. Its
+  // `id` and `updated_at` are OUTPUT_ONLY and ignored if set; the server assigns both.
+  // Returns the full created rule, including its server-assigned `id` and `updated_at`.
   rpc CreateValidationRule(CreateValidationRuleRequest) returns (entur.validation.v1.ValidationRule) {
     option (google.api.http) = {
       post: "/v1/rules"
@@ -42,8 +43,15 @@ service ValidationRuleService {
     option (gnostic.openapi.v3.operation) = {summary: "Create a new validation rule."};
   }
 
-  // Update an existing validation rule. Returns the full updated rule, with its new
-  // `updated_at`.
+  // Update an existing validation rule. Its `id`, if set, must match the path `id`.
+  // The `rule` oneof's set field is immutable: it must be the same variant (e.g. `xsd_rule`)
+  // as the rule's current type, and the request fails with INVALID_ARGUMENT if it is not -
+  // changing a rule's type requires deleting it and creating a new one. Returns the full
+  // updated rule, with its new `updated_at`. Over REST, this is a conditional request (RFC 7232):
+  // it requires a matching `If-Match` request header and fails with 412 Precondition Failed if it no
+  // longer matches the rule's current `ETag`, e.g. because another update happened
+  // concurrently. This is an HTTP-layer precondition, not a field of
+  // UpdateValidationRuleRequest.
   rpc UpdateValidationRule(UpdateValidationRuleRequest) returns (entur.validation.v1.ValidationRule) {
     option (google.api.http) = {
       patch: "/v1/rules/{id}"
@@ -52,7 +60,11 @@ service ValidationRuleService {
     option (gnostic.openapi.v3.operation) = {summary: "Update an existing validation rule."};
   }
 
-  // Delete a validation rule.
+  // Delete a validation rule. Over REST, this is a conditional request (RFC 7232): it
+  // requires a matching `If-Match` request header and fails with 412 Precondition Failed if
+  // it no longer matches the rule's current `ETag`, e.g. because another update happened
+  // concurrently. This is an HTTP-layer precondition, not a field of
+  // DeleteValidationRuleRequest.
   rpc DeleteValidationRule(DeleteValidationRuleRequest) returns (google.protobuf.Empty) {
     option (google.api.http) = {delete: "/v1/rules/{id}"};
     option (gnostic.openapi.v3.operation) = {summary: "Delete a validation rule."};
@@ -100,8 +112,7 @@ message GetValidationRuleRequest {
 
 // Request for CreateValidationRule.
 message CreateValidationRuleRequest {
-  // The validation rule to create. Exactly one field of its `rule` oneof must be set. Its
-  // `id` and `updated_at` are ignored if set; the server assigns both.
+  // The validation rule to create.
   entur.validation.v1.ValidationRule validation_rule = 1 [(google.api.field_behavior) = REQUIRED];
 }
 
@@ -114,14 +125,7 @@ message UpdateValidationRuleRequest {
       example: {yaml: "1"}
     }
   ];
-  // The rule's new field values. Its `id`, if set, must match the `id` above. `updated_at`
-  // is used as an etag: it must be set to the value last returned for this rule, and the
-  // request fails with FAILED_PRECONDITION (412 Precondition Failed over REST) if it no
-  // longer matches the rule's current `updated_at`, e.g. because another update happened
-  // concurrently. On success, the server assigns a new `updated_at`. The `rule` oneof's set
-  // field is immutable: it must be the same variant (e.g. `xsd_rule`) as the rule's current
-  // type, and the request fails with INVALID_ARGUMENT if it is not. Changing a rule's type
-  // requires deleting it and creating a new one.
+  // The rule's new field values.
   entur.validation.v1.ValidationRule validation_rule = 2 [(google.api.field_behavior) = REQUIRED];
   // The fields of `validation_rule` to update. Fields populated in `validation_rule` but not
   // listed here are left unchanged. Omitting this mask updates every field populated in

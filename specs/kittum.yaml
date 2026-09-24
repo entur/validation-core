@@ -32,7 +32,8 @@ paths:
                 - AreaService
             summary: Create a new area.
             description: |-
-                Create a new area. Returns the full created area, including its server-assigned `id`
+                Create a new area. Its `id` and `updated_at` are OUTPUT_ONLY and ignored if set; the
+                 server assigns both. Returns the full created area, including its server-assigned `id`
                  and `updated_at`.
             operationId: AreaService_CreateArea
             requestBody:
@@ -74,7 +75,11 @@ paths:
             tags:
                 - AreaService
             summary: Delete an area.
-            description: Delete an area.
+            description: |-
+                Delete an area. Over REST, this is a conditional request (RFC 7232): it requires a
+                 matching `If-Match` request header and fails with 412 Precondition Failed if it no
+                 longer matches the area's current `ETag`, e.g. because another update happened
+                 concurrently. This is an HTTP-layer precondition, not a field of DeleteAreaRequest.
             operationId: AreaService_DeleteArea
             parameters:
                 - name: id
@@ -92,7 +97,12 @@ paths:
             tags:
                 - AreaService
             summary: Update an existing area.
-            description: Update an existing area. Returns the full updated area, with its new `updated_at`.
+            description: |-
+                Update an existing area. Its `id`, if set, must match the path `id`. Returns the full
+                 updated area, with its new `updated_at`. Over REST, this is a conditional request (RFC 7232):
+                 it requires a matching `If-Match` request header and fails with 412 Precondition Failed if it no
+                 longer matches the area's current `ETag`, e.g. because another update happened
+                 concurrently. This is an HTTP-layer precondition, not a field of UpdateAreaRequest.
             operationId: AreaService_UpdateArea
             parameters:
                 - name: id
@@ -164,9 +174,12 @@ paths:
                 - ValidationFlowService
             summary: Create a new validation flow.
             description: |-
-                Create a new validation flow. Returns the full created flow, deep as in
-                 GetValidationFlow, including its server-assigned `id` and `updated_at` and those of
-                 every item it contains.
+                Create a new validation flow. Every item's `rule_flow_item.id`/`sub_flow_item.id` must
+                 reference an existing ValidationRule/ValidationFlow of the same `stage`; their nested
+                 `validation_rule`/`flow` fields are OUTPUT_ONLY and ignored if set. The flow's `id` and
+                 `updated_at` are likewise OUTPUT_ONLY and ignored if set; the server assigns both.
+                 Returns the full created flow, deep as in GetValidationFlow, including its
+                 server-assigned `id` and `updated_at` and those of every item it contains.
             operationId: ValidationFlowService_CreateValidationFlow
             requestBody:
                 content:
@@ -190,7 +203,12 @@ paths:
                 Get one validation flow by its id. The returned flow is deep: every
                  rule and sub-flow item it contains, recursively, carries both the
                  database id of what it refers to and the referred-to
-                 ValidationRule/ValidationFlow itself.
+                 ValidationRule/ValidationFlow itself. The response's `ETag`/`updated_at` reflects only
+                 this flow's own shallow state - its own fields and item list, i.e. which rules/sub-flows
+                 are referenced and in what order - not the content of the nested rules/sub-flows
+                 themselves, since CreateValidationFlow/UpdateValidationFlow only ever write that shallow
+                 state. A referenced rule or sub-flow changing therefore changes this response's content
+                 without changing this flow's own `ETag`.
             operationId: ValidationFlowService_GetValidationFlow
             parameters:
                 - name: id
@@ -211,7 +229,13 @@ paths:
             tags:
                 - ValidationFlowService
             summary: Delete a validation flow.
-            description: Delete a validation flow.
+            description: |-
+                Delete a validation flow. Over REST, this is a conditional request (RFC 7232): it
+                 requires a matching `If-Match` request header and fails with 412 Precondition Failed if
+                 it no longer matches the flow's current `ETag` - its own shallow state, as returned by
+                 GetValidationFlow, unaffected by changes to a referenced rule or sub-flow - e.g. because
+                 another update to this flow happened concurrently. This is an HTTP-layer precondition,
+                 not a field of DeleteValidationFlowRequest.
             operationId: ValidationFlowService_DeleteValidationFlow
             parameters:
                 - name: id
@@ -230,8 +254,17 @@ paths:
                 - ValidationFlowService
             summary: Update an existing validation flow.
             description: |-
-                Update an existing validation flow. Returns the full updated flow, deep as in
-                 GetValidationFlow, with its new `updated_at` and those of every item it contains.
+                Update an existing validation flow. Its `id`, if set, must match the path `id`.
+                 `items` is treated as a single unit: including it (or omitting the update mask entirely)
+                 replaces the flow's whole item list with what is given, populated and ignored the
+                 same way as in CreateValidationFlow - there is no way to patch only one item in place.
+                 Returns the full updated flow, deep as in GetValidationFlow, with its new `updated_at`
+                 and those of every item it contains. Over REST, this is a conditional request (RFC 7232):
+                 it requires a matching `If-Match` request header and fails with 412 Precondition Failed
+                 if it no longer matches the flow's current `ETag` - its own shallow state, as returned by
+                 GetValidationFlow, unaffected by changes to a referenced rule or sub-flow - e.g. because
+                 another update to this flow happened concurrently. This is an HTTP-layer precondition,
+                 not a field of UpdateValidationFlowRequest.
             operationId: ValidationFlowService_UpdateValidationFlow
             parameters:
                 - name: id
@@ -282,7 +315,8 @@ paths:
                 - OwnerService
             summary: Create a new owner.
             description: |-
-                Create a new owner. Returns the full created owner, including its server-assigned `id`
+                Create a new owner. Its `id` and `updated_at` are OUTPUT_ONLY and ignored if set; the
+                 server assigns both. Returns the full created owner, including its server-assigned `id`
                  and `updated_at`.
             operationId: OwnerService_CreateOwner
             requestBody:
@@ -324,7 +358,11 @@ paths:
             tags:
                 - OwnerService
             summary: Delete an owner.
-            description: Delete an owner.
+            description: |-
+                Delete an owner. Over REST, this is a conditional request (RFC 7232): it requires a
+                 matching `If-Match` request header and fails with 412 Precondition Failed if it no
+                 longer matches the owner's current `ETag`, e.g. because another update happened
+                 concurrently. This is an HTTP-layer precondition, not a field of DeleteOwnerRequest.
             operationId: OwnerService_DeleteOwner
             parameters:
                 - name: id
@@ -342,7 +380,13 @@ paths:
             tags:
                 - OwnerService
             summary: Update an existing owner.
-            description: Update an existing owner. Returns the full updated owner, with its new `updated_at`.
+            description: |-
+                Update an existing owner. Its `id`, if set, must match the path `id`. Returns the full
+                 updated owner, with its new `updated_at`. Over REST, this is a conditional request
+                 (RFC 7232): it requires a matching `If-Match` request header and fails with
+                 412 Precondition Failed if it no longer matches the owner's current `ETag`, e.g.
+                 because another update happened concurrently. This is an HTTP-layer precondition,
+                 not a field of UpdateOwnerRequest.
             operationId: OwnerService_UpdateOwner
             parameters:
                 - name: id
@@ -414,8 +458,9 @@ paths:
                 - ValidationRuleService
             summary: Create a new validation rule.
             description: |-
-                Create a new validation rule. Returns the full created rule, including its
-                 server-assigned `id` and `updated_at`.
+                Create a new validation rule. Exactly one field of its `rule` oneof must be set. Its
+                 `id` and `updated_at` are OUTPUT_ONLY and ignored if set; the server assigns both.
+                 Returns the full created rule, including its server-assigned `id` and `updated_at`.
             operationId: ValidationRuleService_CreateValidationRule
             requestBody:
                 content:
@@ -456,7 +501,12 @@ paths:
             tags:
                 - ValidationRuleService
             summary: Delete a validation rule.
-            description: Delete a validation rule.
+            description: |-
+                Delete a validation rule. Over REST, this is a conditional request (RFC 7232): it
+                 requires a matching `If-Match` request header and fails with 412 Precondition Failed if
+                 it no longer matches the rule's current `ETag`, e.g. because another update happened
+                 concurrently. This is an HTTP-layer precondition, not a field of
+                 DeleteValidationRuleRequest.
             operationId: ValidationRuleService_DeleteValidationRule
             parameters:
                 - name: id
@@ -475,8 +525,15 @@ paths:
                 - ValidationRuleService
             summary: Update an existing validation rule.
             description: |-
-                Update an existing validation rule. Returns the full updated rule, with its new
-                 `updated_at`.
+                Update an existing validation rule. Its `id`, if set, must match the path `id`.
+                 The `rule` oneof's set field is immutable: it must be the same variant (e.g. `xsd_rule`)
+                 as the rule's current type, and the request fails with INVALID_ARGUMENT if it is not -
+                 changing a rule's type requires deleting it and creating a new one. Returns the full
+                 updated rule, with its new `updated_at`. Over REST, this is a conditional request (RFC 7232):
+                 it requires a matching `If-Match` request header and fails with 412 Precondition Failed if it no
+                 longer matches the rule's current `ETag`, e.g. because another update happened
+                 concurrently. This is an HTTP-layer precondition, not a field of
+                 UpdateValidationRuleRequest.
             operationId: ValidationRuleService_UpdateValidationRule
             parameters:
                 - name: id
@@ -527,8 +584,10 @@ paths:
                 - SourceService
             summary: Create a new source.
             description: |-
-                Create a new source. Returns the full created source, including its server-assigned
-                 `id` and `updated_at`.
+                Create a new source. Unlike Area/Owner, a source's `name` is chosen by the caller and is
+                 its identifier; the request fails with ALREADY_EXISTS if it is already taken. Its `id`
+                 and `updated_at` are OUTPUT_ONLY and ignored if set; the server assigns both. Returns
+                 the full created source, including its server-assigned `id` and `updated_at`.
             operationId: SourceService_CreateSource
             requestBody:
                 content:
@@ -568,7 +627,11 @@ paths:
             tags:
                 - SourceService
             summary: Delete a source.
-            description: Delete a source.
+            description: |-
+                Delete a source. Over REST, this is a conditional request (RFC 7232): it requires a
+                 matching `If-Match` request header and fails with 412 Precondition Failed if it no
+                 longer matches the source's current `ETag`, e.g. because another update happened
+                 concurrently. This is an HTTP-layer precondition, not a field of DeleteSourceRequest.
             operationId: SourceService_DeleteSource
             parameters:
                 - name: name
@@ -585,7 +648,14 @@ paths:
             tags:
                 - SourceService
             summary: Update an existing source.
-            description: Update an existing source. Returns the full updated source, with its new `updated_at`.
+            description: |-
+                Update an existing source. Its `id`, if set, must match the source's own id. Renaming a
+                 source is allowed by setting a different `name` in the body (and including it in the
+                 update mask); later requests use the new name. Returns the full updated source,
+                 with its new `updated_at`. Over REST, this is a conditional request (RFC 7232):
+                 it requires a matching `If-Match` request header and fails with 412 Precondition Failed
+                 if it no longer matches the source's current `ETag`, e.g. because another update
+                 happened concurrently. This is an HTTP-layer precondition, not a field of UpdateSourceRequest.
             operationId: SourceService_UpdateSource
             parameters:
                 - name: name
@@ -684,9 +754,12 @@ components:
                     description: The database id of the owner of the area.
                     format: int32
                 updatedAt:
+                    readOnly: true
                     example: "2026-01-01T00:00:00Z"
                     type: string
-                    description: The timestamp of the area.
+                    description: |-
+                        The timestamp the area was last updated. Always populated by the server; a value set by
+                         the client is ignored, not an error.
                     format: date-time
             description: A specific area that is interested in validating certain deliveries. Owned by exactly one Owner.
         FlowItem:
@@ -706,9 +779,12 @@ components:
                         - $ref: '#/components/schemas/SubFlowItem'
                     description: A flow inside the flow.
                 updatedAt:
+                    readOnly: true
                     example: "2026-01-01T00:00:00Z"
                     type: string
-                    description: The timestamp of the flow item.
+                    description: |-
+                        The timestamp the flow item was last updated. Always populated by the server; a value
+                         set by the client is ignored, not an error.
                     format: date-time
             description: One item in a ValidationFlow's ordered list.
         ListAreasResponse:
@@ -783,9 +859,12 @@ components:
                     type: string
                     description: The name of the owner.
                 updatedAt:
+                    readOnly: true
                     example: "2026-01-01T00:00:00Z"
                     type: string
-                    description: The timestamp of the owner.
+                    description: |-
+                        The timestamp the owner was last updated. Always populated by the server; a value set by
+                         the client is ignored, not an error.
                     format: date-time
             description: An owner of deliveries and areas, for example an Entur team.
         RuleFlowItem:
@@ -838,9 +917,12 @@ components:
                     description: The database id of the owner of the source.
                     format: int32
                 updatedAt:
+                    readOnly: true
                     example: "2026-01-01T00:00:00Z"
                     type: string
-                    description: The timestamp of the source.
+                    description: |-
+                        The timestamp the source was last updated. Always populated by the server; a value set
+                         by the client is ignored, not an error.
                     format: date-time
             description: A named intake point for a set of files, owned by exactly one Owner.
         SubFlowItem:
@@ -900,9 +982,12 @@ components:
                         $ref: '#/components/schemas/FlowItem'
                     description: The validation flow's items, in execution order.
                 updatedAt:
+                    readOnly: true
                     example: "2026-01-01T00:00:00Z"
                     type: string
-                    description: The timestamp of the validation flow.
+                    description: |-
+                        The timestamp the validation flow was last updated. Always populated by the server; a
+                         value set by the client is ignored, not an error.
                     format: date-time
             description: |-
                 A named, ordered tree of validation rules. A validation flow belongs to
@@ -956,9 +1041,12 @@ components:
                         - $ref: '#/components/schemas/XsdRule'
                     description: An XSD rule.
                 updatedAt:
+                    readOnly: true
                     example: "2026-01-01T00:00:00Z"
                     type: string
-                    description: The timestamp of the validation rule.
+                    description: |-
+                        The timestamp the validation rule was last updated. Always populated by the server; a
+                         value set by the client is ignored, not an error.
                     format: date-time
             description: A single validation rule, owned by one Area.
         XsdRule:

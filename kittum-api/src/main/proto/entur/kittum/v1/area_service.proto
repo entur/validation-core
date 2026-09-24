@@ -30,7 +30,8 @@ service AreaService {
     option (gnostic.openapi.v3.operation) = {summary: "Get one area by its id."};
   }
 
-  // Create a new area. Returns the full created area, including its server-assigned `id`
+  // Create a new area. Its `id` and `updated_at` are OUTPUT_ONLY and ignored if set; the
+  // server assigns both. Returns the full created area, including its server-assigned `id`
   // and `updated_at`.
   rpc CreateArea(CreateAreaRequest) returns (entur.validation.v1.Area) {
     option (google.api.http) = {
@@ -40,7 +41,11 @@ service AreaService {
     option (gnostic.openapi.v3.operation) = {summary: "Create a new area."};
   }
 
-  // Update an existing area. Returns the full updated area, with its new `updated_at`.
+  // Update an existing area. Its `id`, if set, must match the path `id`. Returns the full
+  // updated area, with its new `updated_at`. Over REST, this is a conditional request (RFC 7232):
+  // it requires a matching `If-Match` request header and fails with 412 Precondition Failed if it no
+  // longer matches the area's current `ETag`, e.g. because another update happened
+  // concurrently. This is an HTTP-layer precondition, not a field of UpdateAreaRequest.
   rpc UpdateArea(UpdateAreaRequest) returns (entur.validation.v1.Area) {
     option (google.api.http) = {
       patch: "/v1/areas/{id}"
@@ -49,7 +54,10 @@ service AreaService {
     option (gnostic.openapi.v3.operation) = {summary: "Update an existing area."};
   }
 
-  // Delete an area.
+  // Delete an area. Over REST, this is a conditional request (RFC 7232): it requires a
+  // matching `If-Match` request header and fails with 412 Precondition Failed if it no
+  // longer matches the area's current `ETag`, e.g. because another update happened
+  // concurrently. This is an HTTP-layer precondition, not a field of DeleteAreaRequest.
   rpc DeleteArea(DeleteAreaRequest) returns (google.protobuf.Empty) {
     option (google.api.http) = {delete: "/v1/areas/{id}"};
     option (gnostic.openapi.v3.operation) = {summary: "Delete an area."};
@@ -78,7 +86,7 @@ message GetAreaRequest {
 
 // Request for CreateArea.
 message CreateAreaRequest {
-  // The area to create. Its `id` and `updated_at` are ignored if set; the server assigns both.
+  // The area to create.
   entur.validation.v1.Area area = 1 [(google.api.field_behavior) = REQUIRED];
 }
 
@@ -91,11 +99,7 @@ message UpdateAreaRequest {
       example: {yaml: "1"}
     }
   ];
-  // The area's new field values. Its `id`, if set, must match the `id` above. `updated_at`
-  // is used as an etag: it must be set to the value last returned for this area, and the
-  // request fails with FAILED_PRECONDITION (412 Precondition Failed over REST) if it no
-  // longer matches the area's current `updated_at`, e.g. because another update happened
-  // concurrently. On success, the server assigns a new `updated_at`.
+  // The area's new field values.
   entur.validation.v1.Area area = 2 [(google.api.field_behavior) = REQUIRED];
   // The fields of `area` to update. Fields populated in `area` but not listed here are
   // left unchanged. Omitting this mask updates every field populated in `area`.

@@ -47,10 +47,14 @@ message ValidationFlow {
   ];
   // The validation flow's items, in execution order.
   repeated FlowItem items = 5;
-  // The timestamp of the validation flow.
-  google.protobuf.Timestamp updated_at = 100 [(gnostic.openapi.v3.property) = {
-    example: {yaml: "\"2026-01-01T00:00:00Z\""}
-  }];
+  // The timestamp the validation flow was last updated. Always populated by the server; a
+  // value set by the client is ignored, not an error.
+  google.protobuf.Timestamp updated_at = 100 [
+    (google.api.field_behavior) = OUTPUT_ONLY,
+    (gnostic.openapi.v3.property) = {
+      example: {yaml: "\"2026-01-01T00:00:00Z\""}
+    }
+  ];
 }
 
 // One item in a ValidationFlow's ordered list.
@@ -71,10 +75,14 @@ message FlowItem {
     SubFlowItem sub_flow_item = 3;
   }
 
-  // The timestamp of the flow item.
-  google.protobuf.Timestamp updated_at = 100 [(gnostic.openapi.v3.property) = {
-    example: {yaml: "\"2026-01-01T00:00:00Z\""}
-  }];
+  // The timestamp the flow item was last updated. Always populated by the server; a value
+  // set by the client is ignored, not an error.
+  google.protobuf.Timestamp updated_at = 100 [
+    (google.api.field_behavior) = OUTPUT_ONLY,
+    (gnostic.openapi.v3.property) = {
+      example: {yaml: "\"2026-01-01T00:00:00Z\""}
+    }
+  ];
 }
 
 // A flow item that runs one concrete ValidationRule, optionally overriding

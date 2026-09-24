@@ -30,7 +30,12 @@ service ValidationFlowService {
   // Get one validation flow by its id. The returned flow is deep: every
   // rule and sub-flow item it contains, recursively, carries both the
   // database id of what it refers to and the referred-to
-  // ValidationRule/ValidationFlow itself.
+  // ValidationRule/ValidationFlow itself. The response's `ETag`/`updated_at` reflects only
+  // this flow's own shallow state - its own fields and item list, i.e. which rules/sub-flows
+  // are referenced and in what order - not the content of the nested rules/sub-flows
+  // themselves, since CreateValidationFlow/UpdateValidationFlow only ever write that shallow
+  // state. A referenced rule or sub-flow changing therefore changes this response's content
+  // without changing this flow's own `ETag`.
   rpc GetValidationFlow(GetValidationFlowRequest) returns (entur.validation.v1.ValidationFlow) {
     option (google.api.http) = {get: "/v1/flows/{id}"};
     option (gnostic.openapi.v3.operation) = {summary: "Get one flow by its id."};
@@ -45,9 +50,12 @@ service ValidationFlowService {
     option (gnostic.openapi.v3.operation) = {summary: "Get the flow connected to a source, for one stage and area."};
   }
 
-  // Create a new validation flow. Returns the full created flow, deep as in
-  // GetValidationFlow, including its server-assigned `id` and `updated_at` and those of
-  // every item it contains.
+  // Create a new validation flow. Every item's `rule_flow_item.id`/`sub_flow_item.id` must
+  // reference an existing ValidationRule/ValidationFlow of the same `stage`; their nested
+  // `validation_rule`/`flow` fields are OUTPUT_ONLY and ignored if set. The flow's `id` and
+  // `updated_at` are likewise OUTPUT_ONLY and ignored if set; the server assigns both.
+  // Returns the full created flow, deep as in GetValidationFlow, including its
+  // server-assigned `id` and `updated_at` and those of every item it contains.
   rpc CreateValidationFlow(CreateValidationFlowRequest) returns (entur.validation.v1.ValidationFlow) {
     option (google.api.http) = {
       post: "/v1/flows"
@@ -56,8 +64,17 @@ service ValidationFlowService {
     option (gnostic.openapi.v3.operation) = {summary: "Create a new validation flow."};
   }
 
-  // Update an existing validation flow. Returns the full updated flow, deep as in
-  // GetValidationFlow, with its new `updated_at` and those of every item it contains.
+  // Update an existing validation flow. Its `id`, if set, must match the path `id`.
+  // `items` is treated as a single unit: including it (or omitting the update mask entirely)
+  // replaces the flow's whole item list with what is given, populated and ignored the
+  // same way as in CreateValidationFlow - there is no way to patch only one item in place.
+  // Returns the full updated flow, deep as in GetValidationFlow, with its new `updated_at`
+  // and those of every item it contains. Over REST, this is a conditional request (RFC 7232):
+  // it requires a matching `If-Match` request header and fails with 412 Precondition Failed
+  // if it no longer matches the flow's current `ETag` - its own shallow state, as returned by
+  // GetValidationFlow, unaffected by changes to a referenced rule or sub-flow - e.g. because
+  // another update to this flow happened concurrently. This is an HTTP-layer precondition,
+  // not a field of UpdateValidationFlowRequest.
   rpc UpdateValidationFlow(UpdateValidationFlowRequest) returns (entur.validation.v1.ValidationFlow) {
     option (google.api.http) = {
       patch: "/v1/flows/{id}"
@@ -66,7 +83,12 @@ service ValidationFlowService {
     option (gnostic.openapi.v3.operation) = {summary: "Update an existing validation flow."};
   }
 
-  // Delete a validation flow.
+  // Delete a validation flow. Over REST, this is a conditional request (RFC 7232): it
+  // requires a matching `If-Match` request header and fails with 412 Precondition Failed if
+  // it no longer matches the flow's current `ETag` - its own shallow state, as returned by
+  // GetValidationFlow, unaffected by changes to a referenced rule or sub-flow - e.g. because
+  // another update to this flow happened concurrently. This is an HTTP-layer precondition,
+  // not a field of DeleteValidationFlowRequest.
   rpc DeleteValidationFlow(DeleteValidationFlowRequest) returns (google.protobuf.Empty) {
     option (google.api.http) = {delete: "/v1/flows/{id}"};
     option (gnostic.openapi.v3.operation) = {summary: "Delete a validation flow."};
@@ -141,10 +163,7 @@ message GetSourceFlowRequest {
 
 // Request for CreateValidationFlow.
 message CreateValidationFlowRequest {
-  // The validation flow to create. Every item's `rule_flow_item.id`/`sub_flow_item.id` must
-  // reference an existing ValidationRule/ValidationFlow of the same `stage`; their nested
-  // `validation_rule`/`flow` fields are OUTPUT_ONLY and ignored if set. The flow's `id` and
-  // `updated_at` are ignored if set; the server assigns both of them.
+  // The validation flow to create.
   entur.validation.v1.ValidationFlow validation_flow = 1 [(google.api.field_behavior) = REQUIRED];
 }
 
@@ -157,14 +176,7 @@ message UpdateValidationFlowRequest {
       example: {yaml: "1"}
     }
   ];
-  // The flow's new field values. Its `id`, if set, must match the `id` above. `updated_at`
-  // is used as an etag: it must be set to the value last returned for this flow, and the
-  // request fails with FAILED_PRECONDITION (412 Precondition Failed over REST) if it no
-  // longer matches the flow's current `updated_at`, e.g. because another update happened
-  // concurrently. On success, the server assigns a new `updated_at`. `items` is treated as
-  // a single unit: including it (or omitting the mask
-  // entirely) replaces the flow's whole item list with what is given here - there is no way
-  // to patch one item in place.
+  // The flow's new field values.
   entur.validation.v1.ValidationFlow validation_flow = 2 [(google.api.field_behavior) = REQUIRED];
   // The fields of `validation_flow` to update. Fields populated in `validation_flow` but not
   // listed here are left unchanged. Omitting this mask updates every field populated in

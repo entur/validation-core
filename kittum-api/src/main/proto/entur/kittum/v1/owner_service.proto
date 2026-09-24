@@ -30,7 +30,8 @@ service OwnerService {
     option (gnostic.openapi.v3.operation) = {summary: "Get one owner by its id."};
   }
 
-  // Create a new owner. Returns the full created owner, including its server-assigned `id`
+  // Create a new owner. Its `id` and `updated_at` are OUTPUT_ONLY and ignored if set; the
+  // server assigns both. Returns the full created owner, including its server-assigned `id`
   // and `updated_at`.
   rpc CreateOwner(CreateOwnerRequest) returns (entur.validation.v1.Owner) {
     option (google.api.http) = {
@@ -40,7 +41,12 @@ service OwnerService {
     option (gnostic.openapi.v3.operation) = {summary: "Create a new owner."};
   }
 
-  // Update an existing owner. Returns the full updated owner, with its new `updated_at`.
+  // Update an existing owner. Its `id`, if set, must match the path `id`. Returns the full
+  // updated owner, with its new `updated_at`. Over REST, this is a conditional request
+  // (RFC 7232): it requires a matching `If-Match` request header and fails with
+  // 412 Precondition Failed if it no longer matches the owner's current `ETag`, e.g.
+  // because another update happened concurrently. This is an HTTP-layer precondition,
+  // not a field of UpdateOwnerRequest.
   rpc UpdateOwner(UpdateOwnerRequest) returns (entur.validation.v1.Owner) {
     option (google.api.http) = {
       patch: "/v1/owners/{id}"
@@ -49,7 +55,10 @@ service OwnerService {
     option (gnostic.openapi.v3.operation) = {summary: "Update an existing owner."};
   }
 
-  // Delete an owner.
+  // Delete an owner. Over REST, this is a conditional request (RFC 7232): it requires a
+  // matching `If-Match` request header and fails with 412 Precondition Failed if it no
+  // longer matches the owner's current `ETag`, e.g. because another update happened
+  // concurrently. This is an HTTP-layer precondition, not a field of DeleteOwnerRequest.
   rpc DeleteOwner(DeleteOwnerRequest) returns (google.protobuf.Empty) {
     option (google.api.http) = {delete: "/v1/owners/{id}"};
     option (gnostic.openapi.v3.operation) = {summary: "Delete an owner."};
@@ -78,7 +87,7 @@ message GetOwnerRequest {
 
 // Request for CreateOwner.
 message CreateOwnerRequest {
-  // The owner to create. Its `id` and `updated_at` are ignored if set; the server assigns both.
+  // The owner to create.
   entur.validation.v1.Owner owner = 1 [(google.api.field_behavior) = REQUIRED];
 }
 
@@ -91,11 +100,7 @@ message UpdateOwnerRequest {
       example: {yaml: "1"}
     }
   ];
-  // The owner's new field values. Its `id`, if set, must match the `id` above. `updated_at`
-  // is used as an etag: it must be set to the value last returned for this owner, and the
-  // request fails with FAILED_PRECONDITION (412 Precondition Failed over REST) if it no
-  // longer matches the owner's current `updated_at`, e.g. because another update happened
-  // concurrently. On success, the server assigns a new `updated_at`.
+  // The owner's new field values.
   entur.validation.v1.Owner owner = 2 [(google.api.field_behavior) = REQUIRED];
   // The fields of `owner` to update. Fields populated in `owner` but not listed here are
   // left unchanged. Omitting this mask updates every field populated in `owner`.
