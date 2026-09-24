@@ -7,6 +7,8 @@ import "gnostic/openapi/v3/annotations.proto";
 import "google/api/annotations.proto";
 import "google/api/client.proto";
 import "google/api/field_behavior.proto";
+import "google/protobuf/empty.proto";
+import "google/protobuf/field_mask.proto";
 
 option go_package = "github.com/entur/validation-core/gen/entur/kittum/v1;kittumv1";
 option java_multiple_files = true;
@@ -28,6 +30,32 @@ service ValidationRuleService {
   rpc GetValidationRule(GetValidationRuleRequest) returns (entur.validation.v1.ValidationRule) {
     option (google.api.http) = {get: "/v1/rules/{id}"};
     option (gnostic.openapi.v3.operation) = {summary: "Get one validation rule by its id."};
+  }
+
+  // Create a new validation rule. Returns the full created rule, including its
+  // server-assigned `id` and `updated_at`.
+  rpc CreateValidationRule(CreateValidationRuleRequest) returns (entur.validation.v1.ValidationRule) {
+    option (google.api.http) = {
+      post: "/v1/rules"
+      body: "validation_rule"
+    };
+    option (gnostic.openapi.v3.operation) = {summary: "Create a new validation rule."};
+  }
+
+  // Update an existing validation rule. Returns the full updated rule, with its new
+  // `updated_at`.
+  rpc UpdateValidationRule(UpdateValidationRuleRequest) returns (entur.validation.v1.ValidationRule) {
+    option (google.api.http) = {
+      patch: "/v1/rules/{id}"
+      body: "validation_rule"
+    };
+    option (gnostic.openapi.v3.operation) = {summary: "Update an existing validation rule."};
+  }
+
+  // Delete a validation rule.
+  rpc DeleteValidationRule(DeleteValidationRuleRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {delete: "/v1/rules/{id}"};
+    option (gnostic.openapi.v3.operation) = {summary: "Delete a validation rule."};
   }
 }
 
@@ -62,6 +90,48 @@ message ListValidationRulesResponse {
 // Request for GetValidationRule.
 message GetValidationRuleRequest {
   // The database id of the validation rule to lookup.
+  int32 id = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (gnostic.openapi.v3.property) = {
+      example: {yaml: "1"}
+    }
+  ];
+}
+
+// Request for CreateValidationRule.
+message CreateValidationRuleRequest {
+  // The validation rule to create. Exactly one field of its `rule` oneof must be set. Its
+  // `id` and `updated_at` are ignored if set; the server assigns both.
+  entur.validation.v1.ValidationRule validation_rule = 1 [(google.api.field_behavior) = REQUIRED];
+}
+
+// Request for UpdateValidationRule.
+message UpdateValidationRuleRequest {
+  // The database id of the validation rule to update.
+  int32 id = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (gnostic.openapi.v3.property) = {
+      example: {yaml: "1"}
+    }
+  ];
+  // The rule's new field values. Its `id`, if set, must match the `id` above. `updated_at`
+  // is used as an etag: it must be set to the value last returned for this rule, and the
+  // request fails with FAILED_PRECONDITION (412 Precondition Failed over REST) if it no
+  // longer matches the rule's current `updated_at`, e.g. because another update happened
+  // concurrently. On success, the server assigns a new `updated_at`. The `rule` oneof's set
+  // field is immutable: it must be the same variant (e.g. `xsd_rule`) as the rule's current
+  // type, and the request fails with INVALID_ARGUMENT if it is not. Changing a rule's type
+  // requires deleting it and creating a new one.
+  entur.validation.v1.ValidationRule validation_rule = 2 [(google.api.field_behavior) = REQUIRED];
+  // The fields of `validation_rule` to update. Fields populated in `validation_rule` but not
+  // listed here are left unchanged. Omitting this mask updates every field populated in
+  // `validation_rule`.
+  optional google.protobuf.FieldMask update_mask = 3;
+}
+
+// Request for DeleteValidationRule.
+message DeleteValidationRuleRequest {
+  // The database id of the validation rule to delete.
   int32 id = 1 [
     (google.api.field_behavior) = REQUIRED,
     (gnostic.openapi.v3.property) = {

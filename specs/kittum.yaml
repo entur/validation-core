@@ -27,6 +27,27 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/ListAreasResponse'
+        post:
+            tags:
+                - AreaService
+            summary: Create a new area.
+            description: |-
+                Create a new area. Returns the full created area, including its server-assigned `id`
+                 and `updated_at`.
+            operationId: AreaService_CreateArea
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/Area'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Area'
     /v1/areas/{id}:
         get:
             tags:
@@ -42,6 +63,59 @@ paths:
                   schema:
                     type: integer
                     format: int32
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Area'
+        delete:
+            tags:
+                - AreaService
+            summary: Delete an area.
+            description: Delete an area.
+            operationId: AreaService_DeleteArea
+            parameters:
+                - name: id
+                  in: path
+                  description: The database id of the area to delete.
+                  required: true
+                  schema:
+                    type: integer
+                    format: int32
+            responses:
+                "200":
+                    description: OK
+                    content: {}
+        patch:
+            tags:
+                - AreaService
+            summary: Update an existing area.
+            description: Update an existing area. Returns the full updated area, with its new `updated_at`.
+            operationId: AreaService_UpdateArea
+            parameters:
+                - name: id
+                  in: path
+                  description: The database id of the area to update.
+                  required: true
+                  schema:
+                    type: integer
+                    format: int32
+                - name: updateMask
+                  in: query
+                  description: |-
+                    The fields of `area` to update. Fields populated in `area` but not listed here are
+                     left unchanged. Omitting this mask updates every field populated in `area`.
+                  schema:
+                    type: string
+                    format: field-mask
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/Area'
+                required: true
             responses:
                 "200":
                     description: OK
@@ -85,6 +159,28 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/ListValidationFlowsResponse'
+        post:
+            tags:
+                - ValidationFlowService
+            summary: Create a new validation flow.
+            description: |-
+                Create a new validation flow. Returns the full created flow, deep as in
+                 GetValidationFlow, including its server-assigned `id` and `updated_at` and those of
+                 every item it contains.
+            operationId: ValidationFlowService_CreateValidationFlow
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/ValidationFlow'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ValidationFlow'
     /v1/flows/{id}:
         get:
             tags:
@@ -111,6 +207,62 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/ValidationFlow'
+        delete:
+            tags:
+                - ValidationFlowService
+            summary: Delete a validation flow.
+            description: Delete a validation flow.
+            operationId: ValidationFlowService_DeleteValidationFlow
+            parameters:
+                - name: id
+                  in: path
+                  description: The database id of the validation flow to delete.
+                  required: true
+                  schema:
+                    type: integer
+                    format: int32
+            responses:
+                "200":
+                    description: OK
+                    content: {}
+        patch:
+            tags:
+                - ValidationFlowService
+            summary: Update an existing validation flow.
+            description: |-
+                Update an existing validation flow. Returns the full updated flow, deep as in
+                 GetValidationFlow, with its new `updated_at` and those of every item it contains.
+            operationId: ValidationFlowService_UpdateValidationFlow
+            parameters:
+                - name: id
+                  in: path
+                  description: The database id of the validation flow to update.
+                  required: true
+                  schema:
+                    type: integer
+                    format: int32
+                - name: updateMask
+                  in: query
+                  description: |-
+                    The fields of `validation_flow` to update. Fields populated in `validation_flow` but not
+                     listed here are left unchanged. Omitting this mask updates every field populated in
+                     `validation_flow`.
+                  schema:
+                    type: string
+                    format: field-mask
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/ValidationFlow'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ValidationFlow'
     /v1/owners:
         get:
             tags:
@@ -125,6 +277,27 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/ListOwnersResponse'
+        post:
+            tags:
+                - OwnerService
+            summary: Create a new owner.
+            description: |-
+                Create a new owner. Returns the full created owner, including its server-assigned `id`
+                 and `updated_at`.
+            operationId: OwnerService_CreateOwner
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/Owner'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Owner'
     /v1/owners/{id}:
         get:
             tags:
@@ -140,6 +313,59 @@ paths:
                   schema:
                     type: integer
                     format: int32
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Owner'
+        delete:
+            tags:
+                - OwnerService
+            summary: Delete an owner.
+            description: Delete an owner.
+            operationId: OwnerService_DeleteOwner
+            parameters:
+                - name: id
+                  in: path
+                  description: The database id of the owner to delete.
+                  required: true
+                  schema:
+                    type: integer
+                    format: int32
+            responses:
+                "200":
+                    description: OK
+                    content: {}
+        patch:
+            tags:
+                - OwnerService
+            summary: Update an existing owner.
+            description: Update an existing owner. Returns the full updated owner, with its new `updated_at`.
+            operationId: OwnerService_UpdateOwner
+            parameters:
+                - name: id
+                  in: path
+                  description: The database id of the owner to update.
+                  required: true
+                  schema:
+                    type: integer
+                    format: int32
+                - name: updateMask
+                  in: query
+                  description: |-
+                    The fields of `owner` to update. Fields populated in `owner` but not listed here are
+                     left unchanged. Omitting this mask updates every field populated in `owner`.
+                  schema:
+                    type: string
+                    format: field-mask
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/Owner'
+                required: true
             responses:
                 "200":
                     description: OK
@@ -183,6 +409,27 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/ListValidationRulesResponse'
+        post:
+            tags:
+                - ValidationRuleService
+            summary: Create a new validation rule.
+            description: |-
+                Create a new validation rule. Returns the full created rule, including its
+                 server-assigned `id` and `updated_at`.
+            operationId: ValidationRuleService_CreateValidationRule
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/ValidationRule'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ValidationRule'
     /v1/rules/{id}:
         get:
             tags:
@@ -205,6 +452,62 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/ValidationRule'
+        delete:
+            tags:
+                - ValidationRuleService
+            summary: Delete a validation rule.
+            description: Delete a validation rule.
+            operationId: ValidationRuleService_DeleteValidationRule
+            parameters:
+                - name: id
+                  in: path
+                  description: The database id of the validation rule to delete.
+                  required: true
+                  schema:
+                    type: integer
+                    format: int32
+            responses:
+                "200":
+                    description: OK
+                    content: {}
+        patch:
+            tags:
+                - ValidationRuleService
+            summary: Update an existing validation rule.
+            description: |-
+                Update an existing validation rule. Returns the full updated rule, with its new
+                 `updated_at`.
+            operationId: ValidationRuleService_UpdateValidationRule
+            parameters:
+                - name: id
+                  in: path
+                  description: The database id of the validation rule to update.
+                  required: true
+                  schema:
+                    type: integer
+                    format: int32
+                - name: updateMask
+                  in: query
+                  description: |-
+                    The fields of `validation_rule` to update. Fields populated in `validation_rule` but not
+                     listed here are left unchanged. Omitting this mask updates every field populated in
+                     `validation_rule`.
+                  schema:
+                    type: string
+                    format: field-mask
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/ValidationRule'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ValidationRule'
     /v1/sources:
         get:
             tags:
@@ -219,6 +522,27 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/ListSourcesResponse'
+        post:
+            tags:
+                - SourceService
+            summary: Create a new source.
+            description: |-
+                Create a new source. Returns the full created source, including its server-assigned
+                 `id` and `updated_at`.
+            operationId: SourceService_CreateSource
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/Source'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Source'
     /v1/sources/{name}:
         get:
             tags:
@@ -233,6 +557,57 @@ paths:
                   required: true
                   schema:
                     type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Source'
+        delete:
+            tags:
+                - SourceService
+            summary: Delete a source.
+            description: Delete a source.
+            operationId: SourceService_DeleteSource
+            parameters:
+                - name: name
+                  in: path
+                  description: The name of the source to delete.
+                  required: true
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content: {}
+        patch:
+            tags:
+                - SourceService
+            summary: Update an existing source.
+            description: Update an existing source. Returns the full updated source, with its new `updated_at`.
+            operationId: SourceService_UpdateSource
+            parameters:
+                - name: name
+                  in: path
+                  description: The current name of the source to update.
+                  required: true
+                  schema:
+                    type: string
+                - name: updateMask
+                  in: query
+                  description: |-
+                    The fields of `source` to update. Fields populated in `source` but not listed here are
+                     left unchanged. Omitting this mask updates every field populated in `source`.
+                  schema:
+                    type: string
+                    format: field-mask
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/Source'
+                required: true
             responses:
                 "200":
                     description: OK

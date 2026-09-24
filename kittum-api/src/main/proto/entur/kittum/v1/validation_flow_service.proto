@@ -8,6 +8,8 @@ import "gnostic/openapi/v3/annotations.proto";
 import "google/api/annotations.proto";
 import "google/api/client.proto";
 import "google/api/field_behavior.proto";
+import "google/protobuf/empty.proto";
+import "google/protobuf/field_mask.proto";
 
 option go_package = "github.com/entur/validation-core/gen/entur/kittum/v1;kittumv1";
 option java_multiple_files = true;
@@ -41,6 +43,33 @@ service ValidationFlowService {
   rpc GetSourceFlow(GetSourceFlowRequest) returns (entur.validation.v1.ValidationFlow) {
     option (google.api.http) = {get: "/v1/sources/{source}/flows/{stage}/{area}"};
     option (gnostic.openapi.v3.operation) = {summary: "Get the flow connected to a source, for one stage and area."};
+  }
+
+  // Create a new validation flow. Returns the full created flow, deep as in
+  // GetValidationFlow, including its server-assigned `id` and `updated_at` and those of
+  // every item it contains.
+  rpc CreateValidationFlow(CreateValidationFlowRequest) returns (entur.validation.v1.ValidationFlow) {
+    option (google.api.http) = {
+      post: "/v1/flows"
+      body: "validation_flow"
+    };
+    option (gnostic.openapi.v3.operation) = {summary: "Create a new validation flow."};
+  }
+
+  // Update an existing validation flow. Returns the full updated flow, deep as in
+  // GetValidationFlow, with its new `updated_at` and those of every item it contains.
+  rpc UpdateValidationFlow(UpdateValidationFlowRequest) returns (entur.validation.v1.ValidationFlow) {
+    option (google.api.http) = {
+      patch: "/v1/flows/{id}"
+      body: "validation_flow"
+    };
+    option (gnostic.openapi.v3.operation) = {summary: "Update an existing validation flow."};
+  }
+
+  // Delete a validation flow.
+  rpc DeleteValidationFlow(DeleteValidationFlowRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {delete: "/v1/flows/{id}"};
+    option (gnostic.openapi.v3.operation) = {summary: "Delete a validation flow."};
   }
 }
 
@@ -106,6 +135,50 @@ message GetSourceFlowRequest {
     (google.api.field_behavior) = REQUIRED,
     (gnostic.openapi.v3.property) = {
       example: {yaml: "\"Personalisering\""}
+    }
+  ];
+}
+
+// Request for CreateValidationFlow.
+message CreateValidationFlowRequest {
+  // The validation flow to create. Every item's `rule_flow_item.id`/`sub_flow_item.id` must
+  // reference an existing ValidationRule/ValidationFlow of the same `stage`; their nested
+  // `validation_rule`/`flow` fields are OUTPUT_ONLY and ignored if set. The flow's `id` and
+  // `updated_at` are ignored if set; the server assigns both of them.
+  entur.validation.v1.ValidationFlow validation_flow = 1 [(google.api.field_behavior) = REQUIRED];
+}
+
+// Request for UpdateValidationFlow.
+message UpdateValidationFlowRequest {
+  // The database id of the validation flow to update.
+  int32 id = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (gnostic.openapi.v3.property) = {
+      example: {yaml: "1"}
+    }
+  ];
+  // The flow's new field values. Its `id`, if set, must match the `id` above. `updated_at`
+  // is used as an etag: it must be set to the value last returned for this flow, and the
+  // request fails with FAILED_PRECONDITION (412 Precondition Failed over REST) if it no
+  // longer matches the flow's current `updated_at`, e.g. because another update happened
+  // concurrently. On success, the server assigns a new `updated_at`. `items` is treated as
+  // a single unit: including it (or omitting the mask
+  // entirely) replaces the flow's whole item list with what is given here - there is no way
+  // to patch one item in place.
+  entur.validation.v1.ValidationFlow validation_flow = 2 [(google.api.field_behavior) = REQUIRED];
+  // The fields of `validation_flow` to update. Fields populated in `validation_flow` but not
+  // listed here are left unchanged. Omitting this mask updates every field populated in
+  // `validation_flow`.
+  optional google.protobuf.FieldMask update_mask = 3;
+}
+
+// Request for DeleteValidationFlow.
+message DeleteValidationFlowRequest {
+  // The database id of the validation flow to delete.
+  int32 id = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (gnostic.openapi.v3.property) = {
+      example: {yaml: "1"}
     }
   ];
 }

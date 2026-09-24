@@ -7,6 +7,8 @@ import "gnostic/openapi/v3/annotations.proto";
 import "google/api/annotations.proto";
 import "google/api/client.proto";
 import "google/api/field_behavior.proto";
+import "google/protobuf/empty.proto";
+import "google/protobuf/field_mask.proto";
 
 option go_package = "github.com/entur/validation-core/gen/entur/kittum/v1;kittumv1";
 option java_multiple_files = true;
@@ -27,6 +29,31 @@ service AreaService {
     option (google.api.http) = {get: "/v1/areas/{id}"};
     option (gnostic.openapi.v3.operation) = {summary: "Get one area by its id."};
   }
+
+  // Create a new area. Returns the full created area, including its server-assigned `id`
+  // and `updated_at`.
+  rpc CreateArea(CreateAreaRequest) returns (entur.validation.v1.Area) {
+    option (google.api.http) = {
+      post: "/v1/areas"
+      body: "area"
+    };
+    option (gnostic.openapi.v3.operation) = {summary: "Create a new area."};
+  }
+
+  // Update an existing area. Returns the full updated area, with its new `updated_at`.
+  rpc UpdateArea(UpdateAreaRequest) returns (entur.validation.v1.Area) {
+    option (google.api.http) = {
+      patch: "/v1/areas/{id}"
+      body: "area"
+    };
+    option (gnostic.openapi.v3.operation) = {summary: "Update an existing area."};
+  }
+
+  // Delete an area.
+  rpc DeleteArea(DeleteAreaRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {delete: "/v1/areas/{id}"};
+    option (gnostic.openapi.v3.operation) = {summary: "Delete an area."};
+  }
 }
 
 // Request for ListAreas.
@@ -41,6 +68,43 @@ message ListAreasResponse {
 // Request for GetArea.
 message GetAreaRequest {
   // The database id of the area to lookup.
+  int32 id = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (gnostic.openapi.v3.property) = {
+      example: {yaml: "1"}
+    }
+  ];
+}
+
+// Request for CreateArea.
+message CreateAreaRequest {
+  // The area to create. Its `id` and `updated_at` are ignored if set; the server assigns both.
+  entur.validation.v1.Area area = 1 [(google.api.field_behavior) = REQUIRED];
+}
+
+// Request for UpdateArea.
+message UpdateAreaRequest {
+  // The database id of the area to update.
+  int32 id = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (gnostic.openapi.v3.property) = {
+      example: {yaml: "1"}
+    }
+  ];
+  // The area's new field values. Its `id`, if set, must match the `id` above. `updated_at`
+  // is used as an etag: it must be set to the value last returned for this area, and the
+  // request fails with FAILED_PRECONDITION (412 Precondition Failed over REST) if it no
+  // longer matches the area's current `updated_at`, e.g. because another update happened
+  // concurrently. On success, the server assigns a new `updated_at`.
+  entur.validation.v1.Area area = 2 [(google.api.field_behavior) = REQUIRED];
+  // The fields of `area` to update. Fields populated in `area` but not listed here are
+  // left unchanged. Omitting this mask updates every field populated in `area`.
+  optional google.protobuf.FieldMask update_mask = 3;
+}
+
+// Request for DeleteArea.
+message DeleteAreaRequest {
+  // The database id of the area to delete.
   int32 id = 1 [
     (google.api.field_behavior) = REQUIRED,
     (gnostic.openapi.v3.property) = {

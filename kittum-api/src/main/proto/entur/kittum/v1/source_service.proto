@@ -7,6 +7,8 @@ import "gnostic/openapi/v3/annotations.proto";
 import "google/api/annotations.proto";
 import "google/api/client.proto";
 import "google/api/field_behavior.proto";
+import "google/protobuf/empty.proto";
+import "google/protobuf/field_mask.proto";
 
 option go_package = "github.com/entur/validation-core/gen/entur/kittum/v1;kittumv1";
 option java_multiple_files = true;
@@ -27,6 +29,31 @@ service SourceService {
     option (google.api.http) = {get: "/v1/sources/{name}"};
     option (gnostic.openapi.v3.operation) = {summary: "Get one source by its name."};
   }
+
+  // Create a new source. Returns the full created source, including its server-assigned
+  // `id` and `updated_at`.
+  rpc CreateSource(CreateSourceRequest) returns (entur.validation.v1.Source) {
+    option (google.api.http) = {
+      post: "/v1/sources"
+      body: "source"
+    };
+    option (gnostic.openapi.v3.operation) = {summary: "Create a new source."};
+  }
+
+  // Update an existing source. Returns the full updated source, with its new `updated_at`.
+  rpc UpdateSource(UpdateSourceRequest) returns (entur.validation.v1.Source) {
+    option (google.api.http) = {
+      patch: "/v1/sources/{name}"
+      body: "source"
+    };
+    option (gnostic.openapi.v3.operation) = {summary: "Update an existing source."};
+  }
+
+  // Delete a source.
+  rpc DeleteSource(DeleteSourceRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {delete: "/v1/sources/{name}"};
+    option (gnostic.openapi.v3.operation) = {summary: "Delete a source."};
+  }
 }
 
 // Request for ListSources.
@@ -41,6 +68,47 @@ message ListSourcesResponse {
 // Request for GetSource.
 message GetSourceRequest {
   // The name of the source to lookup.
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (gnostic.openapi.v3.property) = {
+      example: {yaml: "\"rutedata\""}
+    }
+  ];
+}
+
+// Request for CreateSource.
+message CreateSourceRequest {
+  // The source to create. Unlike Area/Owner, a source's `name` is chosen by the caller and
+  // is its identifier; the request fails with ALREADY_EXISTS if it is already taken. Its
+  // `id` and `updated_at` are ignored if set; the server assigns both.
+  entur.validation.v1.Source source = 1 [(google.api.field_behavior) = REQUIRED];
+}
+
+// Request for UpdateSource.
+message UpdateSourceRequest {
+  // The current name of the source to update.
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (gnostic.openapi.v3.property) = {
+      example: {yaml: "\"rutedata\""}
+    }
+  ];
+  // The source's new field values. Its `id` is ignored; the server assigns it. `updated_at`
+  // is used as an etag: it must be set to the value last returned for this source, and the
+  // request fails with FAILED_PRECONDITION (412 Precondition Failed over REST) if it no
+  // longer matches the source's current `updated_at`, e.g. because another update happened
+  // concurrently. On success, the server assigns a new `updated_at`. Renaming a source is
+  // allowed by setting a different `name` here (and including it in the update mask); later
+  // requests use the new name.
+  entur.validation.v1.Source source = 2 [(google.api.field_behavior) = REQUIRED];
+  // The fields of `source` to update. Fields populated in `source` but not listed here are
+  // left unchanged. Omitting this mask updates every field populated in `source`.
+  optional google.protobuf.FieldMask update_mask = 3;
+}
+
+// Request for DeleteSource.
+message DeleteSourceRequest {
+  // The name of the source to delete.
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
     (gnostic.openapi.v3.property) = {
