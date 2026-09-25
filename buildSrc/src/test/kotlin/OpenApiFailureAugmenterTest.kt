@@ -141,4 +141,45 @@ class OpenApiFailureAugmenterTest {
             exception.message,
         )
     }
+
+    @Test
+    fun `rejects a failure code that isn't a 3-digit HTTP status code`() {
+        val exception =
+            assertFailsWith<IllegalArgumentException> {
+                OpenApiFailureAugmenter().augment(compileFixture("mock/invalid_code_service.proto"), minimalOpenApiYaml)
+            }
+        assertEquals(
+            "Operation 'InvalidCodeService_GetThing' declares (entur.http.v1.failure) with invalid code 'abc' - must be a 3-digit HTTP status code",
+            exception.message,
+        )
+    }
+
+    @Test
+    fun `rejects a failure code that collides with an existing response`() {
+        val yamlWithExistingSuccessResponse =
+            """
+            openapi: 3.0.3
+            info:
+                title: mock
+                version: 0.0.1
+            paths:
+                /things:
+                    get:
+                        operationId: CollisionService_GetThing
+                        responses:
+                            "200":
+                                description: OK
+            components:
+                schemas: {}
+            """.trimIndent()
+
+        val exception =
+            assertFailsWith<IllegalStateException> {
+                OpenApiFailureAugmenter().augment(compileFixture("mock/collision_service.proto"), yamlWithExistingSuccessResponse)
+            }
+        assertEquals(
+            "Operation 'CollisionService_GetThing' response '200' from (entur.http.v1.failure) collides with an existing response in the generated spec",
+            exception.message,
+        )
+    }
 }

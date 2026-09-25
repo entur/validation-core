@@ -57,6 +57,9 @@ class OpenApiFailureAugmenter {
 
                 val responses = yamlMap(operation["responses"])
                 for (failure in failures) {
+                    check(failure.code !in responses) {
+                        "Operation '$operationId' response '${failure.code}' from (entur.http.v1.failure) collides with an existing response in the generated spec"
+                    }
                     responses[failure.code] =
                         linkedMapOf(
                             "description" to failure.description,
@@ -81,6 +84,10 @@ class OpenApiFailureAugmenter {
     }
 
     private data class Failure(val code: String, val description: String)
+
+    // OpenAPI allows "default" and range patterns ("4XX") as response keys too, but
+    // (entur.http.v1.failure) only ever documents one specific, literal status code.
+    private val HTTP_STATUS_CODE = Regex("^[1-5]\\d{2}$")
 
     private fun buildFileDescriptors(
         fileDescriptorSet: DescriptorProtos.FileDescriptorSet,
@@ -149,6 +156,11 @@ class OpenApiFailureAugmenter {
                                 description = msg.getField(descriptor.findFieldByName("description")) as String,
                             )
                         }
+                    for (failure in failures) {
+                        require(HTTP_STATUS_CODE.matches(failure.code)) {
+                            "Operation '$operationId' declares (entur.http.v1.failure) with invalid code '${failure.code}' - must be a 3-digit HTTP status code"
+                        }
+                    }
                     val duplicateCode = failures.groupingBy { it.code }.eachCount().entries.firstOrNull { it.value > 1 }
                     check(duplicateCode == null) {
                         "Operation '$operationId' declares (entur.http.v1.failure) code '${duplicateCode?.key}' more than once"
