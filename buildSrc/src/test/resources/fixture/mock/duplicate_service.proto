@@ -5,10 +5,14 @@ package mock;
 import "entur/http/v1/failure.proto";
 
 // Exists purely so OpenApiFailureAugmenterTest can check that a rpc declaring the same failure
-// code twice is rejected, without polluting service.proto's fixture (which the other tests
-// assert an exact, duplicate-free set of responses against).
+// code twice is rejected - and that every duplicate is reported, both every duplicated code within
+// one rpc and every offending rpc across the service, rather than stopping at the first one found -
+// without polluting service.proto's fixture (which the other tests assert an exact, duplicate-free
+// set of responses against).
 
 message DeleteThingRequest {}
+
+message UpdateThingRequest {}
 
 message Thing {}
 
@@ -16,5 +20,12 @@ service DuplicateFailureService {
   rpc DeleteThing(DeleteThingRequest) returns (Thing) {
     option (entur.http.v1.failure) = {code: "404" description: "Thing not found."};
     option (entur.http.v1.failure) = {code: "404" description: "Thing already deleted."};
+    option (entur.http.v1.failure) = {code: "409" description: "Thing is locked."};
+    option (entur.http.v1.failure) = {code: "409" description: "Thing is being deleted."};
+  }
+
+  rpc UpdateThing(UpdateThingRequest) returns (Thing) {
+    option (entur.http.v1.failure) = {code: "404" description: "Thing not found."};
+    option (entur.http.v1.failure) = {code: "404" description: "Thing was deleted concurrently."};
   }
 }

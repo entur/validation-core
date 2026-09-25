@@ -141,6 +141,7 @@ class OpenApiFailureAugmenter {
         registry: ExtensionRegistry,
     ): Map<String, List<Failure>> {
         val result = LinkedHashMap<String, List<Failure>>()
+        val duplicateErrors = mutableListOf<String>()
         for (file in files.values) {
             for (service in file.services) {
                 for (method in service.methods) {
@@ -161,14 +162,19 @@ class OpenApiFailureAugmenter {
                             "Operation '$operationId' declares (entur.http.v1.failure) with invalid code '${failure.code}' - must be a 3-digit HTTP status code"
                         }
                     }
-                    val duplicateCode = failures.groupingBy { it.code }.eachCount().entries.firstOrNull { it.value > 1 }
-                    check(duplicateCode == null) {
-                        "Operation '$operationId' declares (entur.http.v1.failure) code '${duplicateCode?.key}' more than once"
+                    val duplicateCodes = failures.groupingBy { it.code }.eachCount().filterValues { it > 1 }.keys
+                    if (duplicateCodes.isNotEmpty()) {
+                        duplicateErrors +=
+                            "Operation '$operationId' declares (entur.http.v1.failure) code(s) ${duplicateCodes.joinToString { "'$it'" }} more than once"
                     }
                     result[operationId] = failures
                 }
             }
         }
+        // Collected across every operation before failing, rather than stopping at the first one
+        // found, so a single build failure surfaces every rpc that needs fixing instead of just
+        // the first one hit during iteration.
+        check(duplicateErrors.isEmpty()) { duplicateErrors.joinToString("\n") }
         return result
     }
 

@@ -90,10 +90,11 @@ paths:
               - AreaService
             summary: Delete an area.
             description: |-
-                Delete an area. Over REST, this is a conditional request (RFC 7232): it requires a
-                 matching `If-Match` request header and fails with 412 Precondition Failed if it no
-                 longer matches the area's current `ETag`, e.g. because another update happened
-                 concurrently. This is an HTTP-layer precondition, not a field of DeleteAreaRequest.
+                Delete an area. Over REST, this is a conditional request: it requires a matching
+                 `If-Match` request header and fails with 409 Conflict (not the RFC 7232-standard 412,
+                 which Entur's API guidelines don't allow) if it no longer matches the area's current
+                 `ETag`, e.g. because another update happened concurrently. This is an HTTP-layer
+                 precondition, not a field of DeleteAreaRequest.
             operationId: AreaService_DeleteArea
             parameters:
               - name: id
@@ -113,15 +114,9 @@ paths:
                         application/problem+json:
                             schema:
                                 $ref: '#/components/schemas/ProblemDetail'
-                '412':
-                    description: The `If-Match` header does not match the area's current
-                        ETag.
-                    content:
-                        application/problem+json:
-                            schema:
-                                $ref: '#/components/schemas/ProblemDetail'
                 '409':
-                    description: The area is still referenced by a validation rule
+                    description: The `If-Match` header does not match the area's current
+                        ETag, or the area is still referenced by a validation rule
                         or a source flow.
                     content:
                         application/problem+json:
@@ -133,10 +128,11 @@ paths:
             summary: Update an existing area.
             description: |-
                 Update an existing area. Its `id`, if set, must match the path `id`. Returns the full
-                 updated area, with its new `updated_at`. Over REST, this is a conditional request (RFC 7232):
-                 it requires a matching `If-Match` request header and fails with 412 Precondition Failed if it no
-                 longer matches the area's current `ETag`, e.g. because another update happened
-                 concurrently. This is an HTTP-layer precondition, not a field of UpdateAreaRequest.
+                 updated area, with its new `updated_at`. Over REST, this is a conditional request: it
+                 requires a matching `If-Match` request header and fails with 409 Conflict (not the RFC
+                 7232-standard 412, which Entur's API guidelines don't allow) if it no longer matches
+                 the area's current `ETag`, e.g. because another update happened concurrently. This is
+                 an HTTP-layer precondition, not a field of UpdateAreaRequest.
             operationId: AreaService_UpdateArea
             parameters:
               - name: id
@@ -173,15 +169,9 @@ paths:
                         application/problem+json:
                             schema:
                                 $ref: '#/components/schemas/ProblemDetail'
-                '412':
-                    description: The `If-Match` header does not match the area's current
-                        ETag.
-                    content:
-                        application/problem+json:
-                            schema:
-                                $ref: '#/components/schemas/ProblemDetail'
                 '409':
-                    description: A different area with the new name already exists.
+                    description: The `If-Match` header does not match the area's current
+                        ETag, or a different area with the new name already exists.
                     content:
                         application/problem+json:
                             schema:
@@ -298,12 +288,13 @@ paths:
               - ValidationFlowService
             summary: Delete a validation flow.
             description: |-
-                Delete a validation flow. Over REST, this is a conditional request (RFC 7232): it
-                 requires a matching `If-Match` request header and fails with 412 Precondition Failed if
-                 it no longer matches the flow's current `ETag` - its own shallow state, as returned by
-                 GetValidationFlow, unaffected by changes to a referenced rule or sub-flow - e.g. because
-                 another update to this flow happened concurrently. This is an HTTP-layer precondition,
-                 not a field of DeleteValidationFlowRequest.
+                Delete a validation flow. Over REST, this is a conditional request: it requires a
+                 matching `If-Match` request header and fails with 409 Conflict (not the RFC
+                 7232-standard 412, which Entur's API guidelines don't allow) if it no longer matches
+                 the flow's current `ETag` - its own shallow state, as returned by GetValidationFlow,
+                 unaffected by changes to a referenced rule or sub-flow - e.g. because another update
+                 to this flow happened concurrently. This is an HTTP-layer precondition, not a field of
+                 DeleteValidationFlowRequest.
             operationId: ValidationFlowService_DeleteValidationFlow
             parameters:
               - name: id
@@ -323,15 +314,9 @@ paths:
                         application/problem+json:
                             schema:
                                 $ref: '#/components/schemas/ProblemDetail'
-                '412':
-                    description: The `If-Match` header does not match the flow's current
-                        ETag.
-                    content:
-                        application/problem+json:
-                            schema:
-                                $ref: '#/components/schemas/ProblemDetail'
                 '409':
-                    description: The validation flow is still referenced by a sub
+                    description: The `If-Match` header does not match the flow's current
+                        ETag, or the validation flow is still referenced by a sub
                         flow item or a source flow.
                     content:
                         application/problem+json:
@@ -347,12 +332,13 @@ paths:
                  replaces the flow's whole item list with what is given, populated and ignored the
                  same way as in CreateValidationFlow - there is no way to patch only one item in place.
                  Returns the full updated flow, deep as in GetValidationFlow, with its new `updated_at`
-                 and those of every item it contains. Over REST, this is a conditional request (RFC 7232):
-                 it requires a matching `If-Match` request header and fails with 412 Precondition Failed
-                 if it no longer matches the flow's current `ETag` - its own shallow state, as returned by
-                 GetValidationFlow, unaffected by changes to a referenced rule or sub-flow - e.g. because
-                 another update to this flow happened concurrently. This is an HTTP-layer precondition,
-                 not a field of UpdateValidationFlowRequest.
+                 and those of every item it contains. Over REST, this is a conditional request: it
+                 requires a matching `If-Match` request header and fails with 409 Conflict (not the RFC
+                 7232-standard 412, which Entur's API guidelines don't allow) if it no longer matches
+                 the flow's current `ETag` - its own shallow state, as returned by GetValidationFlow,
+                 unaffected by changes to a referenced rule or sub-flow - e.g. because another update
+                 to this flow happened concurrently. This is an HTTP-layer precondition, not a field of
+                 UpdateValidationFlowRequest.
             operationId: ValidationFlowService_UpdateValidationFlow
             parameters:
               - name: id
@@ -397,7 +383,7 @@ paths:
                         application/problem+json:
                             schema:
                                 $ref: '#/components/schemas/ProblemDetail'
-                '412':
+                '409':
                     description: The `If-Match` header does not match the flow's current
                         ETag.
                     content:
@@ -479,10 +465,11 @@ paths:
               - OwnerService
             summary: Delete an owner.
             description: |-
-                Delete an owner. Over REST, this is a conditional request (RFC 7232): it requires a
-                 matching `If-Match` request header and fails with 412 Precondition Failed if it no
-                 longer matches the owner's current `ETag`, e.g. because another update happened
-                 concurrently. This is an HTTP-layer precondition, not a field of DeleteOwnerRequest.
+                Delete an owner. Over REST, this is a conditional request: it requires a matching
+                 `If-Match` request header and fails with 409 Conflict (not the RFC 7232-standard 412,
+                 which Entur's API guidelines don't allow) if it no longer matches the owner's current
+                 `ETag`, e.g. because another update happened concurrently. This is an HTTP-layer
+                 precondition, not a field of DeleteOwnerRequest.
             operationId: OwnerService_DeleteOwner
             parameters:
               - name: id
@@ -502,15 +489,10 @@ paths:
                         application/problem+json:
                             schema:
                                 $ref: '#/components/schemas/ProblemDetail'
-                '412':
-                    description: The `If-Match` header does not match the owner's
-                        current ETag.
-                    content:
-                        application/problem+json:
-                            schema:
-                                $ref: '#/components/schemas/ProblemDetail'
                 '409':
-                    description: The owner is still referenced by an area or a source.
+                    description: The `If-Match` header does not match the owner's
+                        current ETag, or the owner is still referenced by an area
+                        or a source.
                     content:
                         application/problem+json:
                             schema:
@@ -521,11 +503,11 @@ paths:
             summary: Update an existing owner.
             description: |-
                 Update an existing owner. Its `id`, if set, must match the path `id`. Returns the full
-                 updated owner, with its new `updated_at`. Over REST, this is a conditional request
-                 (RFC 7232): it requires a matching `If-Match` request header and fails with
-                 412 Precondition Failed if it no longer matches the owner's current `ETag`, e.g.
-                 because another update happened concurrently. This is an HTTP-layer precondition,
-                 not a field of UpdateOwnerRequest.
+                 updated owner, with its new `updated_at`. Over REST, this is a conditional request: it
+                 requires a matching `If-Match` request header and fails with 409 Conflict (not the RFC
+                 7232-standard 412, which Entur's API guidelines don't allow) if it no longer matches
+                 the owner's current `ETag`, e.g. because another update happened concurrently. This is
+                 an HTTP-layer precondition, not a field of UpdateOwnerRequest.
             operationId: OwnerService_UpdateOwner
             parameters:
               - name: id
@@ -562,15 +544,10 @@ paths:
                         application/problem+json:
                             schema:
                                 $ref: '#/components/schemas/ProblemDetail'
-                '412':
-                    description: The `If-Match` header does not match the owner's
-                        current ETag.
-                    content:
-                        application/problem+json:
-                            schema:
-                                $ref: '#/components/schemas/ProblemDetail'
                 '409':
-                    description: A different owner with the new name already exists.
+                    description: The `If-Match` header does not match the owner's
+                        current ETag, or a different owner with the new name already
+                        exists.
                     content:
                         application/problem+json:
                             schema:
@@ -668,11 +645,11 @@ paths:
               - ValidationRuleService
             summary: Delete a validation rule.
             description: |-
-                Delete a validation rule. Over REST, this is a conditional request (RFC 7232): it
-                 requires a matching `If-Match` request header and fails with 412 Precondition Failed if
-                 it no longer matches the rule's current `ETag`, e.g. because another update happened
-                 concurrently. This is an HTTP-layer precondition, not a field of
-                 DeleteValidationRuleRequest.
+                Delete a validation rule. Over REST, this is a conditional request: it requires a
+                 matching `If-Match` request header and fails with 409 Conflict (not the RFC
+                 7232-standard 412, which Entur's API guidelines don't allow) if it no longer matches
+                 the rule's current `ETag`, e.g. because another update happened concurrently. This is
+                 an HTTP-layer precondition, not a field of DeleteValidationRuleRequest.
             operationId: ValidationRuleService_DeleteValidationRule
             parameters:
               - name: id
@@ -692,15 +669,9 @@ paths:
                         application/problem+json:
                             schema:
                                 $ref: '#/components/schemas/ProblemDetail'
-                '412':
-                    description: The `If-Match` header does not match the rule's current
-                        ETag.
-                    content:
-                        application/problem+json:
-                            schema:
-                                $ref: '#/components/schemas/ProblemDetail'
                 '409':
-                    description: The validation rule is still referenced by a validation
+                    description: The `If-Match` header does not match the rule's current
+                        ETag, or the validation rule is still referenced by a validation
                         flow item.
                     content:
                         application/problem+json:
@@ -715,11 +686,11 @@ paths:
                  The `rule` oneof's set field is immutable: it must be the same variant (e.g. `xsd_rule`)
                  as the rule's current type, and the request fails with INVALID_ARGUMENT if it is not -
                  changing a rule's type requires deleting it and creating a new one. Returns the full
-                 updated rule, with its new `updated_at`. Over REST, this is a conditional request (RFC 7232):
-                 it requires a matching `If-Match` request header and fails with 412 Precondition Failed if it no
-                 longer matches the rule's current `ETag`, e.g. because another update happened
-                 concurrently. This is an HTTP-layer precondition, not a field of
-                 UpdateValidationRuleRequest.
+                 updated rule, with its new `updated_at`. Over REST, this is a conditional request: it
+                 requires a matching `If-Match` request header and fails with 409 Conflict (not the RFC
+                 7232-standard 412, which Entur's API guidelines don't allow) if it no longer matches
+                 the rule's current `ETag`, e.g. because another update happened concurrently. This is
+                 an HTTP-layer precondition, not a field of UpdateValidationRuleRequest.
             operationId: ValidationRuleService_UpdateValidationRule
             parameters:
               - name: id
@@ -764,7 +735,7 @@ paths:
                         application/problem+json:
                             schema:
                                 $ref: '#/components/schemas/ProblemDetail'
-                '412':
+                '409':
                     description: The `If-Match` header does not match the rule's current
                         ETag.
                     content:
@@ -846,10 +817,11 @@ paths:
               - SourceService
             summary: Delete a source.
             description: |-
-                Delete a source. Over REST, this is a conditional request (RFC 7232): it requires a
-                 matching `If-Match` request header and fails with 412 Precondition Failed if it no
-                 longer matches the source's current `ETag`, e.g. because another update happened
-                 concurrently. This is an HTTP-layer precondition, not a field of DeleteSourceRequest.
+                Delete a source. Over REST, this is a conditional request: it requires a matching
+                 `If-Match` request header and fails with 409 Conflict (not the RFC 7232-standard 412,
+                 which Entur's API guidelines don't allow) if it no longer matches the source's current
+                 `ETag`, e.g. because another update happened concurrently. This is an HTTP-layer
+                 precondition, not a field of DeleteSourceRequest.
             operationId: SourceService_DeleteSource
             parameters:
               - name: name
@@ -868,15 +840,10 @@ paths:
                         application/problem+json:
                             schema:
                                 $ref: '#/components/schemas/ProblemDetail'
-                '412':
-                    description: The `If-Match` header does not match the source's
-                        current ETag.
-                    content:
-                        application/problem+json:
-                            schema:
-                                $ref: '#/components/schemas/ProblemDetail'
                 '409':
-                    description: The source is still referenced by a source flow.
+                    description: The `If-Match` header does not match the source's
+                        current ETag, or the source is still referenced by a source
+                        flow.
                     content:
                         application/problem+json:
                             schema:
@@ -889,10 +856,11 @@ paths:
                 Update an existing source. Its `id`, if set, must match the source's own id. Renaming a
                  source is allowed by setting a different `name` in the body (and including it in the
                  update mask); later requests use the new name. Returns the full updated source,
-                 with its new `updated_at`. Over REST, this is a conditional request (RFC 7232):
-                 it requires a matching `If-Match` request header and fails with 412 Precondition Failed
-                 if it no longer matches the source's current `ETag`, e.g. because another update
-                 happened concurrently. This is an HTTP-layer precondition, not a field of UpdateSourceRequest.
+                 with its new `updated_at`. Over REST, this is a conditional request: it requires a
+                 matching `If-Match` request header and fails with 409 Conflict (not the RFC
+                 7232-standard 412, which Entur's API guidelines don't allow) if it no longer matches
+                 the source's current `ETag`, e.g. because another update happened concurrently. This
+                 is an HTTP-layer precondition, not a field of UpdateSourceRequest.
             operationId: SourceService_UpdateSource
             parameters:
               - name: name
@@ -929,14 +897,9 @@ paths:
                             schema:
                                 $ref: '#/components/schemas/ProblemDetail'
                 '409':
-                    description: A different source with the new name already exists.
-                    content:
-                        application/problem+json:
-                            schema:
-                                $ref: '#/components/schemas/ProblemDetail'
-                '412':
-                    description: The `If-Match` header does not match the source's
-                        current ETag.
+                    description: A different source with the new name already exists,
+                        or the `If-Match` header does not match the source's current
+                        ETag.
                     content:
                         application/problem+json:
                             schema:

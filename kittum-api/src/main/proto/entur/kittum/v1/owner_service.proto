@@ -51,11 +51,11 @@ service OwnerService {
   }
 
   // Update an existing owner. Its `id`, if set, must match the path `id`. Returns the full
-  // updated owner, with its new `updated_at`. Over REST, this is a conditional request
-  // (RFC 7232): it requires a matching `If-Match` request header and fails with
-  // 412 Precondition Failed if it no longer matches the owner's current `ETag`, e.g.
-  // because another update happened concurrently. This is an HTTP-layer precondition,
-  // not a field of UpdateOwnerRequest.
+  // updated owner, with its new `updated_at`. Over REST, this is a conditional request: it
+  // requires a matching `If-Match` request header and fails with 409 Conflict (not the RFC
+  // 7232-standard 412, which Entur's API guidelines don't allow) if it no longer matches
+  // the owner's current `ETag`, e.g. because another update happened concurrently. This is
+  // an HTTP-layer precondition, not a field of UpdateOwnerRequest.
   rpc UpdateOwner(UpdateOwnerRequest) returns (entur.validation.v1.Owner) {
     option (google.api.http) = {
       patch: "/validation/v1/owners/{id}"
@@ -67,19 +67,16 @@ service OwnerService {
       description: "No owner exists with the given id."
     };
     option (entur.http.v1.failure) = {
-      code: "412"
-      description: "The `If-Match` header does not match the owner's current ETag."
-    };
-    option (entur.http.v1.failure) = {
       code: "409"
-      description: "A different owner with the new name already exists."
+      description: "The `If-Match` header does not match the owner's current ETag, or a different owner with the new name already exists."
     };
   }
 
-  // Delete an owner. Over REST, this is a conditional request (RFC 7232): it requires a
-  // matching `If-Match` request header and fails with 412 Precondition Failed if it no
-  // longer matches the owner's current `ETag`, e.g. because another update happened
-  // concurrently. This is an HTTP-layer precondition, not a field of DeleteOwnerRequest.
+  // Delete an owner. Over REST, this is a conditional request: it requires a matching
+  // `If-Match` request header and fails with 409 Conflict (not the RFC 7232-standard 412,
+  // which Entur's API guidelines don't allow) if it no longer matches the owner's current
+  // `ETag`, e.g. because another update happened concurrently. This is an HTTP-layer
+  // precondition, not a field of DeleteOwnerRequest.
   rpc DeleteOwner(DeleteOwnerRequest) returns (google.protobuf.Empty) {
     option (google.api.http) = {delete: "/validation/v1/owners/{id}"};
     option (gnostic.openapi.v3.operation) = {summary: "Delete an owner."};
@@ -88,12 +85,8 @@ service OwnerService {
       description: "No owner exists with the given id."
     };
     option (entur.http.v1.failure) = {
-      code: "412"
-      description: "The `If-Match` header does not match the owner's current ETag."
-    };
-    option (entur.http.v1.failure) = {
       code: "409"
-      description: "The owner is still referenced by an area or a source."
+      description: "The `If-Match` header does not match the owner's current ETag, or the owner is still referenced by an area or a source."
     };
   }
 }

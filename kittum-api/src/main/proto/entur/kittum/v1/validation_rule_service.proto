@@ -52,11 +52,11 @@ service ValidationRuleService {
   // The `rule` oneof's set field is immutable: it must be the same variant (e.g. `xsd_rule`)
   // as the rule's current type, and the request fails with INVALID_ARGUMENT if it is not -
   // changing a rule's type requires deleting it and creating a new one. Returns the full
-  // updated rule, with its new `updated_at`. Over REST, this is a conditional request (RFC 7232):
-  // it requires a matching `If-Match` request header and fails with 412 Precondition Failed if it no
-  // longer matches the rule's current `ETag`, e.g. because another update happened
-  // concurrently. This is an HTTP-layer precondition, not a field of
-  // UpdateValidationRuleRequest.
+  // updated rule, with its new `updated_at`. Over REST, this is a conditional request: it
+  // requires a matching `If-Match` request header and fails with 409 Conflict (not the RFC
+  // 7232-standard 412, which Entur's API guidelines don't allow) if it no longer matches
+  // the rule's current `ETag`, e.g. because another update happened concurrently. This is
+  // an HTTP-layer precondition, not a field of UpdateValidationRuleRequest.
   rpc UpdateValidationRule(UpdateValidationRuleRequest) returns (entur.validation.v1.ValidationRule) {
     option (google.api.http) = {
       patch: "/validation/v1/rules/{id}"
@@ -72,16 +72,16 @@ service ValidationRuleService {
       description: "The `rule` oneof's set field does not match the rule's current type."
     };
     option (entur.http.v1.failure) = {
-      code: "412"
+      code: "409"
       description: "The `If-Match` header does not match the rule's current ETag."
     };
   }
 
-  // Delete a validation rule. Over REST, this is a conditional request (RFC 7232): it
-  // requires a matching `If-Match` request header and fails with 412 Precondition Failed if
-  // it no longer matches the rule's current `ETag`, e.g. because another update happened
-  // concurrently. This is an HTTP-layer precondition, not a field of
-  // DeleteValidationRuleRequest.
+  // Delete a validation rule. Over REST, this is a conditional request: it requires a
+  // matching `If-Match` request header and fails with 409 Conflict (not the RFC
+  // 7232-standard 412, which Entur's API guidelines don't allow) if it no longer matches
+  // the rule's current `ETag`, e.g. because another update happened concurrently. This is
+  // an HTTP-layer precondition, not a field of DeleteValidationRuleRequest.
   rpc DeleteValidationRule(DeleteValidationRuleRequest) returns (google.protobuf.Empty) {
     option (google.api.http) = {delete: "/validation/v1/rules/{id}"};
     option (gnostic.openapi.v3.operation) = {summary: "Delete a validation rule."};
@@ -90,12 +90,8 @@ service ValidationRuleService {
       description: "No validation rule exists with the given id."
     };
     option (entur.http.v1.failure) = {
-      code: "412"
-      description: "The `If-Match` header does not match the rule's current ETag."
-    };
-    option (entur.http.v1.failure) = {
       code: "409"
-      description: "The validation rule is still referenced by a validation flow item."
+      description: "The `If-Match` header does not match the rule's current ETag, or the validation rule is still referenced by a validation flow item."
     };
   }
 }

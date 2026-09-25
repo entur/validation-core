@@ -54,10 +54,11 @@ service SourceService {
   // Update an existing source. Its `id`, if set, must match the source's own id. Renaming a
   // source is allowed by setting a different `name` in the body (and including it in the
   // update mask); later requests use the new name. Returns the full updated source,
-  // with its new `updated_at`. Over REST, this is a conditional request (RFC 7232):
-  // it requires a matching `If-Match` request header and fails with 412 Precondition Failed
-  // if it no longer matches the source's current `ETag`, e.g. because another update
-  // happened concurrently. This is an HTTP-layer precondition, not a field of UpdateSourceRequest.
+  // with its new `updated_at`. Over REST, this is a conditional request: it requires a
+  // matching `If-Match` request header and fails with 409 Conflict (not the RFC
+  // 7232-standard 412, which Entur's API guidelines don't allow) if it no longer matches
+  // the source's current `ETag`, e.g. because another update happened concurrently. This
+  // is an HTTP-layer precondition, not a field of UpdateSourceRequest.
   rpc UpdateSource(UpdateSourceRequest) returns (entur.validation.v1.Source) {
     option (google.api.http) = {
       patch: "/validation/v1/sources/{name}"
@@ -70,18 +71,15 @@ service SourceService {
     };
     option (entur.http.v1.failure) = {
       code: "409"
-      description: "A different source with the new name already exists."
-    };
-    option (entur.http.v1.failure) = {
-      code: "412"
-      description: "The `If-Match` header does not match the source's current ETag."
+      description: "A different source with the new name already exists, or the `If-Match` header does not match the source's current ETag."
     };
   }
 
-  // Delete a source. Over REST, this is a conditional request (RFC 7232): it requires a
-  // matching `If-Match` request header and fails with 412 Precondition Failed if it no
-  // longer matches the source's current `ETag`, e.g. because another update happened
-  // concurrently. This is an HTTP-layer precondition, not a field of DeleteSourceRequest.
+  // Delete a source. Over REST, this is a conditional request: it requires a matching
+  // `If-Match` request header and fails with 409 Conflict (not the RFC 7232-standard 412,
+  // which Entur's API guidelines don't allow) if it no longer matches the source's current
+  // `ETag`, e.g. because another update happened concurrently. This is an HTTP-layer
+  // precondition, not a field of DeleteSourceRequest.
   rpc DeleteSource(DeleteSourceRequest) returns (google.protobuf.Empty) {
     option (google.api.http) = {delete: "/validation/v1/sources/{name}"};
     option (gnostic.openapi.v3.operation) = {summary: "Delete a source."};
@@ -90,12 +88,8 @@ service SourceService {
       description: "No source exists with the given name."
     };
     option (entur.http.v1.failure) = {
-      code: "412"
-      description: "The `If-Match` header does not match the source's current ETag."
-    };
-    option (entur.http.v1.failure) = {
       code: "409"
-      description: "The source is still referenced by a source flow."
+      description: "The `If-Match` header does not match the source's current ETag, or the source is still referenced by a source flow."
     };
   }
 }

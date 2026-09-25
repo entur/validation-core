@@ -51,10 +51,11 @@ service AreaService {
   }
 
   // Update an existing area. Its `id`, if set, must match the path `id`. Returns the full
-  // updated area, with its new `updated_at`. Over REST, this is a conditional request (RFC 7232):
-  // it requires a matching `If-Match` request header and fails with 412 Precondition Failed if it no
-  // longer matches the area's current `ETag`, e.g. because another update happened
-  // concurrently. This is an HTTP-layer precondition, not a field of UpdateAreaRequest.
+  // updated area, with its new `updated_at`. Over REST, this is a conditional request: it
+  // requires a matching `If-Match` request header and fails with 409 Conflict (not the RFC
+  // 7232-standard 412, which Entur's API guidelines don't allow) if it no longer matches
+  // the area's current `ETag`, e.g. because another update happened concurrently. This is
+  // an HTTP-layer precondition, not a field of UpdateAreaRequest.
   rpc UpdateArea(UpdateAreaRequest) returns (entur.validation.v1.Area) {
     option (google.api.http) = {
       patch: "/validation/v1/areas/{id}"
@@ -66,19 +67,16 @@ service AreaService {
       description: "No area exists with the given id."
     };
     option (entur.http.v1.failure) = {
-      code: "412"
-      description: "The `If-Match` header does not match the area's current ETag."
-    };
-    option (entur.http.v1.failure) = {
       code: "409"
-      description: "A different area with the new name already exists."
+      description: "The `If-Match` header does not match the area's current ETag, or a different area with the new name already exists."
     };
   }
 
-  // Delete an area. Over REST, this is a conditional request (RFC 7232): it requires a
-  // matching `If-Match` request header and fails with 412 Precondition Failed if it no
-  // longer matches the area's current `ETag`, e.g. because another update happened
-  // concurrently. This is an HTTP-layer precondition, not a field of DeleteAreaRequest.
+  // Delete an area. Over REST, this is a conditional request: it requires a matching
+  // `If-Match` request header and fails with 409 Conflict (not the RFC 7232-standard 412,
+  // which Entur's API guidelines don't allow) if it no longer matches the area's current
+  // `ETag`, e.g. because another update happened concurrently. This is an HTTP-layer
+  // precondition, not a field of DeleteAreaRequest.
   rpc DeleteArea(DeleteAreaRequest) returns (google.protobuf.Empty) {
     option (google.api.http) = {delete: "/validation/v1/areas/{id}"};
     option (gnostic.openapi.v3.operation) = {summary: "Delete an area."};
@@ -87,12 +85,8 @@ service AreaService {
       description: "No area exists with the given id."
     };
     option (entur.http.v1.failure) = {
-      code: "412"
-      description: "The `If-Match` header does not match the area's current ETag."
-    };
-    option (entur.http.v1.failure) = {
       code: "409"
-      description: "The area is still referenced by a validation rule or a source flow."
+      description: "The `If-Match` header does not match the area's current ETag, or the area is still referenced by a validation rule or a source flow."
     };
   }
 }

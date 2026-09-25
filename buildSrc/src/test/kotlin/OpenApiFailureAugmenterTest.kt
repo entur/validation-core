@@ -131,13 +131,14 @@ class OpenApiFailureAugmenterTest {
     }
 
     @Test
-    fun `rejects an rpc that declares the same failure code more than once`() {
+    fun `rejects rpcs that declare the same failure code more than once, reporting every duplicate across every offending rpc`() {
         val exception =
             assertFailsWith<IllegalStateException> {
                 OpenApiFailureAugmenter().augment(compileFixture("mock/duplicate_service.proto"), minimalOpenApiYaml)
             }
         assertEquals(
-            "Operation 'DuplicateFailureService_DeleteThing' declares (entur.http.v1.failure) code '404' more than once",
+            "Operation 'DuplicateFailureService_DeleteThing' declares (entur.http.v1.failure) code(s) '404', '409' more than once\n" +
+                "Operation 'DuplicateFailureService_UpdateThing' declares (entur.http.v1.failure) code(s) '404' more than once",
             exception.message,
         )
     }
