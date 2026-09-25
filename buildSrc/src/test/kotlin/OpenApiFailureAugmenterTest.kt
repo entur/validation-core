@@ -1,5 +1,8 @@
 import com.google.protobuf.DescriptorProtos
-import org.yaml.snakeyaml.Yaml
+import no.entur.http.OpenApiFailureAugmenter
+import no.entur.http.buildExtensionRegistry
+import no.entur.http.buildFileDescriptors
+import no.entur.http.newOpenApiYaml
 import java.io.File
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -64,6 +67,17 @@ class OpenApiFailureAugmenterTest {
         return descriptorSetFile.inputStream().use { DescriptorProtos.FileDescriptorSet.parseFrom(it) }
     }
 
+    private fun augment(
+        mockProtoFile: String = "mock/service.proto",
+        openApiYaml: String = minimalOpenApiYaml,
+    ): Map<String, Any?> {
+        val files = buildFileDescriptors(compileFixture(mockProtoFile))
+        val registry = buildExtensionRegistry(files)
+        val spec: MutableMap<String, Any?> = newOpenApiYaml().load(openApiYaml)
+        OpenApiFailureAugmenter().augment(files, registry, spec)
+        return spec
+    }
+
     @Suppress("UNCHECKED_CAST")
     private fun Map<String, Any?>.at(vararg keys: String): Map<String, Any?> {
         var current = this
@@ -73,8 +87,7 @@ class OpenApiFailureAugmenterTest {
 
     @Test
     fun `adds the response a failure option declares, and leaves other operations alone`() {
-        val result = OpenApiFailureAugmenter().augment(compileFixture(), minimalOpenApiYaml)
-        val spec: Map<String, Any?> = Yaml().load(result)
+        val spec = augment()
 
         val getThingResponses = spec.at("paths", "/things", "get", "responses")
         assertEquals(setOf("200", "404"), getThingResponses.keys)
@@ -93,8 +106,7 @@ class OpenApiFailureAugmenterTest {
 
     @Test
     fun `derives the ref'd schema from the real ProblemDetail message's fields, comments and REQUIRED behavior`() {
-        val result = OpenApiFailureAugmenter().augment(compileFixture(), minimalOpenApiYaml)
-        val spec: Map<String, Any?> = Yaml().load(result)
+        val spec = augment()
 
         val schema = spec.at("components", "schemas").getValue("ProblemDetail") as Map<String, Any?>
         assertEquals("object", schema["type"])
@@ -113,8 +125,7 @@ class OpenApiFailureAugmenterTest {
 
     @Test
     fun `derives a components schema for a message-typed field's own type too, and refs it as an array`() {
-        val result = OpenApiFailureAugmenter().augment(compileFixture(), minimalOpenApiYaml)
-        val spec: Map<String, Any?> = Yaml().load(result)
+        val spec = augment()
 
         val problemDetailProperties = spec.at("components", "schemas", "ProblemDetail", "properties")
         val errors = problemDetailProperties["errors"] as Map<String, Any?>
@@ -134,7 +145,7 @@ class OpenApiFailureAugmenterTest {
     fun `rejects rpcs that declare the same failure code more than once, reporting every duplicate across every offending rpc`() {
         val exception =
             assertFailsWith<IllegalStateException> {
-                OpenApiFailureAugmenter().augment(compileFixture("mock/duplicate_service.proto"), minimalOpenApiYaml)
+                augment("mock/duplicate_service.proto")
             }
         assertEquals(
             "Operation 'DuplicateFailureService_DeleteThing' declares (entur.http.v1.failure) code(s) '404', '409' more than once\n" +
@@ -147,7 +158,7 @@ class OpenApiFailureAugmenterTest {
     fun `rejects a failure code that isn't a 3-digit HTTP status code`() {
         val exception =
             assertFailsWith<IllegalArgumentException> {
-                OpenApiFailureAugmenter().augment(compileFixture("mock/invalid_code_service.proto"), minimalOpenApiYaml)
+                augment("mock/invalid_code_service.proto")
             }
         assertEquals(
             "Operation 'InvalidCodeService_GetThing' declares (entur.http.v1.failure) with invalid code 'abc' - must be a 3-digit HTTP status code",
@@ -176,7 +187,7 @@ class OpenApiFailureAugmenterTest {
 
         val exception =
             assertFailsWith<IllegalStateException> {
-                OpenApiFailureAugmenter().augment(compileFixture("mock/collision_service.proto"), yamlWithExistingSuccessResponse)
+                augment("mock/collision_service.proto", yamlWithExistingSuccessResponse)
             }
         assertEquals(
             "Operation 'CollisionService_GetThing' response '200' from (entur.http.v1.failure) collides with an existing response in the generated spec",

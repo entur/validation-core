@@ -2,6 +2,7 @@ syntax = "proto3";
 
 package entur.http.v1;
 
+import "gnostic/openapi/v3/annotations.proto";
 import "google/api/field_behavior.proto";
 
 option go_package = "github.com/entur/validation-core/gen/entur/http/v1;httpv1";
@@ -11,11 +12,23 @@ option java_package = "no.entur.http.proto.v1";
 // RFC 9457 Problem Details for HTTP APIs.
 message ProblemDetail {
   // A short, human-readable summary of the problem type.
-  string title = 1 [(google.api.field_behavior) = REQUIRED];
+  string title = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (gnostic.openapi.v3.property) = {
+      example: {yaml: "\"Not Found\""}
+    }
+  ];
   // The HTTP status code.
-  int32 status = 2 [(google.api.field_behavior) = REQUIRED];
+  int32 status = 2 [
+    (google.api.field_behavior) = REQUIRED,
+    (gnostic.openapi.v3.property) = {
+      example: {yaml: "404"}
+    }
+  ];
   // A human-readable explanation specific to this occurrence.
-  string detail = 3;
+  string detail = 3 [(gnostic.openapi.v3.property) = {
+    example: {yaml: "\"No source exists with the name 'rutedata'.\""}
+  }];
   // Field-level validation errors that caused this problem, if any. This is an RFC 9457 extension
   // member; it is absent when the problem isn't a per-field validation failure.
   repeated FieldViolation errors = 4;
@@ -24,7 +37,17 @@ message ProblemDetail {
 // One request field that failed validation.
 message FieldViolation {
   // The offending field, e.g. "name" or "items[2].severity_override".
-  string field = 1 [(google.api.field_behavior) = REQUIRED];
+  string field = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (gnostic.openapi.v3.property) = {
+      example: {yaml: "\"name\""}
+    }
+  ];
   // A human-readable explanation of why this field is invalid.
-  string message = 2 [(google.api.field_behavior) = REQUIRED];
+  string message = 2 [
+    (google.api.field_behavior) = REQUIRED,
+    (gnostic.openapi.v3.property) = {
+      example: {yaml: "\"must not be blank\""}
+    }
+  ];
 }

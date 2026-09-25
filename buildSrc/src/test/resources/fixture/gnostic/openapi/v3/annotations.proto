@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+package gnostic.openapi.v3;
+
+import "google/protobuf/descriptor.proto";
+
+// A minimal stand-in for the real gnostic/openapi/v3/annotations.proto (and the Schema/Any
+// messages it and openapiv3.proto declare), just enough to exercise
+// OpenApiExampleAugmenter's per-field example extraction without a network/BSR dependency in
+// this fixture. OpenApiExampleAugmenter only ever navigates these by field name
+// (property -> example -> yaml), so the real message shapes - and the rest of Schema's ~30
+// other fields - don't need to be reproduced.
+message Any {
+  string yaml = 2;
+}
+
+message Schema {
+  Any example = 7;
+}
+
+extend google.protobuf.FieldOptions {
+  Schema property = 1143;
+}

@@ -1,0 +1,30 @@
+syntax = "proto3";
+
+package mock;
+
+import "gnostic/openapi/v3/annotations.proto";
+
+// A minimal message tree purely to exercise OpenApiExampleAugmenter: a field with a declared
+// example, a field without one, a singular and a repeated message-typed field to recurse
+// through, and a pair of messages that reference each other so the augmenter's cycle-breaking
+// can be exercised too. See OpenApiExampleAugmenterTest.
+
+message Leaf {
+  string name = 1 [(gnostic.openapi.v3.property) = {example: {yaml: "\"leaf\""}}];
+  // Deliberately undeclared - OpenApiExampleAugmenterTest checks this is left out of the
+  // synthesized example rather than e.g. rendered as null.
+  string unannotated = 2;
+}
+
+message Wrapper {
+  Leaf leaf = 1;
+  repeated Leaf leaves = 2;
+}
+
+message CycleA {
+  CycleB b = 1;
+}
+
+message CycleB {
+  CycleA a = 1;
+}
