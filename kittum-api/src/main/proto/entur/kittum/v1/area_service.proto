@@ -44,6 +44,10 @@ service AreaService {
       body: "area"
     };
     option (gnostic.openapi.v3.operation) = {summary: "Create a new area."};
+    option (entur.http.v1.failure) = {
+      code: "409"
+      description: "An area with the given name already exists."
+    };
   }
 
   // Update an existing area. Its `id`, if set, must match the path `id`. Returns the full
@@ -65,6 +69,10 @@ service AreaService {
       code: "412"
       description: "The `If-Match` header does not match the area's current ETag."
     };
+    option (entur.http.v1.failure) = {
+      code: "409"
+      description: "A different area with the new name already exists."
+    };
   }
 
   // Delete an area. Over REST, this is a conditional request (RFC 7232): it requires a
@@ -81,6 +89,10 @@ service AreaService {
     option (entur.http.v1.failure) = {
       code: "412"
       description: "The `If-Match` header does not match the area's current ETag."
+    };
+    option (entur.http.v1.failure) = {
+      code: "409"
+      description: "The area is still referenced by a validation rule or a source flow."
     };
   }
 }

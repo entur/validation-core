@@ -16,4 +16,15 @@ message ProblemDetail {
   int32 status = 2 [(google.api.field_behavior) = REQUIRED];
   // A human-readable explanation specific to this occurrence.
   string detail = 3;
+  // Field-level validation errors that caused this problem, if any. An RFC 9457 extension
+  // member: absent when the problem isn't a per-field validation failure.
+  repeated FieldViolation errors = 4;
+}
+
+// One request field that failed validation.
+message FieldViolation {
+  // The offending field, e.g. "name" or "items[2].severity_override".
+  string field = 1 [(google.api.field_behavior) = REQUIRED];
+  // A human-readable explanation of why this field is invalid.
+  string message = 2 [(google.api.field_behavior) = REQUIRED];
 }

@@ -51,6 +51,12 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/Area'
+                '409':
+                    description: An area with the given name already exists.
+                    content:
+                        application/problem+json:
+                            schema:
+                                $ref: '#/components/schemas/ProblemDetail'
     /validation/v1/areas/{id}:
         get:
             tags:
@@ -114,6 +120,13 @@ paths:
                         application/problem+json:
                             schema:
                                 $ref: '#/components/schemas/ProblemDetail'
+                '409':
+                    description: The area is still referenced by a validation rule
+                        or a source flow.
+                    content:
+                        application/problem+json:
+                            schema:
+                                $ref: '#/components/schemas/ProblemDetail'
         patch:
             tags:
               - AreaService
@@ -163,6 +176,12 @@ paths:
                 '412':
                     description: The `If-Match` header does not match the area's current
                         ETag.
+                    content:
+                        application/problem+json:
+                            schema:
+                                $ref: '#/components/schemas/ProblemDetail'
+                '409':
+                    description: A different area with the new name already exists.
                     content:
                         application/problem+json:
                             schema:
@@ -311,6 +330,13 @@ paths:
                         application/problem+json:
                             schema:
                                 $ref: '#/components/schemas/ProblemDetail'
+                '409':
+                    description: The validation flow is still referenced by a sub
+                        flow item or a source flow.
+                    content:
+                        application/problem+json:
+                            schema:
+                                $ref: '#/components/schemas/ProblemDetail'
         patch:
             tags:
               - ValidationFlowService
@@ -414,6 +440,12 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/Owner'
+                '409':
+                    description: An owner with the given name already exists.
+                    content:
+                        application/problem+json:
+                            schema:
+                                $ref: '#/components/schemas/ProblemDetail'
     /validation/v1/owners/{id}:
         get:
             tags:
@@ -477,6 +509,12 @@ paths:
                         application/problem+json:
                             schema:
                                 $ref: '#/components/schemas/ProblemDetail'
+                '409':
+                    description: The owner is still referenced by an area or a source.
+                    content:
+                        application/problem+json:
+                            schema:
+                                $ref: '#/components/schemas/ProblemDetail'
         patch:
             tags:
               - OwnerService
@@ -527,6 +565,12 @@ paths:
                 '412':
                     description: The `If-Match` header does not match the owner's
                         current ETag.
+                    content:
+                        application/problem+json:
+                            schema:
+                                $ref: '#/components/schemas/ProblemDetail'
+                '409':
+                    description: A different owner with the new name already exists.
                     content:
                         application/problem+json:
                             schema:
@@ -651,6 +695,13 @@ paths:
                 '412':
                     description: The `If-Match` header does not match the rule's current
                         ETag.
+                    content:
+                        application/problem+json:
+                            schema:
+                                $ref: '#/components/schemas/ProblemDetail'
+                '409':
+                    description: The validation rule is still referenced by a validation
+                        flow item.
                     content:
                         application/problem+json:
                             schema:
@@ -824,6 +875,12 @@ paths:
                         application/problem+json:
                             schema:
                                 $ref: '#/components/schemas/ProblemDetail'
+                '409':
+                    description: The source is still referenced by a source flow.
+                    content:
+                        application/problem+json:
+                            schema:
+                                $ref: '#/components/schemas/ProblemDetail'
         patch:
             tags:
               - SourceService
@@ -969,6 +1026,20 @@ components:
                     format: date-time
             description: A specific area that is interested in validating certain
                 deliveries. Owned by exactly one Owner.
+        FieldViolation:
+            description: One request field that failed validation.
+            required:
+              - field
+              - message
+            type: object
+            properties:
+                field:
+                    type: string
+                    description: The offending field, e.g. "name" or "items[2].severity_override".
+                message:
+                    type: string
+                    description: A human-readable explanation of why this field is
+                        invalid.
         FlowItem:
             type: object
             properties:
@@ -1091,6 +1162,13 @@ components:
                 detail:
                     type: string
                     description: A human-readable explanation specific to this occurrence.
+                errors:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/FieldViolation'
+                    description: |-
+                        Field-level validation errors that caused this problem, if any. An RFC 9457 extension
+                         member: absent when the problem isn't a per-field validation failure.
         RuleFlowItem:
             type: object
             properties:

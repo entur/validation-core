@@ -93,6 +93,10 @@ service ValidationRuleService {
       code: "412"
       description: "The `If-Match` header does not match the rule's current ETag."
     };
+    option (entur.http.v1.failure) = {
+      code: "409"
+      description: "The validation rule is still referenced by a validation flow item."
+    };
   }
 }
 

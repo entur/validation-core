@@ -125,6 +125,10 @@ service ValidationFlowService {
       code: "412"
       description: "The `If-Match` header does not match the flow's current ETag."
     };
+    option (entur.http.v1.failure) = {
+      code: "409"
+      description: "The validation flow is still referenced by a sub flow item or a source flow."
+    };
   }
 }
 
