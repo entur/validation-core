@@ -2,6 +2,7 @@ syntax = "proto3";
 
 package entur.kittum.v1;
 
+import "entur/http/v1/failure.proto";
 import "entur/validation/v1/owner.proto";
 import "gnostic/openapi/v3/annotations.proto";
 import "google/api/annotations.proto";
@@ -26,6 +27,10 @@ service OwnerService {
   rpc GetOwner(GetOwnerRequest) returns (entur.validation.v1.Owner) {
     option (google.api.http) = {get: "/v1/owners/{id}"};
     option (gnostic.openapi.v3.operation) = {summary: "Get one owner by its id."};
+    option (entur.http.v1.failure) = {
+      code: "404"
+      description: "No owner exists with the given id."
+    };
   }
 }
 

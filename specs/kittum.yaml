@@ -1,5 +1,6 @@
-# Generated with protoc-gen-openapi
+# Generated with protoc-gen-openapi and OpenApiFailureAugmenter
 # https://github.com/google/gnostic/tree/master/cmd/protoc-gen-openapi
+# https://github.com/entur/validation-core/tree/master/buildSrc/src/main/kotlin/OpenApiFailureAugmenter.kt
 
 openapi: 3.0.3
 info:
@@ -11,17 +12,17 @@ info:
         audience: internal
         owner: team-validering
 servers:
-    - url: https://kittum.entur.io
+  - url: https://kittum.entur.io
 paths:
     /v1/areas:
         get:
             tags:
-                - AreaService
+              - AreaService
             summary: List all existing areas.
             description: List all existing areas.
             operationId: AreaService_ListAreas
             responses:
-                "200":
+                '200':
                     description: OK
                     content:
                         application/json:
@@ -30,29 +31,35 @@ paths:
     /v1/areas/{id}:
         get:
             tags:
-                - AreaService
+              - AreaService
             summary: Get one area by its id.
             description: Get one area by its id.
             operationId: AreaService_GetArea
             parameters:
-                - name: id
-                  in: path
-                  description: The database id of the area to lookup.
-                  required: true
-                  schema:
+              - name: id
+                in: path
+                description: The database id of the area to lookup.
+                required: true
+                schema:
                     type: integer
                     format: int32
             responses:
-                "200":
+                '200':
                     description: OK
                     content:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/Area'
+                '404':
+                    description: No area exists with the given id.
+                    content:
+                        application/problem+json:
+                            schema:
+                                $ref: '#/components/schemas/ProblemDetail'
     /v1/flows:
         get:
             tags:
-                - ValidationFlowService
+              - ValidationFlowService
             summary: List all existing flows.
             description: |-
                 List existing validation flows. The request is paginated with a default
@@ -60,26 +67,28 @@ paths:
                  sub-flow items carry only the database id of what they refer to.
             operationId: ValidationFlowService_ListValidationFlows
             parameters:
-                - name: cursor
-                  in: query
-                  description: The cursor to resume listing from, as returned by a previous call's cursor.
-                  schema:
+              - name: cursor
+                in: query
+                description: The cursor to resume listing from, as returned by a previous
+                    call's cursor.
+                schema:
                     type: string
-                - name: pageSize
-                  in: query
-                  description: The maximum number of flows to return. The default page size is 20.
-                  schema:
+              - name: pageSize
+                in: query
+                description: The maximum number of flows to return. The default page
+                    size is 20.
+                schema:
                     type: integer
                     format: int32
-                - name: orderBy
-                  in: query
-                  description: |-
+              - name: orderBy
+                in: query
+                description: |-
                     A comma-separated list of fields to order by, each optionally suffixed with " desc"
                      for descending order (ascending is the default). See https://google.aip.dev/132.
-                  schema:
+                schema:
                     type: string
             responses:
-                "200":
+                '200':
                     description: OK
                     content:
                         application/json:
@@ -88,7 +97,7 @@ paths:
     /v1/flows/{id}:
         get:
             tags:
-                - ValidationFlowService
+              - ValidationFlowService
             summary: Get one flow by its id.
             description: |-
                 Get one validation flow by its id. The returned flow is deep: every
@@ -97,29 +106,35 @@ paths:
                  ValidationRule/ValidationFlow itself.
             operationId: ValidationFlowService_GetValidationFlow
             parameters:
-                - name: id
-                  in: path
-                  description: The database id of the flow to lookup.
-                  required: true
-                  schema:
+              - name: id
+                in: path
+                description: The database id of the flow to lookup.
+                required: true
+                schema:
                     type: integer
                     format: int32
             responses:
-                "200":
+                '200':
                     description: OK
                     content:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/ValidationFlow'
+                '404':
+                    description: No validation flow exists with the given id.
+                    content:
+                        application/problem+json:
+                            schema:
+                                $ref: '#/components/schemas/ProblemDetail'
     /v1/owners:
         get:
             tags:
-                - OwnerService
+              - OwnerService
             summary: List all existing owners.
             description: List all existing owners.
             operationId: OwnerService_ListOwners
             responses:
-                "200":
+                '200':
                     description: OK
                     content:
                         application/json:
@@ -128,29 +143,35 @@ paths:
     /v1/owners/{id}:
         get:
             tags:
-                - OwnerService
+              - OwnerService
             summary: Get one owner by its id.
             description: Get one owner by its id.
             operationId: OwnerService_GetOwner
             parameters:
-                - name: id
-                  in: path
-                  description: The database id of the owner to lookup.
-                  required: true
-                  schema:
+              - name: id
+                in: path
+                description: The database id of the owner to lookup.
+                required: true
+                schema:
                     type: integer
                     format: int32
             responses:
-                "200":
+                '200':
                     description: OK
                     content:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/Owner'
+                '404':
+                    description: No owner exists with the given id.
+                    content:
+                        application/problem+json:
+                            schema:
+                                $ref: '#/components/schemas/ProblemDetail'
     /v1/rules:
         get:
             tags:
-                - ValidationRuleService
+              - ValidationRuleService
             summary: List existing validation rules.
             description: |-
                 List existing validation rules.
@@ -158,26 +179,28 @@ paths:
                  The request is paginated with a default page size of 100.
             operationId: ValidationRuleService_ListValidationRules
             parameters:
-                - name: cursor
-                  in: query
-                  description: The cursor to resume listing from, as returned by a previous call's cursor.
-                  schema:
+              - name: cursor
+                in: query
+                description: The cursor to resume listing from, as returned by a previous
+                    call's cursor.
+                schema:
                     type: string
-                - name: pageSize
-                  in: query
-                  description: The maximum number of validation rules to return. The default page size is 100.
-                  schema:
+              - name: pageSize
+                in: query
+                description: The maximum number of validation rules to return. The
+                    default page size is 100.
+                schema:
                     type: integer
                     format: int32
-                - name: orderBy
-                  in: query
-                  description: |-
+              - name: orderBy
+                in: query
+                description: |-
                     A comma-separated list of fields to order by, each optionally suffixed with " desc"
                      for descending order (ascending is the default). See https://google.aip.dev/132.
-                  schema:
+                schema:
                     type: string
             responses:
-                "200":
+                '200':
                     description: OK
                     content:
                         application/json:
@@ -186,34 +209,40 @@ paths:
     /v1/rules/{id}:
         get:
             tags:
-                - ValidationRuleService
+              - ValidationRuleService
             summary: Get one validation rule by its id.
             description: Get one validation rule by its id.
             operationId: ValidationRuleService_GetValidationRule
             parameters:
-                - name: id
-                  in: path
-                  description: The database id of the validation rule to lookup.
-                  required: true
-                  schema:
+              - name: id
+                in: path
+                description: The database id of the validation rule to lookup.
+                required: true
+                schema:
                     type: integer
                     format: int32
             responses:
-                "200":
+                '200':
                     description: OK
                     content:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/ValidationRule'
+                '404':
+                    description: No validation rule exists with the given id.
+                    content:
+                        application/problem+json:
+                            schema:
+                                $ref: '#/components/schemas/ProblemDetail'
     /v1/sources:
         get:
             tags:
-                - SourceService
+              - SourceService
             summary: List all existing sources.
             description: List all existing sources.
             operationId: SourceService_ListSources
             responses:
-                "200":
+                '200':
                     description: OK
                     content:
                         application/json:
@@ -222,28 +251,34 @@ paths:
     /v1/sources/{name}:
         get:
             tags:
-                - SourceService
+              - SourceService
             summary: Get one source by its name.
             description: Get one source by its name.
             operationId: SourceService_GetSource
             parameters:
-                - name: name
-                  in: path
-                  description: The name of the source to lookup.
-                  required: true
-                  schema:
+              - name: name
+                in: path
+                description: The name of the source to lookup.
+                required: true
+                schema:
                     type: string
             responses:
-                "200":
+                '200':
                     description: OK
                     content:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/Source'
+                '404':
+                    description: No source exists with the given name.
+                    content:
+                        application/problem+json:
+                            schema:
+                                $ref: '#/components/schemas/ProblemDetail'
     /v1/sources/{source}/flows/{stage}/{area}:
         get:
             tags:
-                - ValidationFlowService
+              - ValidationFlowService
             summary: Get the flow connected to a source, for one stage and area.
             description: |-
                 Get the validation flow connected to a source, for one stage and area.
@@ -252,46 +287,53 @@ paths:
                  referred-to ValidationRule/ValidationFlow itself.
             operationId: ValidationFlowService_GetSourceFlow
             parameters:
-                - name: source
-                  in: path
-                  description: The name of the source to lookup.
-                  required: true
-                  schema:
+              - name: source
+                in: path
+                description: The name of the source to lookup.
+                required: true
+                schema:
                     type: string
-                - name: stage
-                  in: path
-                  description: |-
+              - name: stage
+                in: path
+                description: |-
                     The stage of the flow to lookup.
 
                      This field is case insensitive.
-                  required: true
-                  schema:
+                required: true
+                schema:
                     enum:
-                        - VALIDATION_STAGE_UNSPECIFIED
-                        - STRUCTURAL
-                        - LOCAL
-                        - GLOBAL
+                      - VALIDATION_STAGE_UNSPECIFIED
+                      - STRUCTURAL
+                      - LOCAL
+                      - GLOBAL
                     type: string
                     format: enum
-                - name: area
-                  in: path
-                  description: The name of the area to lookup.
-                  required: true
-                  schema:
+              - name: area
+                in: path
+                description: The name of the area to lookup.
+                required: true
+                schema:
                     type: string
             responses:
-                "200":
+                '200':
                     description: OK
                     content:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/ValidationFlow'
+                '404':
+                    description: The source or area does not exist, or no flow is
+                        connected for the given stage and area.
+                    content:
+                        application/problem+json:
+                            schema:
+                                $ref: '#/components/schemas/ProblemDetail'
 components:
     schemas:
         Area:
             required:
-                - name
-                - owner
+              - name
+              - owner
             type: object
             properties:
                 id:
@@ -300,7 +342,7 @@ components:
                     description: The database id of the area.
                     format: int32
                 name:
-                    example: "Personalisering"
+                    example: Personalisering
                     type: string
                     description: The name of the area.
                 owner:
@@ -309,11 +351,12 @@ components:
                     description: The database id of the owner of the area.
                     format: int32
                 updatedAt:
-                    example: "2026-01-01T00:00:00Z"
+                    example: '2026-01-01T00:00:00Z'
                     type: string
                     description: The timestamp of the area.
                     format: date-time
-            description: A specific area that is interested in validating certain deliveries. Owned by exactly one Owner.
+            description: A specific area that is interested in validating certain
+                deliveries. Owned by exactly one Owner.
         FlowItem:
             type: object
             properties:
@@ -324,14 +367,14 @@ components:
                     format: int32
                 ruleFlowItem:
                     allOf:
-                        - $ref: '#/components/schemas/RuleFlowItem'
+                      - $ref: '#/components/schemas/RuleFlowItem'
                     description: A rule inside the flow.
                 subFlowItem:
                     allOf:
-                        - $ref: '#/components/schemas/SubFlowItem'
+                      - $ref: '#/components/schemas/SubFlowItem'
                     description: A flow inside the flow.
                 updatedAt:
-                    example: "2026-01-01T00:00:00Z"
+                    example: '2026-01-01T00:00:00Z'
                     type: string
                     description: The timestamp of the flow item.
                     format: date-time
@@ -372,7 +415,7 @@ components:
                         $ref: '#/components/schemas/ValidationFlow'
                     description: The (shallow) flows in this page of results.
                 cursor:
-                    example: "eyJpZCI6NjJ9"
+                    example: eyJpZCI6NjJ9
                     type: string
                     description: |-
                         The cursor to pass to a subsequent call to continue listing. Empty
@@ -387,7 +430,7 @@ components:
                         $ref: '#/components/schemas/ValidationRule'
                     description: The validation rules in this page of results.
                 cursor:
-                    example: "eyJpZCI6NjJ9"
+                    example: eyJpZCI6NjJ9
                     type: string
                     description: |-
                         The cursor to pass to a subsequent call to continue listing. Empty
@@ -395,7 +438,7 @@ components:
             description: Response for ListValidationRules.
         Owner:
             required:
-                - name
+              - name
             type: object
             properties:
                 id:
@@ -404,15 +447,31 @@ components:
                     description: The database id of the owner.
                     format: int32
                 name:
-                    example: "team-validering"
+                    example: team-validering
                     type: string
                     description: The name of the owner.
                 updatedAt:
-                    example: "2026-01-01T00:00:00Z"
+                    example: '2026-01-01T00:00:00Z'
                     type: string
                     description: The timestamp of the owner.
                     format: date-time
             description: An owner of deliveries and areas, for example an Entur team.
+        ProblemDetail:
+            description: RFC 9457 Problem Details for HTTP APIs.
+            required:
+              - title
+              - status
+            properties:
+                title:
+                    type: string
+                    description: A short, human-readable summary of the problem type.
+                status:
+                    type: integer
+                    format: int32
+                    description: The HTTP status code.
+                detail:
+                    type: string
+                    description: A human-readable explanation specific to this occurrence.
         RuleFlowItem:
             type: object
             properties:
@@ -424,28 +483,29 @@ components:
                 validationRule:
                     readOnly: true
                     allOf:
-                        - $ref: '#/components/schemas/ValidationRule'
+                      - $ref: '#/components/schemas/ValidationRule'
                     description: |-
                         The full validation rule. Populated on a deep read (GetValidationFlow,
                          GetSourceFlow); absent on a shallow listing (ListValidationFlows).
                 severityOverride:
-                    example: "WARNING"
+                    example: WARNING
                     enum:
-                        - SEVERITY_UNSPECIFIED
-                        - CRITICAL
-                        - ERROR
-                        - WARNING
-                        - INFO
+                      - SEVERITY_UNSPECIFIED
+                      - CRITICAL
+                      - ERROR
+                      - WARNING
+                      - INFO
                     type: string
-                    description: If present, overrides the rule's own default_severity for this inclusion only.
+                    description: If present, overrides the rule's own default_severity
+                        for this inclusion only.
                     format: enum
             description: |-
                 A flow item that runs one concrete ValidationRule, optionally overriding
                  its default severity for this inclusion only.
         Source:
             required:
-                - name
-                - owner
+              - name
+              - owner
             type: object
             properties:
                 id:
@@ -454,7 +514,7 @@ components:
                     description: The database id of the source.
                     format: int32
                 name:
-                    example: "rutedata"
+                    example: rutedata
                     type: string
                     description: The name of the source.
                 owner:
@@ -463,11 +523,12 @@ components:
                     description: The database id of the owner of the source.
                     format: int32
                 updatedAt:
-                    example: "2026-01-01T00:00:00Z"
+                    example: '2026-01-01T00:00:00Z'
                     type: string
                     description: The timestamp of the source.
                     format: date-time
-            description: A named intake point for a set of files, owned by exactly one Owner.
+            description: A named intake point for a set of files, owned by exactly
+                one Owner.
         SubFlowItem:
             type: object
             properties:
@@ -479,7 +540,7 @@ components:
                 flow:
                     readOnly: true
                     allOf:
-                        - $ref: '#/components/schemas/ValidationFlow'
+                      - $ref: '#/components/schemas/ValidationFlow'
                     description: |-
                         The full flow. Populated on a deep read (GetValidationFlow,
                          GetSourceFlow), recursively for every sub-flow it contains in turn;
@@ -489,9 +550,9 @@ components:
                  flows be composed into a tree.
         ValidationFlow:
             required:
-                - name
-                - description
-                - stage
+              - name
+              - description
+              - stage
             type: object
             properties:
                 id:
@@ -500,20 +561,20 @@ components:
                     description: The database id of the validation flow.
                     format: int32
                 name:
-                    example: "netex-structural"
+                    example: netex-structural
                     type: string
                     description: The name of the validation flow.
                 description:
-                    example: "Runs structural checks for NeTEx deliveries."
+                    example: Runs structural checks for NeTEx deliveries.
                     type: string
                     description: A textual description of the validation flow.
                 stage:
-                    example: "STRUCTURAL"
+                    example: STRUCTURAL
                     enum:
-                        - VALIDATION_STAGE_UNSPECIFIED
-                        - STRUCTURAL
-                        - LOCAL
-                        - GLOBAL
+                      - VALIDATION_STAGE_UNSPECIFIED
+                      - STRUCTURAL
+                      - LOCAL
+                      - GLOBAL
                     type: string
                     description: |-
                         The stage the validation flow runs in. All items in the validation
@@ -525,7 +586,7 @@ components:
                         $ref: '#/components/schemas/FlowItem'
                     description: The validation flow's items, in execution order.
                 updatedAt:
-                    example: "2026-01-01T00:00:00Z"
+                    example: '2026-01-01T00:00:00Z'
                     type: string
                     description: The timestamp of the validation flow.
                     format: date-time
@@ -535,10 +596,10 @@ components:
                  belong to that same stage.
         ValidationRule:
             required:
-                - area
-                - defaultSeverity
-                - stage
-                - description
+              - area
+              - defaultSeverity
+              - stage
+              - description
             type: object
             properties:
                 id:
@@ -549,70 +610,74 @@ components:
                 area:
                     example: 7
                     type: integer
-                    description: The database id of the area that owns the validation rule.
+                    description: The database id of the area that owns the validation
+                        rule.
                     format: int32
                 defaultSeverity:
-                    example: "ERROR"
+                    example: ERROR
                     enum:
-                        - SEVERITY_UNSPECIFIED
-                        - CRITICAL
-                        - ERROR
-                        - WARNING
-                        - INFO
+                      - SEVERITY_UNSPECIFIED
+                      - CRITICAL
+                      - ERROR
+                      - WARNING
+                      - INFO
                     type: string
                     description: The default severity of the validation rule.
                     format: enum
                 stage:
-                    example: "STRUCTURAL"
+                    example: STRUCTURAL
                     enum:
-                        - VALIDATION_STAGE_UNSPECIFIED
-                        - STRUCTURAL
-                        - LOCAL
-                        - GLOBAL
+                      - VALIDATION_STAGE_UNSPECIFIED
+                      - STRUCTURAL
+                      - LOCAL
+                      - GLOBAL
                     type: string
                     description: The stage the validation rule runs in.
                     format: enum
                 description:
-                    example: "Validates the file against its XSD."
+                    example: Validates the file against its XSD.
                     type: string
                     description: A textual description of the validation rule.
                 xsdRule:
                     allOf:
-                        - $ref: '#/components/schemas/XsdRule'
+                      - $ref: '#/components/schemas/XsdRule'
                     description: An XSD rule.
                 updatedAt:
-                    example: "2026-01-01T00:00:00Z"
+                    example: '2026-01-01T00:00:00Z'
                     type: string
                     description: The timestamp of the validation rule.
                     format: date-time
             description: A single validation rule, owned by one Area.
         XsdRule:
             required:
-                - message
-                - xsdPath
+              - message
+              - xsdPath
             type: object
             properties:
                 message:
-                    example: "File does not match its XSD."
+                    example: File does not match its XSD.
                     type: string
                     description: The message to print if the validation rule fails.
                 xsdPath:
-                    example: "xsd/netex/NeTEx_publication.xsd"
+                    example: xsd/netex/NeTEx_publication.xsd
                     type: string
-                    description: The path to the XSD, relative to some externally configured root.
+                    description: The path to the XSD, relative to some externally
+                        configured root.
                 fileFilter:
-                    example: ".*\\.xml"
+                    example: .*\.xml
                     type: string
-                    description: A regexp a file's name must match to be processed by this rule. Runs against every file when absent.
-            description: A validation rule that checks a file against an XSD. Always stage STRUCTURAL.
+                    description: A regexp a file's name must match to be processed
+                        by this rule. Runs against every file when absent.
+            description: A validation rule that checks a file against an XSD. Always
+                stage STRUCTURAL.
 tags:
-    - name: AreaService
-      description: The gRPC service to view and administrate areas.
-    - name: OwnerService
-      description: The gRPC service to view and administrate owners.
-    - name: SourceService
-      description: The gRPC service to view and administrate sources.
-    - name: ValidationFlowService
-      description: The gRPC service to view and administrate flows.
-    - name: ValidationRuleService
-      description: The gRPC service to view and administrate validation rules.
+  - name: AreaService
+    description: The gRPC service to view and administrate areas.
+  - name: OwnerService
+    description: The gRPC service to view and administrate owners.
+  - name: SourceService
+    description: The gRPC service to view and administrate sources.
+  - name: ValidationFlowService
+    description: The gRPC service to view and administrate flows.
+  - name: ValidationRuleService
+    description: The gRPC service to view and administrate validation rules.

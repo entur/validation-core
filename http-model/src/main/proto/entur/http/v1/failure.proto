@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+package entur.http.v1;
+
+import "google/protobuf/descriptor.proto";
+
+option go_package = "github.com/entur/validation-core/gen/entur/http/v1;httpv1";
+option java_multiple_files = true;
+option java_package = "no.entur.http.proto.v1";
+
+// One documented way an rpc can fail over HTTP. Rendered into the OpenAPI spec as a
+// `application/problem+json` response, `code` -> `entur.http.v1.ProblemDetail`.
+message Failure {
+  // The HTTP status code this occurs with, e.g. "404".
+  string code = 1;
+  // A human-readable explanation of when this failure occurs.
+  string description = 2;
+}
+
+extend google.protobuf.MethodOptions {
+  // 50000-99999 is protobuf's reserved range for internal-only (unregistered) extensions.
+  repeated Failure failure = 50000;
+}

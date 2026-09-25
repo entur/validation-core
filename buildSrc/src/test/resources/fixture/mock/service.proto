@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+package mock;
+
+import "entur/http/v1/failure.proto";
+
+// A minimal service purely to exercise OpenApiFailureAugmenter's operationId matching, against
+// the real entur.http.v1.Failure/ProblemDetail (see OpenApiFailureAugmenterTest) rather than a
+// hand-duplicated stand-in for them.
+
+message GetThingRequest {}
+
+message Thing {}
+
+service MockService {
+  // Has a documented failure - OpenApiFailureAugmenterTest checks this rpc gets a 404 response.
+  rpc GetThing(GetThingRequest) returns (Thing) {
+    option (entur.http.v1.failure) = {code: "404" description: "Thing not found."};
+  }
+
+  // Has no documented failure - the test checks this rpc is left untouched.
+  rpc ListThings(GetThingRequest) returns (Thing) {}
+}

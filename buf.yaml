@@ -12,6 +12,7 @@ lint:
     - RPC_RESPONSE_STANDARD_NAME
     - RPC_REQUEST_RESPONSE_UNIQUE
 modules:
+  - path: http-model/src/main/proto
   - path: validation-model/src/main/proto
   - path: kittum-api/src/main/proto
 deps:

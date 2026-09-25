@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+package entur.http.v1;
+
+import "google/api/field_behavior.proto";
+
+option go_package = "github.com/entur/validation-core/gen/entur/http/v1;httpv1";
+option java_multiple_files = true;
+option java_package = "no.entur.http.proto.v1";
+
+// RFC 9457 Problem Details for HTTP APIs.
+message ProblemDetail {
+  // A short, human-readable summary of the problem type.
+  string title = 1 [(google.api.field_behavior) = REQUIRED];
+  // The HTTP status code.
+  int32 status = 2 [(google.api.field_behavior) = REQUIRED];
+  // A human-readable explanation specific to this occurrence.
+  string detail = 3;
+}

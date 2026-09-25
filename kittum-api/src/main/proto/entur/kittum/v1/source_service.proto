@@ -2,6 +2,7 @@ syntax = "proto3";
 
 package entur.kittum.v1;
 
+import "entur/http/v1/failure.proto";
 import "entur/validation/v1/source.proto";
 import "gnostic/openapi/v3/annotations.proto";
 import "google/api/annotations.proto";
@@ -26,6 +27,10 @@ service SourceService {
   rpc GetSource(GetSourceRequest) returns (entur.validation.v1.Source) {
     option (google.api.http) = {get: "/v1/sources/{name}"};
     option (gnostic.openapi.v3.operation) = {summary: "Get one source by its name."};
+    option (entur.http.v1.failure) = {
+      code: "404"
+      description: "No source exists with the given name."
+    };
   }
 }
 
