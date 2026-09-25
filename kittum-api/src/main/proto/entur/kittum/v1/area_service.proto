@@ -8,6 +8,8 @@ import "gnostic/openapi/v3/annotations.proto";
 import "google/api/annotations.proto";
 import "google/api/client.proto";
 import "google/api/field_behavior.proto";
+import "google/protobuf/empty.proto";
+import "google/protobuf/field_mask.proto";
 
 option go_package = "github.com/entur/validation-core/gen/entur/kittum/v1;kittumv1";
 option java_multiple_files = true;
@@ -19,17 +21,72 @@ service AreaService {
 
   // List all existing areas.
   rpc ListAreas(ListAreasRequest) returns (ListAreasResponse) {
-    option (google.api.http) = {get: "/v1/areas"};
+    option (google.api.http) = {get: "/validation/v1/areas"};
     option (gnostic.openapi.v3.operation) = {summary: "List all existing areas."};
   }
 
   // Get one area by its id.
   rpc GetArea(GetAreaRequest) returns (entur.validation.v1.Area) {
-    option (google.api.http) = {get: "/v1/areas/{id}"};
+    option (google.api.http) = {get: "/validation/v1/areas/{id}"};
     option (gnostic.openapi.v3.operation) = {summary: "Get one area by its id."};
     option (entur.http.v1.failure) = {
       code: "404"
       description: "No area exists with the given id."
+    };
+  }
+
+  // Create a new area. Its `id` and `updated_at` are OUTPUT_ONLY and ignored if set; the
+  // server assigns both. Returns the full created area, including its server-assigned `id`
+  // and `updated_at`.
+  rpc CreateArea(CreateAreaRequest) returns (entur.validation.v1.Area) {
+    option (google.api.http) = {
+      post: "/validation/v1/areas"
+      body: "area"
+    };
+    option (gnostic.openapi.v3.operation) = {summary: "Create a new area."};
+    option (entur.http.v1.failure) = {
+      code: "409"
+      description: "An area with the given name already exists."
+    };
+  }
+
+  // Update an existing area. Its `id`, if set, must match the path `id`. Returns the full
+  // updated area, with its new `updated_at`. Over REST, this is a conditional request: it
+  // requires a matching `If-Match` request header and fails with 409 Conflict (not the RFC
+  // 7232-standard 412, which Entur's API guidelines don't allow) if it no longer matches
+  // the area's current `ETag`, e.g. because another update happened concurrently. This is
+  // an HTTP-layer precondition, not a field of UpdateAreaRequest.
+  rpc UpdateArea(UpdateAreaRequest) returns (entur.validation.v1.Area) {
+    option (google.api.http) = {
+      patch: "/validation/v1/areas/{id}"
+      body: "area"
+    };
+    option (gnostic.openapi.v3.operation) = {summary: "Update an existing area."};
+    option (entur.http.v1.failure) = {
+      code: "404"
+      description: "No area exists with the given id."
+    };
+    option (entur.http.v1.failure) = {
+      code: "409"
+      description: "The `If-Match` header does not match the area's current ETag, or a different area with the new name already exists."
+    };
+  }
+
+  // Delete an area. Over REST, this is a conditional request: it requires a matching
+  // `If-Match` request header and fails with 409 Conflict (not the RFC 7232-standard 412,
+  // which Entur's API guidelines don't allow) if it no longer matches the area's current
+  // `ETag`, e.g. because another update happened concurrently. This is an HTTP-layer
+  // precondition, not a field of DeleteAreaRequest.
+  rpc DeleteArea(DeleteAreaRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {delete: "/validation/v1/areas/{id}"};
+    option (gnostic.openapi.v3.operation) = {summary: "Delete an area."};
+    option (entur.http.v1.failure) = {
+      code: "404"
+      description: "No area exists with the given id."
+    };
+    option (entur.http.v1.failure) = {
+      code: "409"
+      description: "The `If-Match` header does not match the area's current ETag, or the area is still referenced by a validation rule or a source flow."
     };
   }
 }
@@ -46,6 +103,39 @@ message ListAreasResponse {
 // Request for GetArea.
 message GetAreaRequest {
   // The database id of the area to lookup.
+  int32 id = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (gnostic.openapi.v3.property) = {
+      example: {yaml: "1"}
+    }
+  ];
+}
+
+// Request for CreateArea.
+message CreateAreaRequest {
+  // The area to create.
+  entur.validation.v1.Area area = 1 [(google.api.field_behavior) = REQUIRED];
+}
+
+// Request for UpdateArea.
+message UpdateAreaRequest {
+  // The database id of the area to update.
+  int32 id = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (gnostic.openapi.v3.property) = {
+      example: {yaml: "1"}
+    }
+  ];
+  // The area's new field values.
+  entur.validation.v1.Area area = 2 [(google.api.field_behavior) = REQUIRED];
+  // The fields of `area` to update. Fields populated in `area` but not listed here are
+  // left unchanged. Omitting this mask updates every field populated in `area`.
+  optional google.protobuf.FieldMask update_mask = 3;
+}
+
+// Request for DeleteArea.
+message DeleteAreaRequest {
+  // The database id of the area to delete.
   int32 id = 1 [
     (google.api.field_behavior) = REQUIRED,
     (gnostic.openapi.v3.property) = {

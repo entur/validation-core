@@ -8,6 +8,8 @@ import "gnostic/openapi/v3/annotations.proto";
 import "google/api/annotations.proto";
 import "google/api/client.proto";
 import "google/api/field_behavior.proto";
+import "google/protobuf/empty.proto";
+import "google/protobuf/field_mask.proto";
 
 option go_package = "github.com/entur/validation-core/gen/entur/kittum/v1;kittumv1";
 option java_multiple_files = true;
@@ -21,17 +23,75 @@ service ValidationRuleService {
   //
   // The request is paginated with a default page size of 100.
   rpc ListValidationRules(ListValidationRulesRequest) returns (ListValidationRulesResponse) {
-    option (google.api.http) = {get: "/v1/rules"};
+    option (google.api.http) = {get: "/validation/v1/rules"};
     option (gnostic.openapi.v3.operation) = {summary: "List existing validation rules."};
   }
 
   // Get one validation rule by its id.
   rpc GetValidationRule(GetValidationRuleRequest) returns (entur.validation.v1.ValidationRule) {
-    option (google.api.http) = {get: "/v1/rules/{id}"};
+    option (google.api.http) = {get: "/validation/v1/rules/{id}"};
     option (gnostic.openapi.v3.operation) = {summary: "Get one validation rule by its id."};
     option (entur.http.v1.failure) = {
       code: "404"
       description: "No validation rule exists with the given id."
+    };
+  }
+
+  // Create a new validation rule. Exactly one field of its `rule` oneof must be set. Its
+  // `id` and `updated_at` are OUTPUT_ONLY and ignored if set; the server assigns both.
+  // Returns the full created rule, including its server-assigned `id` and `updated_at`.
+  rpc CreateValidationRule(CreateValidationRuleRequest) returns (entur.validation.v1.ValidationRule) {
+    option (google.api.http) = {
+      post: "/validation/v1/rules"
+      body: "validation_rule"
+    };
+    option (gnostic.openapi.v3.operation) = {summary: "Create a new validation rule."};
+  }
+
+  // Update an existing validation rule. Its `id`, if set, must match the path `id`.
+  // The `rule` oneof's set field is immutable: it must be the same variant (e.g. `xsd_rule`)
+  // as the rule's current type, and the request fails with INVALID_ARGUMENT if it is not -
+  // changing a rule's type requires deleting it and creating a new one. Returns the full
+  // updated rule, with its new `updated_at`. Over REST, this is a conditional request: it
+  // requires a matching `If-Match` request header and fails with 409 Conflict (not the RFC
+  // 7232-standard 412, which Entur's API guidelines don't allow) if it no longer matches
+  // the rule's current `ETag`, e.g. because another update happened concurrently. This is
+  // an HTTP-layer precondition, not a field of UpdateValidationRuleRequest.
+  rpc UpdateValidationRule(UpdateValidationRuleRequest) returns (entur.validation.v1.ValidationRule) {
+    option (google.api.http) = {
+      patch: "/validation/v1/rules/{id}"
+      body: "validation_rule"
+    };
+    option (gnostic.openapi.v3.operation) = {summary: "Update an existing validation rule."};
+    option (entur.http.v1.failure) = {
+      code: "404"
+      description: "No validation rule exists with the given id."
+    };
+    option (entur.http.v1.failure) = {
+      code: "400"
+      description: "The `rule` oneof's set field does not match the rule's current type."
+    };
+    option (entur.http.v1.failure) = {
+      code: "409"
+      description: "The `If-Match` header does not match the rule's current ETag."
+    };
+  }
+
+  // Delete a validation rule. Over REST, this is a conditional request: it requires a
+  // matching `If-Match` request header and fails with 409 Conflict (not the RFC
+  // 7232-standard 412, which Entur's API guidelines don't allow) if it no longer matches
+  // the rule's current `ETag`, e.g. because another update happened concurrently. This is
+  // an HTTP-layer precondition, not a field of DeleteValidationRuleRequest.
+  rpc DeleteValidationRule(DeleteValidationRuleRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {delete: "/validation/v1/rules/{id}"};
+    option (gnostic.openapi.v3.operation) = {summary: "Delete a validation rule."};
+    option (entur.http.v1.failure) = {
+      code: "404"
+      description: "No validation rule exists with the given id."
+    };
+    option (entur.http.v1.failure) = {
+      code: "409"
+      description: "The `If-Match` header does not match the rule's current ETag, or the validation rule is still referenced by a validation flow item."
     };
   }
 }
@@ -67,6 +127,40 @@ message ListValidationRulesResponse {
 // Request for GetValidationRule.
 message GetValidationRuleRequest {
   // The database id of the validation rule to lookup.
+  int32 id = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (gnostic.openapi.v3.property) = {
+      example: {yaml: "1"}
+    }
+  ];
+}
+
+// Request for CreateValidationRule.
+message CreateValidationRuleRequest {
+  // The validation rule to create.
+  entur.validation.v1.ValidationRule validation_rule = 1 [(google.api.field_behavior) = REQUIRED];
+}
+
+// Request for UpdateValidationRule.
+message UpdateValidationRuleRequest {
+  // The database id of the validation rule to update.
+  int32 id = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (gnostic.openapi.v3.property) = {
+      example: {yaml: "1"}
+    }
+  ];
+  // The rule's new field values.
+  entur.validation.v1.ValidationRule validation_rule = 2 [(google.api.field_behavior) = REQUIRED];
+  // The fields of `validation_rule` to update. Fields populated in `validation_rule` but not
+  // listed here are left unchanged. Omitting this mask updates every field populated in
+  // `validation_rule`.
+  optional google.protobuf.FieldMask update_mask = 3;
+}
+
+// Request for DeleteValidationRule.
+message DeleteValidationRuleRequest {
+  // The database id of the validation rule to delete.
   int32 id = 1 [
     (google.api.field_behavior) = REQUIRED,
     (gnostic.openapi.v3.property) = {

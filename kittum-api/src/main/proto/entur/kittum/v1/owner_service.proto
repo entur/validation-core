@@ -8,6 +8,8 @@ import "gnostic/openapi/v3/annotations.proto";
 import "google/api/annotations.proto";
 import "google/api/client.proto";
 import "google/api/field_behavior.proto";
+import "google/protobuf/empty.proto";
+import "google/protobuf/field_mask.proto";
 
 option go_package = "github.com/entur/validation-core/gen/entur/kittum/v1;kittumv1";
 option java_multiple_files = true;
@@ -19,17 +21,72 @@ service OwnerService {
 
   // List all existing owners.
   rpc ListOwners(ListOwnersRequest) returns (ListOwnersResponse) {
-    option (google.api.http) = {get: "/v1/owners"};
+    option (google.api.http) = {get: "/validation/v1/owners"};
     option (gnostic.openapi.v3.operation) = {summary: "List all existing owners."};
   }
 
   // Get one owner by its id.
   rpc GetOwner(GetOwnerRequest) returns (entur.validation.v1.Owner) {
-    option (google.api.http) = {get: "/v1/owners/{id}"};
+    option (google.api.http) = {get: "/validation/v1/owners/{id}"};
     option (gnostic.openapi.v3.operation) = {summary: "Get one owner by its id."};
     option (entur.http.v1.failure) = {
       code: "404"
       description: "No owner exists with the given id."
+    };
+  }
+
+  // Create a new owner. Its `id` and `updated_at` are OUTPUT_ONLY and ignored if set; the
+  // server assigns both. Returns the full created owner, including its server-assigned `id`
+  // and `updated_at`.
+  rpc CreateOwner(CreateOwnerRequest) returns (entur.validation.v1.Owner) {
+    option (google.api.http) = {
+      post: "/validation/v1/owners"
+      body: "owner"
+    };
+    option (gnostic.openapi.v3.operation) = {summary: "Create a new owner."};
+    option (entur.http.v1.failure) = {
+      code: "409"
+      description: "An owner with the given name already exists."
+    };
+  }
+
+  // Update an existing owner. Its `id`, if set, must match the path `id`. Returns the full
+  // updated owner, with its new `updated_at`. Over REST, this is a conditional request: it
+  // requires a matching `If-Match` request header and fails with 409 Conflict (not the RFC
+  // 7232-standard 412, which Entur's API guidelines don't allow) if it no longer matches
+  // the owner's current `ETag`, e.g. because another update happened concurrently. This is
+  // an HTTP-layer precondition, not a field of UpdateOwnerRequest.
+  rpc UpdateOwner(UpdateOwnerRequest) returns (entur.validation.v1.Owner) {
+    option (google.api.http) = {
+      patch: "/validation/v1/owners/{id}"
+      body: "owner"
+    };
+    option (gnostic.openapi.v3.operation) = {summary: "Update an existing owner."};
+    option (entur.http.v1.failure) = {
+      code: "404"
+      description: "No owner exists with the given id."
+    };
+    option (entur.http.v1.failure) = {
+      code: "409"
+      description: "The `If-Match` header does not match the owner's current ETag, or a different owner with the new name already exists."
+    };
+  }
+
+  // Delete an owner. Over REST, this is a conditional request: it requires a matching
+  // `If-Match` request header and fails with 409 Conflict (not the RFC 7232-standard 412,
+  // which Entur's API guidelines don't allow) if it no longer matches the owner's current
+  // `ETag`, e.g. because another update happened concurrently. This is an HTTP-layer
+  // precondition, not a field of DeleteOwnerRequest.
+  rpc DeleteOwner(DeleteOwnerRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {delete: "/validation/v1/owners/{id}"};
+    option (gnostic.openapi.v3.operation) = {summary: "Delete an owner."};
+    option (entur.http.v1.failure) = {
+      code: "404"
+      description: "No owner exists with the given id."
+    };
+    option (entur.http.v1.failure) = {
+      code: "409"
+      description: "The `If-Match` header does not match the owner's current ETag, or the owner is still referenced by an area or a source."
     };
   }
 }
@@ -46,6 +103,39 @@ message ListOwnersResponse {
 // Request for GetOwner.
 message GetOwnerRequest {
   // The database id of the owner to lookup.
+  int32 id = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (gnostic.openapi.v3.property) = {
+      example: {yaml: "1"}
+    }
+  ];
+}
+
+// Request for CreateOwner.
+message CreateOwnerRequest {
+  // The owner to create.
+  entur.validation.v1.Owner owner = 1 [(google.api.field_behavior) = REQUIRED];
+}
+
+// Request for UpdateOwner.
+message UpdateOwnerRequest {
+  // The database id of the owner to update.
+  int32 id = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (gnostic.openapi.v3.property) = {
+      example: {yaml: "1"}
+    }
+  ];
+  // The owner's new field values.
+  entur.validation.v1.Owner owner = 2 [(google.api.field_behavior) = REQUIRED];
+  // The fields of `owner` to update. Fields populated in `owner` but not listed here are
+  // left unchanged. Omitting this mask updates every field populated in `owner`.
+  optional google.protobuf.FieldMask update_mask = 3;
+}
+
+// Request for DeleteOwner.
+message DeleteOwnerRequest {
+  // The database id of the owner to delete.
   int32 id = 1 [
     (google.api.field_behavior) = REQUIRED,
     (gnostic.openapi.v3.property) = {

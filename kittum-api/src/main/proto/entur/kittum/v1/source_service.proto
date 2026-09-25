@@ -8,6 +8,8 @@ import "gnostic/openapi/v3/annotations.proto";
 import "google/api/annotations.proto";
 import "google/api/client.proto";
 import "google/api/field_behavior.proto";
+import "google/protobuf/empty.proto";
+import "google/protobuf/field_mask.proto";
 
 option go_package = "github.com/entur/validation-core/gen/entur/kittum/v1;kittumv1";
 option java_multiple_files = true;
@@ -19,17 +21,75 @@ service SourceService {
 
   // List all existing sources.
   rpc ListSources(ListSourcesRequest) returns (ListSourcesResponse) {
-    option (google.api.http) = {get: "/v1/sources"};
+    option (google.api.http) = {get: "/validation/v1/sources"};
     option (gnostic.openapi.v3.operation) = {summary: "List all existing sources."};
   }
 
   // Get one source by its name.
   rpc GetSource(GetSourceRequest) returns (entur.validation.v1.Source) {
-    option (google.api.http) = {get: "/v1/sources/{name}"};
+    option (google.api.http) = {get: "/validation/v1/sources/{name}"};
     option (gnostic.openapi.v3.operation) = {summary: "Get one source by its name."};
     option (entur.http.v1.failure) = {
       code: "404"
       description: "No source exists with the given name."
+    };
+  }
+
+  // Create a new source. Unlike Area/Owner, a source's `name` is chosen by the caller and is
+  // its identifier; the request fails with ALREADY_EXISTS if it is already taken. Its `id`
+  // and `updated_at` are OUTPUT_ONLY and ignored if set; the server assigns both. Returns
+  // the full created source, including its server-assigned `id` and `updated_at`.
+  rpc CreateSource(CreateSourceRequest) returns (entur.validation.v1.Source) {
+    option (google.api.http) = {
+      post: "/validation/v1/sources"
+      body: "source"
+    };
+    option (gnostic.openapi.v3.operation) = {summary: "Create a new source."};
+    option (entur.http.v1.failure) = {
+      code: "409"
+      description: "A source with the given name already exists."
+    };
+  }
+
+  // Update an existing source. Its `id`, if set, must match the source's own id. Renaming a
+  // source is allowed by setting a different `name` in the body (and including it in the
+  // update mask); later requests use the new name. Returns the full updated source,
+  // with its new `updated_at`. Over REST, this is a conditional request: it requires a
+  // matching `If-Match` request header and fails with 409 Conflict (not the RFC
+  // 7232-standard 412, which Entur's API guidelines don't allow) if it no longer matches
+  // the source's current `ETag`, e.g. because another update happened concurrently. This
+  // is an HTTP-layer precondition, not a field of UpdateSourceRequest.
+  rpc UpdateSource(UpdateSourceRequest) returns (entur.validation.v1.Source) {
+    option (google.api.http) = {
+      patch: "/validation/v1/sources/{name}"
+      body: "source"
+    };
+    option (gnostic.openapi.v3.operation) = {summary: "Update an existing source."};
+    option (entur.http.v1.failure) = {
+      code: "404"
+      description: "No source exists with the given name."
+    };
+    option (entur.http.v1.failure) = {
+      code: "409"
+      description: "A different source with the new name already exists, or the `If-Match` header does not match the source's current ETag."
+    };
+  }
+
+  // Delete a source. Over REST, this is a conditional request: it requires a matching
+  // `If-Match` request header and fails with 409 Conflict (not the RFC 7232-standard 412,
+  // which Entur's API guidelines don't allow) if it no longer matches the source's current
+  // `ETag`, e.g. because another update happened concurrently. This is an HTTP-layer
+  // precondition, not a field of DeleteSourceRequest.
+  rpc DeleteSource(DeleteSourceRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {delete: "/validation/v1/sources/{name}"};
+    option (gnostic.openapi.v3.operation) = {summary: "Delete a source."};
+    option (entur.http.v1.failure) = {
+      code: "404"
+      description: "No source exists with the given name."
+    };
+    option (entur.http.v1.failure) = {
+      code: "409"
+      description: "The `If-Match` header does not match the source's current ETag, or the source is still referenced by a source flow."
     };
   }
 }
@@ -46,6 +106,39 @@ message ListSourcesResponse {
 // Request for GetSource.
 message GetSourceRequest {
   // The name of the source to lookup.
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (gnostic.openapi.v3.property) = {
+      example: {yaml: "\"rutedata\""}
+    }
+  ];
+}
+
+// Request for CreateSource.
+message CreateSourceRequest {
+  // The source to create.
+  entur.validation.v1.Source source = 1 [(google.api.field_behavior) = REQUIRED];
+}
+
+// Request for UpdateSource.
+message UpdateSourceRequest {
+  // The current name of the source to update.
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (gnostic.openapi.v3.property) = {
+      example: {yaml: "\"rutedata\""}
+    }
+  ];
+  // The source's new field values.
+  entur.validation.v1.Source source = 2 [(google.api.field_behavior) = REQUIRED];
+  // The fields of `source` to update. Fields populated in `source` but not listed here are
+  // left unchanged. Omitting this mask updates every field populated in `source`.
+  optional google.protobuf.FieldMask update_mask = 3;
+}
+
+// Request for DeleteSource.
+message DeleteSourceRequest {
+  // The name of the source to delete.
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
     (gnostic.openapi.v3.property) = {

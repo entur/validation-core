@@ -26,8 +26,12 @@ message Owner {
       example: {yaml: "\"team-validering\""}
     }
   ];
-  // The timestamp of the owner.
-  google.protobuf.Timestamp updated_at = 100 [(gnostic.openapi.v3.property) = {
-    example: {yaml: "\"2026-01-01T00:00:00Z\""}
-  }];
+  // The timestamp the owner was last updated. Always populated by the server; a value set by
+  // the client is ignored, not an error.
+  google.protobuf.Timestamp updated_at = 100 [
+    (google.api.field_behavior) = OUTPUT_ONLY,
+    (gnostic.openapi.v3.property) = {
+      example: {yaml: "\"2026-01-01T00:00:00Z\""}
+    }
+  ];
 }

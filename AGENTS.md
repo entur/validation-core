@@ -57,3 +57,10 @@ https://github.com/entur/ai/blob/main/AGENTS.md
 - `.proto` formatting is enforced by `./gradlew build` itself (the root `bufFormat` task runs
   `buf format -w` before codegen), not by a separate lint step - it rewrites files rather than
   failing. CI still fails if the rewrite produces a diff, meaning an unformatted file was committed.
+- A field's own comment only reaches `specs/*.yaml` when that field becomes a path/query
+  parameter. For a field bound via `body: "..."` in a `google.api.http` option, gnostic's
+  protoc-gen-openapi emits a bare `$ref` to that field's message type and drops the wrapping
+  field's comment entirely - so a `CreateXRequest`/`UpdateXRequest`'s embedded-resource field
+  comment is invisible in the generated spec, no matter how detailed. Put real documentation -
+  ignored/OUTPUT_ONLY fields, side effects, error conditions - on the rpc's own doc comment
+  (which does become the operation's `description`), and keep body-bound field comments minimal.
