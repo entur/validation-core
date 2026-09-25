@@ -45,7 +45,7 @@ class OpenApiFailureAugmenter {
 
         val components = yamlMap(spec["components"])
         val schemas = yamlMap(components["schemas"])
-        schemas["ProblemDetail"] = buildSchema(files, "entur.http.v1.ProblemDetail", fieldBehaviorExt, registry)
+        schemas.putAll(buildSchemas(files, "entur.http.v1.ProblemDetail", fieldBehaviorExt, registry))
         components["schemas"] = schemas.toSortedMap()
 
         for (pathItem in yamlMap(spec["paths"]).values) {
@@ -160,12 +160,41 @@ class OpenApiFailureAugmenter {
         return result
     }
 
+    /**
+     * [buildSchema] for [rootMessageFullName], plus - transitively - every message type any of its
+     * fields (or its fields' fields, ...) refs, keyed by short name. A message-typed field like
+     * `ProblemDetail.errors` (`repeated FieldViolation`) only renders as a valid `$ref` if the
+     * referenced message has its own `components.schemas` entry too; gnostic never contributes one
+     * for a type unreachable from any rpc's request/response, which is exactly what every message
+     * reachable from here is.
+     */
+    private fun buildSchemas(
+        files: Map<String, Descriptors.FileDescriptor>,
+        rootMessageFullName: String,
+        fieldBehaviorExt: Descriptors.FieldDescriptor,
+        registry: ExtensionRegistry,
+    ): Map<String, Map<String, Any?>> {
+        val result = LinkedHashMap<String, Map<String, Any?>>()
+        val queue = ArrayDeque(listOf(rootMessageFullName))
+        val queued = mutableSetOf(rootMessageFullName)
+        while (queue.isNotEmpty()) {
+            val fullName = queue.removeFirst()
+            val (schema, referencedMessages) = buildSchema(files, fullName, fieldBehaviorExt, registry)
+            result[fullName.substringAfterLast('.')] = schema
+            for (referenced in referencedMessages) {
+                if (queued.add(referenced)) queue.addLast(referenced)
+            }
+        }
+        return result
+    }
+
+    /** [messageFullName]'s own schema, plus the full name of every message-typed field it declares (for [buildSchemas] to recurse into). */
     private fun buildSchema(
         files: Map<String, Descriptors.FileDescriptor>,
         messageFullName: String,
         fieldBehaviorExt: Descriptors.FieldDescriptor,
         registry: ExtensionRegistry,
-    ): Map<String, Any?> {
+    ): Pair<Map<String, Any?>, List<String>> {
         val file = files.values.first { it.messageTypes.any { m -> m.fullName == messageFullName } }
         val messageProto = file.toProto()
         val messageIndex = messageProto.messageTypeList.indexOfFirst { it.name == messageFullName.substringAfterLast('.') }
@@ -180,12 +209,10 @@ class OpenApiFailureAugmenter {
 
         val properties = LinkedHashMap<String, Any?>()
         val required = mutableListOf<String>()
+        val referencedMessages = mutableListOf<String>()
         for (field in message.fields) {
             val path = listOf(4, messageIndex, 2, field.index)
-            val (type, format) = jsonSchemaType(field)
-            val property = LinkedHashMap<String, Any?>()
-            property["type"] = type
-            if (format != null) property["format"] = format
+            val property = fieldSchema(field, referencedMessages)
             comments[path]?.let { property["description"] = it }
             properties[field.name] = property
 
@@ -200,7 +227,36 @@ class OpenApiFailureAugmenter {
         if (required.isNotEmpty()) schema["required"] = required
         schema["type"] = "object"
         schema["properties"] = properties
-        return schema
+        return schema to referencedMessages
+    }
+
+    /**
+     * One field's own schema fragment. A message-typed field `$ref`s its type's own
+     * `components.schemas` entry (appending its full name to [referencedMessages] for the caller to
+     * recurse into) - wrapped in `allOf` for a singular field, since a bare `$ref` can't carry a
+     * sibling `description` in OpenAPI 3.0; a `repeated` field of either kind wraps in a `type:
+     * array` envelope instead, same as gnostic's own output for a `repeated` message field
+     * elsewhere in the spec.
+     */
+    private fun fieldSchema(
+        field: Descriptors.FieldDescriptor,
+        referencedMessages: MutableList<String>,
+    ): LinkedHashMap<String, Any?> {
+        val single: LinkedHashMap<String, Any?>
+        if (field.javaType == Descriptors.FieldDescriptor.JavaType.MESSAGE) {
+            referencedMessages += field.messageType.fullName
+            single = linkedMapOf("\$ref" to "#/components/schemas/${field.messageType.name}")
+        } else {
+            val (type, format) = jsonSchemaType(field)
+            single = linkedMapOf("type" to type)
+            if (format != null) single["format"] = format
+        }
+
+        return when {
+            field.isRepeated -> linkedMapOf("type" to "array", "items" to single)
+            field.javaType == Descriptors.FieldDescriptor.JavaType.MESSAGE -> linkedMapOf("allOf" to listOf(single))
+            else -> single
+        }
     }
 
     private fun jsonSchemaType(field: Descriptors.FieldDescriptor): Pair<String, String?> =

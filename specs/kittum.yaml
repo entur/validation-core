@@ -357,6 +357,20 @@ components:
                     format: date-time
             description: A specific area that is interested in validating certain
                 deliveries. Owned by exactly one Owner.
+        FieldViolation:
+            description: One request field that failed validation.
+            required:
+              - field
+              - message
+            type: object
+            properties:
+                field:
+                    type: string
+                    description: The offending field, e.g. "name" or "items[2].severity_override".
+                message:
+                    type: string
+                    description: A human-readable explanation of why this field is
+                        invalid.
         FlowItem:
             type: object
             properties:
@@ -473,6 +487,13 @@ components:
                 detail:
                     type: string
                     description: A human-readable explanation specific to this occurrence.
+                errors:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/FieldViolation'
+                    description: |-
+                        Field-level validation errors that caused this problem, if any. An RFC 9457 extension
+                         member: absent when the problem isn't a per-field validation failure.
         RuleFlowItem:
             type: object
             properties:

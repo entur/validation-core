@@ -102,13 +102,32 @@ class OpenApiFailureAugmenterTest {
 
         @Suppress("UNCHECKED_CAST")
         val properties = schema["properties"] as Map<String, Any?>
-        assertEquals(setOf("title", "status", "detail"), properties.keys)
+        assertEquals(setOf("title", "status", "detail", "errors"), properties.keys)
         val title = properties["title"] as Map<String, Any?>
         assertEquals("string", title["type"])
         assertEquals("A short, human-readable summary of the problem type.", title["description"])
         val status = properties["status"] as Map<String, Any?>
         assertEquals("integer", status["type"])
         assertEquals("int32", status["format"])
+    }
+
+    @Test
+    fun `derives a components schema for a message-typed field's own type too, and refs it as an array`() {
+        val result = OpenApiFailureAugmenter().augment(compileFixture(), minimalOpenApiYaml)
+        val spec: Map<String, Any?> = Yaml().load(result)
+
+        val problemDetailProperties = spec.at("components", "schemas", "ProblemDetail", "properties")
+        val errors = problemDetailProperties["errors"] as Map<String, Any?>
+        assertEquals("array", errors["type"])
+        val items = errors["items"] as Map<String, Any?>
+        assertEquals("#/components/schemas/FieldViolation", items["\$ref"])
+
+        val fieldViolationSchema = spec.at("components", "schemas").getValue("FieldViolation") as Map<String, Any?>
+        assertEquals("object", fieldViolationSchema["type"])
+        assertEquals(listOf("field", "message"), fieldViolationSchema["required"])
+        @Suppress("UNCHECKED_CAST")
+        val fieldViolationProperties = fieldViolationSchema["properties"] as Map<String, Any?>
+        assertEquals(setOf("field", "message"), fieldViolationProperties.keys)
     }
 
     @Test
