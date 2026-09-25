@@ -10,6 +10,7 @@ info:
         id: kittum
         audience: internal
         owner: team-validering
+    x-stability-level: draft
 servers:
     - url: https://kittum.entur.io
 paths:

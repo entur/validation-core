@@ -15,5 +15,11 @@ option (gnostic.openapi.v3.document) = {
         value: {yaml: "id: kittum\naudience: internal\nowner: team-validering"}
       }
     ]
+    specification_extension: [
+      {
+        name: "x-stability-level"
+        value: {yaml: "draft"}
+      }
+    ]
   }
 };
