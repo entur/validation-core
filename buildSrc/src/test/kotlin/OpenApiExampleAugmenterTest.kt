@@ -69,6 +69,17 @@ class OpenApiExampleAugmenterTest {
                             type: string
                 NoProperties:
                     type: object
+                WithOneof:
+                    type: object
+                    properties:
+                        id:
+                            type: integer
+                        firstChoice:
+                            type: string
+                        secondChoice:
+                            type: string
+                        trailing:
+                            type: string
         """.trimIndent()
 
     private fun compileFixture(): DescriptorProtos.FileDescriptorSet {
@@ -149,5 +160,15 @@ class OpenApiExampleAugmenterTest {
     fun `adds no example to a schema with no properties to build one from`() {
         val noProperties = result().at("components", "schemas", "NoProperties")
         assertFalse("example" in noProperties)
+    }
+
+    @Test
+    fun `includes at most one field of a oneof in the synthesized example, preferring the first declared`() {
+        val withOneof = result().at("components", "schemas", "WithOneof")
+        assertEquals(
+            mapOf("id" to 1, "firstChoice" to "first", "trailing" to "trailing"),
+            withOneof["example"],
+            "secondChoice is mutually exclusive with firstChoice and must not appear alongside it",
+        )
     }
 }

@@ -1054,14 +1054,6 @@ components:
                             fileFilter: .*\.xml
                         updatedAt: '2026-01-01T00:00:00Z'
                     severityOverride: WARNING
-                subFlowItem:
-                    id: 1
-                    flow:
-                        id: 1
-                        name: netex-structural
-                        description: Runs structural checks for NeTEx deliveries.
-                        stage: STRUCTURAL
-                        updatedAt: '2026-01-01T00:00:00Z'
                 updatedAt: '2026-01-01T00:00:00Z'
         ListAreasResponse:
             type: object
@@ -1128,6 +1120,23 @@ components:
                     name: netex-structural
                     description: Runs structural checks for NeTEx deliveries.
                     stage: STRUCTURAL
+                    items:
+                      - id: 1
+                        ruleFlowItem:
+                            id: 1
+                            validationRule:
+                                id: 1
+                                area: 7
+                                defaultSeverity: ERROR
+                                stage: STRUCTURAL
+                                description: Validates the file against its XSD.
+                                xsdRule:
+                                    message: File does not match its XSD.
+                                    xsdPath: xsd/netex/NeTEx_publication.xsd
+                                    fileFilter: .*\.xml
+                                updatedAt: '2026-01-01T00:00:00Z'
+                            severityOverride: WARNING
+                        updatedAt: '2026-01-01T00:00:00Z'
                     updatedAt: '2026-01-01T00:00:00Z'
                 cursor: eyJpZCI6NjJ9
         ListValidationRulesResponse:
@@ -1324,6 +1333,23 @@ components:
                     name: netex-structural
                     description: Runs structural checks for NeTEx deliveries.
                     stage: STRUCTURAL
+                    items:
+                      - id: 1
+                        ruleFlowItem:
+                            id: 1
+                            validationRule:
+                                id: 1
+                                area: 7
+                                defaultSeverity: ERROR
+                                stage: STRUCTURAL
+                                description: Validates the file against its XSD.
+                                xsdRule:
+                                    message: File does not match its XSD.
+                                    xsdPath: xsd/netex/NeTEx_publication.xsd
+                                    fileFilter: .*\.xml
+                                updatedAt: '2026-01-01T00:00:00Z'
+                            severityOverride: WARNING
+                        updatedAt: '2026-01-01T00:00:00Z'
                     updatedAt: '2026-01-01T00:00:00Z'
         ValidationFlow:
             required:
@@ -1379,6 +1405,23 @@ components:
                 name: netex-structural
                 description: Runs structural checks for NeTEx deliveries.
                 stage: STRUCTURAL
+                items:
+                  - id: 1
+                    ruleFlowItem:
+                        id: 1
+                        validationRule:
+                            id: 1
+                            area: 7
+                            defaultSeverity: ERROR
+                            stage: STRUCTURAL
+                            description: Validates the file against its XSD.
+                            xsdRule:
+                                message: File does not match its XSD.
+                                xsdPath: xsd/netex/NeTEx_publication.xsd
+                                fileFilter: .*\.xml
+                            updatedAt: '2026-01-01T00:00:00Z'
+                        severityOverride: WARNING
+                    updatedAt: '2026-01-01T00:00:00Z'
                 updatedAt: '2026-01-01T00:00:00Z'
         ValidationRule:
             required:

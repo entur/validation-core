@@ -33,6 +33,7 @@ class OpenApiExampleAugmenter {
 
         val schemas = yamlMap(yamlMap(spec["components"])["schemas"])
         val messageFullNameByShortName = indexMessagesByShortName(files, schemas.keys)
+        val oneofFieldGroupsByMessage = collectOneofFieldGroups(files)
 
         for (name in schemas.keys) {
             val fullName = messageFullNameByShortName[name] ?: continue
@@ -55,8 +56,9 @@ class OpenApiExampleAugmenter {
             if (name in built) return deepCopy(built[name])
             if (name in building) return null
             val schema = yamlMapOrNull(schemas[name]) ?: return null
+            val oneofFieldGroups = messageFullNameByShortName[name]?.let { oneofFieldGroupsByMessage[it] } ?: emptyList()
             building += name
-            val example = buildObjectExample(schema, ::exampleFor)
+            val example = buildObjectExample(schema, oneofFieldGroups, ::exampleFor)
             building -= name
             built[name] = example
             return example
@@ -74,14 +76,23 @@ class OpenApiExampleAugmenter {
      *  One example object per `components.schemas` entry's own `properties`, recursing through a `$ref`
      *  (bare or `allOf`-wrapped) or a `repeated` field's array wrapper via [resolve]. A field with no example anywhere
      *  in its chain, or a cycle is simply left out of the result, since a partial example is still a valid one.
+     *
+     *  [oneofFieldGroups] is the message's own `oneof` groups (as field-name sets) - a real instance can only ever
+     *  populate one member of each, so only the first field declared in each group (`properties` iterates in
+     *  declaration order) is even considered; the rest are skipped outright, whether or not that first field ends
+     *  up with a usable example of its own.
      *  */
     private fun buildObjectExample(
         schema: Map<String, Any?>,
+        oneofFieldGroups: List<Set<String>>,
         resolve: (String) -> Any?,
     ): Map<String, Any?>? {
         val properties = yamlMapOrNull(schema["properties"]) ?: return null
         val result = LinkedHashMap<String, Any?>()
+        val chosenOneofFieldGroups = mutableSetOf<Set<String>>()
         for ((fieldName, propertySchemaAny) in properties) {
+            val oneofFieldGroup = oneofFieldGroups.firstOrNull { fieldName in it }
+            if (oneofFieldGroup != null && !chosenOneofFieldGroups.add(oneofFieldGroup)) continue
             val propertySchema = yamlMapOrNull(propertySchemaAny) ?: continue
             val value = propertyExampleValue(propertySchema, resolve) ?: continue
             result[fieldName] = value
@@ -135,7 +146,9 @@ class OpenApiExampleAugmenter {
                 for (field in message.fields) {
                     val reparsed =
                         DescriptorProtos.FieldOptions.parseFrom(field.toProto().options.toByteString(), registry)
-                    fieldExample(reparsed, propertyExt)?.let { fieldExamples[field.name] = it }
+                    // Keyed by jsonName (camelCase), not the proto field's own snake_case name, to match the
+                    // property names gnostic itself renders into components.schemas.*.properties.
+                    fieldExample(reparsed, propertyExt)?.let { fieldExamples[field.jsonName] = it }
                 }
                 if (fieldExamples.isNotEmpty()) result[message.fullName] = fieldExamples
             }
@@ -180,6 +193,26 @@ class OpenApiExampleAugmenter {
                         candidates.joinToString { it.fullName }
             }
             result[name] = candidates.single().fullName
+        }
+        return result
+    }
+
+    /**
+     * Each message's own `oneof` groups, as a list of field-name (jsonName, matching the property names gnostic
+     * itself renders) sets - one set per `oneof` the message declares. Uses
+     * [Descriptors.FieldDescriptor.getRealContainingOneof], not `getContainingOneof`, so a proto3 `optional`
+     * field's own synthetic single-field oneof (which isn't a real "pick one of these" choice) is never treated as
+     * one.
+     */
+    private fun collectOneofFieldGroups(files: Map<String, Descriptors.FileDescriptor>): Map<String, List<Set<String>>> {
+        val result = LinkedHashMap<String, List<Set<String>>>()
+        for (file in files.values) {
+            for (message in file.messageTypes) {
+                val groups =
+                    message.fields.mapNotNull { it.realContainingOneof }.distinct()
+                        .map { oneof -> oneof.fields.map { it.jsonName }.toSet() }
+                if (groups.isNotEmpty()) result[message.fullName] = groups
+            }
         }
         return result
     }
