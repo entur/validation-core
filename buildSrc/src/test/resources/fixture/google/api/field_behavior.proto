@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+package google.api;
+
+import "google/protobuf/descriptor.proto";
+
+// A minimal stand-in for the real google/api/field_behavior.proto, just enough to exercise
+// OpenApiFailureAugmenter's "required" detection without a network/BSR dependency in this fixture.
+enum FieldBehavior {
+  FIELD_BEHAVIOR_UNSPECIFIED = 0;
+  REQUIRED = 1;
+}
+
+extend google.protobuf.FieldOptions {
+  repeated FieldBehavior field_behavior = 1052;
+}

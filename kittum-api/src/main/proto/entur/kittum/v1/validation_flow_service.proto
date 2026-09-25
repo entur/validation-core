@@ -2,6 +2,7 @@ syntax = "proto3";
 
 package entur.kittum.v1;
 
+import "entur/http/v1/failure.proto";
 import "entur/validation/v1/enum.proto";
 import "entur/validation/v1/validation_flow.proto";
 import "gnostic/openapi/v3/annotations.proto";
@@ -39,6 +40,10 @@ service ValidationFlowService {
   rpc GetValidationFlow(GetValidationFlowRequest) returns (entur.validation.v1.ValidationFlow) {
     option (google.api.http) = {get: "/validation/v1/flows/{id}"};
     option (gnostic.openapi.v3.operation) = {summary: "Get one flow by its id."};
+    option (entur.http.v1.failure) = {
+      code: "404"
+      description: "No validation flow exists with the given id."
+    };
   }
 
   // Get the validation flow connected to a source, for one stage and area.
@@ -48,6 +53,10 @@ service ValidationFlowService {
   rpc GetSourceFlow(GetSourceFlowRequest) returns (entur.validation.v1.ValidationFlow) {
     option (google.api.http) = {get: "/validation/v1/sources/{source}/flows/{stage}/{area}"};
     option (gnostic.openapi.v3.operation) = {summary: "Get the flow connected to a source, for one stage and area."};
+    option (entur.http.v1.failure) = {
+      code: "404"
+      description: "The source or area does not exist, or no flow is connected for the given stage and area."
+    };
   }
 
   // Create a new validation flow. Every item's `rule_flow_item.id`/`sub_flow_item.id` must

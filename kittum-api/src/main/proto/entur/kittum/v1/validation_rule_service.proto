@@ -2,6 +2,7 @@ syntax = "proto3";
 
 package entur.kittum.v1;
 
+import "entur/http/v1/failure.proto";
 import "entur/validation/v1/validation_rule.proto";
 import "gnostic/openapi/v3/annotations.proto";
 import "google/api/annotations.proto";
@@ -30,6 +31,10 @@ service ValidationRuleService {
   rpc GetValidationRule(GetValidationRuleRequest) returns (entur.validation.v1.ValidationRule) {
     option (google.api.http) = {get: "/validation/v1/rules/{id}"};
     option (gnostic.openapi.v3.operation) = {summary: "Get one validation rule by its id."};
+    option (entur.http.v1.failure) = {
+      code: "404"
+      description: "No validation rule exists with the given id."
+    };
   }
 
   // Create a new validation rule. Exactly one field of its `rule` oneof must be set. Its

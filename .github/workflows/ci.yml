@@ -52,5 +52,11 @@ jobs:
         # current .proto files.
         run: ./gradlew build
 
+      - name: Test build logic
+        # buildSrc is a separate Gradle build (for the main build's own script classpath) -
+        # its own tests, e.g. of the entur.grpc-openapi-module convention plugin, never run
+        # as a side effect of `./gradlew build` above and need this separate invocation.
+        run: ./gradlew :buildSrc:test
+
       - name: Verify generated OpenAPI specs are committed
         run: git diff --exit-code -- specs/
