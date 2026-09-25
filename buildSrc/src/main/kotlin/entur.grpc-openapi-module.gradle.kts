@@ -65,12 +65,17 @@ configure<SourceSetContainer> {
 
 // A separate image of the *whole* workspace (not just this module's own src/main/proto), since
 // entur.http.v1.ProblemDetail - which AugmentOpenApiWithFailures needs to turn into a
-// components.schemas entry - lives in validation-model and, being unreachable from any rpc's
+// components.schemas entry - lives in http-model and, being unreachable from any rpc's
 // actual request/response type, is never pulled into this module's own buf image.
 val bufBuildDescriptorSet =
     tasks.register<Exec>("bufBuildDescriptorSet") {
         description = "Builds a FileDescriptorSet of the whole workspace for AugmentOpenApiWithFailures."
         group = "build"
+        // Root's subprojects{} only wires bufFormat as a dependency of tasks literally named
+        // "bufGenerate" - this task needs the same ordering guarantee (read formatted .proto
+        // files, not ones buf format -w is concurrently rewriting) since it builds its own image
+        // of the same workspace.
+        dependsOn(rootProject.tasks.named("bufFormat"))
         workingDir = rootProject.projectDir
         inputs.dir("src/main/proto")
         inputs.dir(rootProject.file("http-model/src/main/proto"))

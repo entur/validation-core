@@ -141,7 +141,7 @@ class OpenApiFailureAugmenter {
                     val failureMessages = reparsed.repeatedField<Message>(failureExt)
                     if (failureMessages.isEmpty()) continue
                     val operationId = "${service.name}_${method.name}"
-                    result[operationId] =
+                    val failures =
                         failureMessages.map { msg ->
                             val descriptor = msg.descriptorForType
                             Failure(
@@ -149,6 +149,11 @@ class OpenApiFailureAugmenter {
                                 description = msg.getField(descriptor.findFieldByName("description")) as String,
                             )
                         }
+                    val duplicateCode = failures.groupingBy { it.code }.eachCount().entries.firstOrNull { it.value > 1 }
+                    check(duplicateCode == null) {
+                        "Operation '$operationId' declares (entur.http.v1.failure) code '${duplicateCode?.key}' more than once"
+                    }
+                    result[operationId] = failures
                 }
             }
         }
@@ -193,6 +198,7 @@ class OpenApiFailureAugmenter {
         val schema = LinkedHashMap<String, Any?>()
         comments[listOf(4, messageIndex)]?.let { schema["description"] = it }
         if (required.isNotEmpty()) schema["required"] = required
+        schema["type"] = "object"
         schema["properties"] = properties
         return schema
     }

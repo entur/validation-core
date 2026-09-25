@@ -461,6 +461,7 @@ components:
             required:
               - title
               - status
+            type: object
             properties:
                 title:
                     type: string
