@@ -1,0 +1,13 @@
+version: v2
+plugins:
+  # java/kotlin are two of the languages built into protoc itself (no
+  # standalone protoc-gen-java/protoc-gen-kotlin binary exists) - buf's
+  # `protoc_builtin` plugin type shells out to `protoc` on $PATH (pinned in
+  # .mise.toml, matching the protobuf-java/protobuf-kotlin runtime version in
+  # gradle/libs.versions.toml) for these instead of the plugin protocol.
+  - protoc_builtin: java
+    protoc_path: protoc
+    out: http-model/build/generated/source/proto/main/java
+  - protoc_builtin: kotlin
+    protoc_path: protoc
+    out: http-model/build/generated/source/proto/main/kotlin

@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+package mock;
+
+import "entur/http/v1/failure.proto";
+
+// Exists purely so OpenApiFailureAugmenterTest can check that a non-HTTP-status-code failure
+// code is rejected, without polluting service.proto's fixture (which the other tests assert an
+// exact, invalid-code-free set of responses against).
+
+message GetThingRequest {}
+
+message Thing {}
+
+service InvalidCodeService {
+  rpc GetThing(GetThingRequest) returns (Thing) {
+    option (entur.http.v1.failure) = {code: "abc" description: "Not a valid HTTP status code."};
+  }
+}

@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+package mock;
+
+import "entur/http/v1/failure.proto";
+
+// Exists purely so OpenApiFailureAugmenterTest can check that a failure code colliding with an
+// already-present response (e.g. the generated success response) is rejected, without polluting
+// service.proto's fixture (which the other tests assert an exact, collision-free set of
+// responses against).
+
+message GetThingRequest {}
+
+message Thing {}
+
+service CollisionService {
+  rpc GetThing(GetThingRequest) returns (Thing) {
+    option (entur.http.v1.failure) = {code: "200" description: "Wrongly collides with the success response."};
+  }
+}

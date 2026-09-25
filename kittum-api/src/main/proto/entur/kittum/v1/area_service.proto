@@ -2,6 +2,7 @@ syntax = "proto3";
 
 package entur.kittum.v1;
 
+import "entur/http/v1/failure.proto";
 import "entur/validation/v1/area.proto";
 import "gnostic/openapi/v3/annotations.proto";
 import "google/api/annotations.proto";
@@ -26,6 +27,10 @@ service AreaService {
   rpc GetArea(GetAreaRequest) returns (entur.validation.v1.Area) {
     option (google.api.http) = {get: "/v1/areas/{id}"};
     option (gnostic.openapi.v3.operation) = {summary: "Get one area by its id."};
+    option (entur.http.v1.failure) = {
+      code: "404"
+      description: "No area exists with the given id."
+    };
   }
 }
 
