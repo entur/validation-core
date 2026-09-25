@@ -1,6 +1,6 @@
-# Generated with protoc-gen-openapi and OpenApiFailureAugmenter
+# Generated with protoc-gen-openapi and OpenApiAugmentationPipeline
 # https://github.com/google/gnostic/tree/master/cmd/protoc-gen-openapi
-# https://github.com/entur/validation-core/tree/master/buildSrc/src/main/kotlin/OpenApiFailureAugmenter.kt
+# https://github.com/entur/validation-core/tree/master/buildSrc/src/main/kotlin/no/entur/http/OpenApiAugmentationPipeline.kt
 
 openapi: 3.0.3
 info:
@@ -989,6 +989,11 @@ components:
                     format: date-time
             description: A specific area that is interested in validating certain
                 deliveries. Owned by exactly one Owner.
+            example:
+                id: 1
+                name: Personalisering
+                owner: 2
+                updatedAt: '2026-01-01T00:00:00Z'
         FieldViolation:
             description: One request field that failed validation.
             required:
@@ -999,10 +1004,15 @@ components:
                 field:
                     type: string
                     description: The offending field, e.g. "name" or "items[2].severity_override".
+                    example: name
                 message:
                     type: string
                     description: A human-readable explanation of why this field is
                         invalid.
+                    example: must not be blank
+            example:
+                field: name
+                message: must not be blank
         FlowItem:
             type: object
             properties:
@@ -1028,6 +1038,23 @@ components:
                          set by the client is ignored, not an error.
                     format: date-time
             description: One item in a ValidationFlow's ordered list.
+            example:
+                id: 1
+                ruleFlowItem:
+                    id: 1
+                    validationRule:
+                        id: 1
+                        area: 7
+                        defaultSeverity: ERROR
+                        stage: STRUCTURAL
+                        description: Validates the file against its XSD.
+                        xsdRule:
+                            message: File does not match its XSD.
+                            xsdPath: xsd/netex/NeTEx_publication.xsd
+                            fileFilter: .*\.xml
+                        updatedAt: '2026-01-01T00:00:00Z'
+                    severityOverride: WARNING
+                updatedAt: '2026-01-01T00:00:00Z'
         ListAreasResponse:
             type: object
             properties:
@@ -1037,6 +1064,12 @@ components:
                         $ref: '#/components/schemas/Area'
                     description: All existing areas.
             description: Response for ListAreas.
+            example:
+                items:
+                  - id: 1
+                    name: Personalisering
+                    owner: 2
+                    updatedAt: '2026-01-01T00:00:00Z'
         ListOwnersResponse:
             type: object
             properties:
@@ -1046,6 +1079,11 @@ components:
                         $ref: '#/components/schemas/Owner'
                     description: All existing owners.
             description: Response for ListOwners.
+            example:
+                items:
+                  - id: 1
+                    name: team-validering
+                    updatedAt: '2026-01-01T00:00:00Z'
         ListSourcesResponse:
             type: object
             properties:
@@ -1055,6 +1093,12 @@ components:
                         $ref: '#/components/schemas/Source'
                     description: All existing sources.
             description: Response for ListSources.
+            example:
+                items:
+                  - id: 42
+                    name: rutedata
+                    owner: 3
+                    updatedAt: '2026-01-01T00:00:00Z'
         ListValidationFlowsResponse:
             type: object
             properties:
@@ -1070,6 +1114,31 @@ components:
                         The cursor to pass to a subsequent call to continue listing. Empty
                          when there are no more results.
             description: Response for ListValidationFlows.
+            example:
+                items:
+                  - id: 1
+                    name: netex-structural
+                    description: Runs structural checks for NeTEx deliveries.
+                    stage: STRUCTURAL
+                    items:
+                      - id: 1
+                        ruleFlowItem:
+                            id: 1
+                            validationRule:
+                                id: 1
+                                area: 7
+                                defaultSeverity: ERROR
+                                stage: STRUCTURAL
+                                description: Validates the file against its XSD.
+                                xsdRule:
+                                    message: File does not match its XSD.
+                                    xsdPath: xsd/netex/NeTEx_publication.xsd
+                                    fileFilter: .*\.xml
+                                updatedAt: '2026-01-01T00:00:00Z'
+                            severityOverride: WARNING
+                        updatedAt: '2026-01-01T00:00:00Z'
+                    updatedAt: '2026-01-01T00:00:00Z'
+                cursor: eyJpZCI6NjJ9
         ListValidationRulesResponse:
             type: object
             properties:
@@ -1085,6 +1154,19 @@ components:
                         The cursor to pass to a subsequent call to continue listing. Empty
                          when there are no more results.
             description: Response for ListValidationRules.
+            example:
+                items:
+                  - id: 1
+                    area: 7
+                    defaultSeverity: ERROR
+                    stage: STRUCTURAL
+                    description: Validates the file against its XSD.
+                    xsdRule:
+                        message: File does not match its XSD.
+                        xsdPath: xsd/netex/NeTEx_publication.xsd
+                        fileFilter: .*\.xml
+                    updatedAt: '2026-01-01T00:00:00Z'
+                cursor: eyJpZCI6NjJ9
         Owner:
             required:
               - name
@@ -1108,6 +1190,10 @@ components:
                          the client is ignored, not an error.
                     format: date-time
             description: An owner of deliveries and areas, for example an Entur team.
+            example:
+                id: 1
+                name: team-validering
+                updatedAt: '2026-01-01T00:00:00Z'
         ProblemDetail:
             description: RFC 9457 Problem Details for HTTP APIs.
             required:
@@ -1118,13 +1204,16 @@ components:
                 title:
                     type: string
                     description: A short, human-readable summary of the problem type.
+                    example: Not Found
                 status:
                     type: integer
                     format: int32
                     description: The HTTP status code.
+                    example: 404
                 detail:
                     type: string
                     description: A human-readable explanation specific to this occurrence.
+                    example: No source exists with the name 'rutedata'.
                 errors:
                     type: array
                     items:
@@ -1132,6 +1221,13 @@ components:
                     description: |-
                         Field-level validation errors that caused this problem, if any. This is an RFC 9457 extension
                          member; it is absent when the problem isn't a per-field validation failure.
+            example:
+                title: Not Found
+                status: 404
+                detail: No source exists with the name 'rutedata'.
+                errors:
+                  - field: name
+                    message: must not be blank
         RuleFlowItem:
             type: object
             properties:
@@ -1162,6 +1258,20 @@ components:
             description: |-
                 A flow item that runs one concrete ValidationRule, optionally overriding
                  its default severity for this inclusion only.
+            example:
+                id: 1
+                validationRule:
+                    id: 1
+                    area: 7
+                    defaultSeverity: ERROR
+                    stage: STRUCTURAL
+                    description: Validates the file against its XSD.
+                    xsdRule:
+                        message: File does not match its XSD.
+                        xsdPath: xsd/netex/NeTEx_publication.xsd
+                        fileFilter: .*\.xml
+                    updatedAt: '2026-01-01T00:00:00Z'
+                severityOverride: WARNING
         Source:
             required:
               - name
@@ -1192,6 +1302,11 @@ components:
                     format: date-time
             description: A named intake point for a set of files, owned by exactly
                 one Owner.
+            example:
+                id: 42
+                name: rutedata
+                owner: 3
+                updatedAt: '2026-01-01T00:00:00Z'
         SubFlowItem:
             type: object
             properties:
@@ -1211,6 +1326,31 @@ components:
             description: |-
                 A flow item that runs another ValidationFlow in its entirety, letting
                  flows be composed into a tree.
+            example:
+                id: 1
+                flow:
+                    id: 1
+                    name: netex-structural
+                    description: Runs structural checks for NeTEx deliveries.
+                    stage: STRUCTURAL
+                    items:
+                      - id: 1
+                        ruleFlowItem:
+                            id: 1
+                            validationRule:
+                                id: 1
+                                area: 7
+                                defaultSeverity: ERROR
+                                stage: STRUCTURAL
+                                description: Validates the file against its XSD.
+                                xsdRule:
+                                    message: File does not match its XSD.
+                                    xsdPath: xsd/netex/NeTEx_publication.xsd
+                                    fileFilter: .*\.xml
+                                updatedAt: '2026-01-01T00:00:00Z'
+                            severityOverride: WARNING
+                        updatedAt: '2026-01-01T00:00:00Z'
+                    updatedAt: '2026-01-01T00:00:00Z'
         ValidationFlow:
             required:
               - name
@@ -1260,6 +1400,29 @@ components:
                 A named, ordered tree of validation rules. A validation flow belongs to
                  exactly one validation stage; every rule and sub-flow it contains must
                  belong to that same stage.
+            example:
+                id: 1
+                name: netex-structural
+                description: Runs structural checks for NeTEx deliveries.
+                stage: STRUCTURAL
+                items:
+                  - id: 1
+                    ruleFlowItem:
+                        id: 1
+                        validationRule:
+                            id: 1
+                            area: 7
+                            defaultSeverity: ERROR
+                            stage: STRUCTURAL
+                            description: Validates the file against its XSD.
+                            xsdRule:
+                                message: File does not match its XSD.
+                                xsdPath: xsd/netex/NeTEx_publication.xsd
+                                fileFilter: .*\.xml
+                            updatedAt: '2026-01-01T00:00:00Z'
+                        severityOverride: WARNING
+                    updatedAt: '2026-01-01T00:00:00Z'
+                updatedAt: '2026-01-01T00:00:00Z'
         ValidationRule:
             required:
               - area
@@ -1317,6 +1480,17 @@ components:
                          value set by the client is ignored, not an error.
                     format: date-time
             description: A single validation rule, owned by one Area.
+            example:
+                id: 1
+                area: 7
+                defaultSeverity: ERROR
+                stage: STRUCTURAL
+                description: Validates the file against its XSD.
+                xsdRule:
+                    message: File does not match its XSD.
+                    xsdPath: xsd/netex/NeTEx_publication.xsd
+                    fileFilter: .*\.xml
+                updatedAt: '2026-01-01T00:00:00Z'
         XsdRule:
             required:
               - message
@@ -1339,6 +1513,10 @@ components:
                         by this rule. Runs against every file when absent.
             description: A validation rule that checks a file against an XSD. Always
                 stage STRUCTURAL.
+            example:
+                message: File does not match its XSD.
+                xsdPath: xsd/netex/NeTEx_publication.xsd
+                fileFilter: .*\.xml
 tags:
   - name: AreaService
     description: The gRPC service to view and administrate areas.

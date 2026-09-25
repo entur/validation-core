@@ -1,9 +1,10 @@
 /**
  * Convention plugin for a gRPC module whose `.proto` files carry `google.api.http` bindings and
  * therefore publish an OpenAPI contract via gnostic. Bundles the whole `.proto` -> Java/Kotlin +
- * OpenAPI pipeline, including the AugmentOpenApiWithFailures post-processing step that splices
- * in the responses an rpc's `(entur.http.v1.failure)` method options describe and
- * the entur.http.v1.ProblemDetail schema they `$ref`.
+ * OpenAPI pipeline, including the AugmentOpenApi post-processing step (see
+ * OpenApiAugmentationPipeline.kt) that splices in the responses an rpc's `(entur.http.v1.failure)`
+ * method options describe, the entur.http.v1.ProblemDetail schema they `$ref`, and a whole-object
+ * `example` for every schema.
  *
  * A module applying this plugin only needs to additionally:
  * - declare its own `dependencies { api(project(":validation-model")); api(libs.bundles.protobuf) }`
@@ -11,6 +12,8 @@
  * - have a `<module>/buf.gen.yaml` templating the google-gnostic-openapi plugin, and its own
  *   `src/main/proto`
  */
+
+import no.entur.http.AugmentOpenApi
 
 plugins {
     `java-library`
@@ -64,12 +67,12 @@ configure<SourceSetContainer> {
 }
 
 // A separate image of the *whole* workspace (not just this module's own src/main/proto), since
-// entur.http.v1.ProblemDetail - which AugmentOpenApiWithFailures needs to turn into a
-// components.schemas entry - lives in http-model and, being unreachable from any rpc's
-// actual request/response type, is never pulled into this module's own buf image.
+// entur.http.v1.ProblemDetail - which AugmentOpenApi needs to turn into a components.schemas
+// entry - lives in http-model and, being unreachable from any rpc's actual request/response type,
+// is never pulled into this module's own buf image.
 val bufBuildDescriptorSet =
     tasks.register<Exec>("bufBuildDescriptorSet") {
-        description = "Builds a FileDescriptorSet of the whole workspace for AugmentOpenApiWithFailures."
+        description = "Builds a FileDescriptorSet of the whole workspace for AugmentOpenApi."
         group = "build"
         // Root's subprojects{} only wires bufFormat as a dependency of tasks literally named
         // "bufGenerate" - this task needs the same ordering guarantee (read formatted .proto
@@ -95,16 +98,18 @@ val bufBuildDescriptorSet =
     }
 
 // gnostic has no way to turn an rpc's terse `(entur.http.v1.failure)` method options into the
-// OpenAPI responses they describe, or entur.http.v1.ProblemDetail - the message those responses
-// $ref - into a components.schemas entry (see AugmentOpenApiWithFailures's own doc comment for
-// why). This splices both in as a post-processing step over gnostic's own output.
-val augmentOpenApiWithFailures =
-    tasks.register<AugmentOpenApiWithFailures>("augmentOpenApiWithFailures") {
+// OpenAPI responses they describe, entur.http.v1.ProblemDetail - the message those responses $ref
+// - into a components.schemas entry, or a whole-object `example` for a schema (as opposed to the
+// per-field ones it already copies from `(gnostic.openapi.v3.property).example`) - see
+// OpenApiAugmentationPipeline.kt for why. This splices all of that in as a post-processing step
+// over gnostic's own output.
+val augmentOpenApi =
+    tasks.register<AugmentOpenApi>("augmentOpenApi") {
         group = "build"
         dependsOn(bufGenerate, bufBuildDescriptorSet)
         descriptorSet = layout.buildDirectory.file("generated/descriptor-set/descriptor.binpb")
         openApiYaml = layout.buildDirectory.file("generated/openapi/openapi.yaml")
-        outputYaml = layout.buildDirectory.file("generated/openapi/openapi-with-failures.yaml")
+        outputYaml = layout.buildDirectory.file("generated/openapi/openapi-augmented.yaml")
     }
 
 // ../specs/<specFileName> is a copied build artifact. It is committed so that a change to a
@@ -114,8 +119,8 @@ val copyOpenApiSpec =
     tasks.register<Copy>("copyOpenApiSpec") {
         description = "Copies the augmented OpenAPI spec over the committed specs/${grpcOpenApiModule.specFileName.orNull}."
         group = "documentation"
-        dependsOn(augmentOpenApiWithFailures)
-        from(layout.buildDirectory.file("generated/openapi/openapi-with-failures.yaml"))
+        dependsOn(augmentOpenApi)
+        from(layout.buildDirectory.file("generated/openapi/openapi-augmented.yaml"))
         into(rootProject.layout.projectDirectory.dir("specs"))
         rename { grpcOpenApiModule.specFileName.get() }
     }

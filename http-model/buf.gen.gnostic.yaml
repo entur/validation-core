@@ -4,7 +4,7 @@ version: v2
 plugins:
   - protoc_builtin: java
     protoc_path: protoc
-    out: validation-model/build/generated/source/gnostic/main/java
+    out: http-model/build/generated/source/gnostic/main/java
   - protoc_builtin: kotlin
     protoc_path: protoc
-    out: validation-model/build/generated/source/gnostic/main/kotlin
+    out: http-model/build/generated/source/gnostic/main/kotlin
