@@ -236,8 +236,7 @@ class OpenApiFailureAugmenter {
      * recurse into) - wrapped in `allOf` for a singular field, since a bare `$ref` can't carry a
      * sibling `description` in OpenAPI 3.0; a `repeated` field of either kind wraps in a `type:
      * array` envelope instead, same as gnostic's own output for a `repeated` message field
-     * elsewhere in the spec. Doesn't handle a proto3 map field (none exist on any message reachable
-     * from here today).
+     * elsewhere in the spec.
      */
     private fun fieldSchema(
         field: Descriptors.FieldDescriptor,
