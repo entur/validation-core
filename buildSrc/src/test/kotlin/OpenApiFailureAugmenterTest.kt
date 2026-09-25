@@ -3,6 +3,7 @@ import org.yaml.snakeyaml.Yaml
 import java.io.File
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 
 /**
  * Exercises OpenApiFailureAugmenter against the real entur.http.v1.Failure/ProblemDetail (from
@@ -40,7 +41,7 @@ class OpenApiFailureAugmenterTest {
             schemas: {}
         """.trimIndent()
 
-    private fun compileFixture(): DescriptorProtos.FileDescriptorSet {
+    private fun compileFixture(mockProtoFile: String = "mock/service.proto"): DescriptorProtos.FileDescriptorSet {
         val descriptorSetFile = File.createTempFile("fixture", ".binpb").apply { deleteOnExit() }
         val protoc = File(System.getProperty("user.home"), ".local/share/mise/shims/protoc")
             .let { if (it.canExecute()) it.absolutePath else "protoc" }
@@ -55,7 +56,7 @@ class OpenApiFailureAugmenterTest {
                 "--descriptor_set_out=${descriptorSetFile.absolutePath}",
                 "entur/http/v1/failure.proto",
                 "entur/http/v1/problem_detail.proto",
-                "mock/service.proto",
+                mockProtoFile,
             ).redirectErrorStream(true).start()
         val output = process.inputStream.bufferedReader().readText()
         check(process.waitFor() == 0) { "protoc failed compiling the fixture:\n$output" }
@@ -96,6 +97,7 @@ class OpenApiFailureAugmenterTest {
         val spec: Map<String, Any?> = Yaml().load(result)
 
         val schema = spec.at("components", "schemas").getValue("ProblemDetail") as Map<String, Any?>
+        assertEquals("object", schema["type"])
         assertEquals(listOf("title", "status"), schema["required"])
 
         @Suppress("UNCHECKED_CAST")
@@ -107,5 +109,17 @@ class OpenApiFailureAugmenterTest {
         val status = properties["status"] as Map<String, Any?>
         assertEquals("integer", status["type"])
         assertEquals("int32", status["format"])
+    }
+
+    @Test
+    fun `rejects an rpc that declares the same failure code more than once`() {
+        val exception =
+            assertFailsWith<IllegalStateException> {
+                OpenApiFailureAugmenter().augment(compileFixture("mock/duplicate_service.proto"), minimalOpenApiYaml)
+            }
+        assertEquals(
+            "Operation 'DuplicateFailureService_DeleteThing' declares (entur.http.v1.failure) code '404' more than once",
+            exception.message,
+        )
     }
 }

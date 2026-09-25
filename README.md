@@ -7,12 +7,13 @@ Java libraries. It contains schema and generated code only.
 
 ## Modules
 
-Two Gradle modules, each published as its own Maven artifact, sharing one version:
+Three Gradle modules, each published as its own Maven artifact, sharing one version:
 
 | Module | Proto package | Artifact | Contents |
 |--------|---------------|----------|----------|
+| [`http-model`](http-model) | `entur.http.v1` | `no.entur.validation:http-model` | `Failure`/`ProblemDetail`, the RFC 9457-style types used to document and render rpc failure responses. |
 | [`validation-model`](validation-model) | `entur.validation.v1` | `no.entur.validation:validation-model` | The domain messages. |
-| [`kittum-api`](kittum-api) | `entur.kittum.v1` | `no.entur.validation:kittum-api` | Kittum's gRPC/REST service definitions and their Request/Response messages. Depends on `validation-model`. |
+| [`kittum-api`](kittum-api) | `entur.kittum.v1` | `no.entur.validation:kittum-api` | Kittum's gRPC/REST service definitions and their Request/Response messages. |
 
 More packages (and modules) are expected as new APIs are added on top of the shared model.
 

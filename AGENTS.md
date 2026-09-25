@@ -1,8 +1,9 @@
 # validation-core
 
-Shared protobuf schema for Entur's validation platform, published as Java/Kotlin libraries. Two
-Gradle modules - `validation-model` (the `entur.validation.v1` domain messages) and `kittum-api`
-(Kittum's `entur.kittum.v1` service definitions) - each published as its own Maven artifact.
+Shared protobuf schema for Entur's validation platform, published as Java/Kotlin libraries. Three
+Gradle modules - `http-model` (the shared `entur.http.v1` `Failure`/`ProblemDetail` types),
+`validation-model` (the `entur.validation.v1` domain messages), and `kittum-api` (Kittum's
+`entur.kittum.v1` service definitions) - each published as its own Maven artifact.
 
 This repository contains schema and generated code only. There is no application implementation, no
 database, no Dockerfile, and nothing deployable. The parts of the golden path that assume a running
@@ -17,7 +18,8 @@ https://github.com/entur/ai/blob/main/AGENTS.md
 ## Project-Specific
 
 - Owning team: `team-validering`
-- Artifacts: `no.entur.validation:validation-model`, `no.entur.validation:kittum-api`
+- Artifacts: `no.entur.validation:http-model`, `no.entur.validation:validation-model`,
+  `no.entur.validation:kittum-api`
 - Published to Entur's JFrog Artifactory (`entur-release-standard`) via `entur/gha-artifactory`.
   Publishing is manual and tag-triggered: pushing a `v<major>.<minor>.<patch>` tag runs CD, which
   publishes that exact version. Merging to `main` does not publish by itself. See "Versioning and
@@ -36,9 +38,12 @@ https://github.com/entur/ai/blob/main/AGENTS.md
   `specs/*.yaml` is generated from them by `buf generate`, then copied into the source tree so a
   schema change produces a reviewable diff of the resulting HTTP contract. The location matches the
   standard; the direction of authorship is inverted.
-- **No tests.** Both modules report `test NO-SOURCE`; there is no hand-written code to exercise.
-  This is a known gap rather than a decision - a smoke test proving the generated classes load and
-  round-trip would be cheap insurance that codegen actually produces working output.
+- **No tests in the schema modules.** All three report `test NO-SOURCE`; there is no hand-written
+  code to exercise. This is a known gap rather than a decision - a smoke test proving the generated
+  classes load and round-trip would be cheap insurance that codegen actually produces working
+  output. (`buildSrc`'s own build logic, e.g. `OpenApiFailureAugmenter`, does have unit tests -
+  run separately via `./gradlew :buildSrc:test`, since buildSrc is compiled and jar'd automatically
+  before every build but not tested as a side effect of it.)
 
 ## Critical Rules
 
