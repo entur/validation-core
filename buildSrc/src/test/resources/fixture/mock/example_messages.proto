@@ -29,8 +29,6 @@ message CycleB {
   CycleA a = 1;
 }
 
-// Mirrors FlowItem's rule_flow_item/sub_flow_item oneof: two mutually exclusive alternatives,
-// each with its own declared example, plus a field before and after the oneof.
 message WithOneof {
   int32 id = 1 [(gnostic.openapi.v3.property) = {example: {yaml: "1"}}];
   oneof choice {

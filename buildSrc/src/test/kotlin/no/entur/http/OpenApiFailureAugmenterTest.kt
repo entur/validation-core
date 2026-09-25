@@ -1,8 +1,6 @@
+package no.entur.http
+
 import com.google.protobuf.DescriptorProtos
-import no.entur.http.OpenApiFailureAugmenter
-import no.entur.http.buildExtensionRegistry
-import no.entur.http.buildFileDescriptors
-import no.entur.http.newOpenApiYaml
 import java.io.File
 import kotlin.test.Test
 import kotlin.test.assertEquals
