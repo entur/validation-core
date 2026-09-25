@@ -13,7 +13,7 @@ info:
 servers:
     - url: https://kittum.entur.io
 paths:
-    /v1/areas:
+    /validation/v1/areas:
         get:
             tags:
                 - AreaService
@@ -49,7 +49,7 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/Area'
-    /v1/areas/{id}:
+    /validation/v1/areas/{id}:
         get:
             tags:
                 - AreaService
@@ -133,7 +133,7 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/Area'
-    /v1/flows:
+    /validation/v1/flows:
         get:
             tags:
                 - ValidationFlowService
@@ -194,7 +194,7 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/ValidationFlow'
-    /v1/flows/{id}:
+    /validation/v1/flows/{id}:
         get:
             tags:
                 - ValidationFlowService
@@ -296,7 +296,7 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/ValidationFlow'
-    /v1/owners:
+    /validation/v1/owners:
         get:
             tags:
                 - OwnerService
@@ -332,7 +332,7 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/Owner'
-    /v1/owners/{id}:
+    /validation/v1/owners/{id}:
         get:
             tags:
                 - OwnerService
@@ -417,7 +417,7 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/Owner'
-    /v1/rules:
+    /validation/v1/rules:
         get:
             tags:
                 - ValidationRuleService
@@ -475,7 +475,7 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/ValidationRule'
-    /v1/rules/{id}:
+    /validation/v1/rules/{id}:
         get:
             tags:
                 - ValidationRuleService
@@ -565,7 +565,7 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/ValidationRule'
-    /v1/sources:
+    /validation/v1/sources:
         get:
             tags:
                 - SourceService
@@ -602,7 +602,7 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/Source'
-    /v1/sources/{name}:
+    /validation/v1/sources/{name}:
         get:
             tags:
                 - SourceService
@@ -685,7 +685,7 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/Source'
-    /v1/sources/{source}/flows/{stage}/{area}:
+    /validation/v1/sources/{source}/flows/{stage}/{area}:
         get:
             tags:
                 - ValidationFlowService

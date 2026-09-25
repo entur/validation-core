@@ -20,13 +20,13 @@ service OwnerService {
 
   // List all existing owners.
   rpc ListOwners(ListOwnersRequest) returns (ListOwnersResponse) {
-    option (google.api.http) = {get: "/v1/owners"};
+    option (google.api.http) = {get: "/validation/v1/owners"};
     option (gnostic.openapi.v3.operation) = {summary: "List all existing owners."};
   }
 
   // Get one owner by its id.
   rpc GetOwner(GetOwnerRequest) returns (entur.validation.v1.Owner) {
-    option (google.api.http) = {get: "/v1/owners/{id}"};
+    option (google.api.http) = {get: "/validation/v1/owners/{id}"};
     option (gnostic.openapi.v3.operation) = {summary: "Get one owner by its id."};
   }
 
@@ -35,7 +35,7 @@ service OwnerService {
   // and `updated_at`.
   rpc CreateOwner(CreateOwnerRequest) returns (entur.validation.v1.Owner) {
     option (google.api.http) = {
-      post: "/v1/owners"
+      post: "/validation/v1/owners"
       body: "owner"
     };
     option (gnostic.openapi.v3.operation) = {summary: "Create a new owner."};
@@ -49,7 +49,7 @@ service OwnerService {
   // not a field of UpdateOwnerRequest.
   rpc UpdateOwner(UpdateOwnerRequest) returns (entur.validation.v1.Owner) {
     option (google.api.http) = {
-      patch: "/v1/owners/{id}"
+      patch: "/validation/v1/owners/{id}"
       body: "owner"
     };
     option (gnostic.openapi.v3.operation) = {summary: "Update an existing owner."};
@@ -60,7 +60,7 @@ service OwnerService {
   // longer matches the owner's current `ETag`, e.g. because another update happened
   // concurrently. This is an HTTP-layer precondition, not a field of DeleteOwnerRequest.
   rpc DeleteOwner(DeleteOwnerRequest) returns (google.protobuf.Empty) {
-    option (google.api.http) = {delete: "/v1/owners/{id}"};
+    option (google.api.http) = {delete: "/validation/v1/owners/{id}"};
     option (gnostic.openapi.v3.operation) = {summary: "Delete an owner."};
   }
 }

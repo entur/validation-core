@@ -20,13 +20,13 @@ service SourceService {
 
   // List all existing sources.
   rpc ListSources(ListSourcesRequest) returns (ListSourcesResponse) {
-    option (google.api.http) = {get: "/v1/sources"};
+    option (google.api.http) = {get: "/validation/v1/sources"};
     option (gnostic.openapi.v3.operation) = {summary: "List all existing sources."};
   }
 
   // Get one source by its name.
   rpc GetSource(GetSourceRequest) returns (entur.validation.v1.Source) {
-    option (google.api.http) = {get: "/v1/sources/{name}"};
+    option (google.api.http) = {get: "/validation/v1/sources/{name}"};
     option (gnostic.openapi.v3.operation) = {summary: "Get one source by its name."};
   }
 
@@ -36,7 +36,7 @@ service SourceService {
   // the full created source, including its server-assigned `id` and `updated_at`.
   rpc CreateSource(CreateSourceRequest) returns (entur.validation.v1.Source) {
     option (google.api.http) = {
-      post: "/v1/sources"
+      post: "/validation/v1/sources"
       body: "source"
     };
     option (gnostic.openapi.v3.operation) = {summary: "Create a new source."};
@@ -51,7 +51,7 @@ service SourceService {
   // happened concurrently. This is an HTTP-layer precondition, not a field of UpdateSourceRequest.
   rpc UpdateSource(UpdateSourceRequest) returns (entur.validation.v1.Source) {
     option (google.api.http) = {
-      patch: "/v1/sources/{name}"
+      patch: "/validation/v1/sources/{name}"
       body: "source"
     };
     option (gnostic.openapi.v3.operation) = {summary: "Update an existing source."};
@@ -62,7 +62,7 @@ service SourceService {
   // longer matches the source's current `ETag`, e.g. because another update happened
   // concurrently. This is an HTTP-layer precondition, not a field of DeleteSourceRequest.
   rpc DeleteSource(DeleteSourceRequest) returns (google.protobuf.Empty) {
-    option (google.api.http) = {delete: "/v1/sources/{name}"};
+    option (google.api.http) = {delete: "/validation/v1/sources/{name}"};
     option (gnostic.openapi.v3.operation) = {summary: "Delete a source."};
   }
 }

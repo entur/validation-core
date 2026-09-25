@@ -23,7 +23,7 @@ service ValidationFlowService {
   // page size of 20. The flows are returned shallow: their rule and
   // sub-flow items carry only the database id of what they refer to.
   rpc ListValidationFlows(ListValidationFlowsRequest) returns (ListValidationFlowsResponse) {
-    option (google.api.http) = {get: "/v1/flows"};
+    option (google.api.http) = {get: "/validation/v1/flows"};
     option (gnostic.openapi.v3.operation) = {summary: "List all existing flows."};
   }
 
@@ -37,7 +37,7 @@ service ValidationFlowService {
   // state. A referenced rule or sub-flow changing therefore changes this response's content
   // without changing this flow's own `ETag`.
   rpc GetValidationFlow(GetValidationFlowRequest) returns (entur.validation.v1.ValidationFlow) {
-    option (google.api.http) = {get: "/v1/flows/{id}"};
+    option (google.api.http) = {get: "/validation/v1/flows/{id}"};
     option (gnostic.openapi.v3.operation) = {summary: "Get one flow by its id."};
   }
 
@@ -46,7 +46,7 @@ service ValidationFlowService {
   // recursively, carries both the database id of what it refers to and the
   // referred-to ValidationRule/ValidationFlow itself.
   rpc GetSourceFlow(GetSourceFlowRequest) returns (entur.validation.v1.ValidationFlow) {
-    option (google.api.http) = {get: "/v1/sources/{source}/flows/{stage}/{area}"};
+    option (google.api.http) = {get: "/validation/v1/sources/{source}/flows/{stage}/{area}"};
     option (gnostic.openapi.v3.operation) = {summary: "Get the flow connected to a source, for one stage and area."};
   }
 
@@ -58,7 +58,7 @@ service ValidationFlowService {
   // server-assigned `id` and `updated_at` and those of every item it contains.
   rpc CreateValidationFlow(CreateValidationFlowRequest) returns (entur.validation.v1.ValidationFlow) {
     option (google.api.http) = {
-      post: "/v1/flows"
+      post: "/validation/v1/flows"
       body: "validation_flow"
     };
     option (gnostic.openapi.v3.operation) = {summary: "Create a new validation flow."};
@@ -77,7 +77,7 @@ service ValidationFlowService {
   // not a field of UpdateValidationFlowRequest.
   rpc UpdateValidationFlow(UpdateValidationFlowRequest) returns (entur.validation.v1.ValidationFlow) {
     option (google.api.http) = {
-      patch: "/v1/flows/{id}"
+      patch: "/validation/v1/flows/{id}"
       body: "validation_flow"
     };
     option (gnostic.openapi.v3.operation) = {summary: "Update an existing validation flow."};
@@ -90,7 +90,7 @@ service ValidationFlowService {
   // another update to this flow happened concurrently. This is an HTTP-layer precondition,
   // not a field of DeleteValidationFlowRequest.
   rpc DeleteValidationFlow(DeleteValidationFlowRequest) returns (google.protobuf.Empty) {
-    option (google.api.http) = {delete: "/v1/flows/{id}"};
+    option (google.api.http) = {delete: "/validation/v1/flows/{id}"};
     option (gnostic.openapi.v3.operation) = {summary: "Delete a validation flow."};
   }
 }

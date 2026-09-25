@@ -22,13 +22,13 @@ service ValidationRuleService {
   //
   // The request is paginated with a default page size of 100.
   rpc ListValidationRules(ListValidationRulesRequest) returns (ListValidationRulesResponse) {
-    option (google.api.http) = {get: "/v1/rules"};
+    option (google.api.http) = {get: "/validation/v1/rules"};
     option (gnostic.openapi.v3.operation) = {summary: "List existing validation rules."};
   }
 
   // Get one validation rule by its id.
   rpc GetValidationRule(GetValidationRuleRequest) returns (entur.validation.v1.ValidationRule) {
-    option (google.api.http) = {get: "/v1/rules/{id}"};
+    option (google.api.http) = {get: "/validation/v1/rules/{id}"};
     option (gnostic.openapi.v3.operation) = {summary: "Get one validation rule by its id."};
   }
 
@@ -37,7 +37,7 @@ service ValidationRuleService {
   // Returns the full created rule, including its server-assigned `id` and `updated_at`.
   rpc CreateValidationRule(CreateValidationRuleRequest) returns (entur.validation.v1.ValidationRule) {
     option (google.api.http) = {
-      post: "/v1/rules"
+      post: "/validation/v1/rules"
       body: "validation_rule"
     };
     option (gnostic.openapi.v3.operation) = {summary: "Create a new validation rule."};
@@ -54,7 +54,7 @@ service ValidationRuleService {
   // UpdateValidationRuleRequest.
   rpc UpdateValidationRule(UpdateValidationRuleRequest) returns (entur.validation.v1.ValidationRule) {
     option (google.api.http) = {
-      patch: "/v1/rules/{id}"
+      patch: "/validation/v1/rules/{id}"
       body: "validation_rule"
     };
     option (gnostic.openapi.v3.operation) = {summary: "Update an existing validation rule."};
@@ -66,7 +66,7 @@ service ValidationRuleService {
   // concurrently. This is an HTTP-layer precondition, not a field of
   // DeleteValidationRuleRequest.
   rpc DeleteValidationRule(DeleteValidationRuleRequest) returns (google.protobuf.Empty) {
-    option (google.api.http) = {delete: "/v1/rules/{id}"};
+    option (google.api.http) = {delete: "/validation/v1/rules/{id}"};
     option (gnostic.openapi.v3.operation) = {summary: "Delete a validation rule."};
   }
 }
