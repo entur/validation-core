@@ -1167,8 +1167,8 @@ components:
                     items:
                         $ref: '#/components/schemas/FieldViolation'
                     description: |-
-                        Field-level validation errors that caused this problem, if any. An RFC 9457 extension
-                         member: absent when the problem isn't a per-field validation failure.
+                        Field-level validation errors that caused this problem, if any. This is an RFC 9457 extension
+                         member; it is absent when the problem isn't a per-field validation failure.
         RuleFlowItem:
             type: object
             properties:

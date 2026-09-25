@@ -16,8 +16,8 @@ message ProblemDetail {
   int32 status = 2 [(google.api.field_behavior) = REQUIRED];
   // A human-readable explanation specific to this occurrence.
   string detail = 3;
-  // Field-level validation errors that caused this problem, if any. An RFC 9457 extension
-  // member: absent when the problem isn't a per-field validation failure.
+  // Field-level validation errors that caused this problem, if any. This is an RFC 9457 extension
+  // member; it is absent when the problem isn't a per-field validation failure.
   repeated FieldViolation errors = 4;
 }
 
