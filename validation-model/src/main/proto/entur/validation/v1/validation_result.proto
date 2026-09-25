@@ -60,6 +60,21 @@ message ValidationResult {
       example: {yaml: "true"}
     }
   ];
+
+  // Whether this result is incomplete.
+  bool incomplete = 8 [(gnostic.openapi.v3.property) = {
+    description: "Whether this result is incomplete because the full set of findings was too large to fit in this Kafka message. When true, `messages` only contains a partial view and the complete result can be retrieved from `full_result_url`."
+    example: {yaml: "false"}
+  }];
+
+  // Where the complete, untruncated result can be retrieved, e.g. a GCS object URL.
+  // Only set when `incomplete` is true.
+  optional string full_result_url = 9 [
+    (google.api.field_behavior) = OPTIONAL,
+    (gnostic.openapi.v3.property) = {
+      example: {yaml: "\"https://storage.googleapis.com/validation-results/2026/09/25/abc123.json\""}
+    }
+  ];
 }
 
 // A single finding raised while validating a delivery.
