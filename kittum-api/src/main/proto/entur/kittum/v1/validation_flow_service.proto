@@ -71,6 +71,10 @@ service ValidationFlowService {
       body: "validation_flow"
     };
     option (gnostic.openapi.v3.operation) = {summary: "Create a new validation flow."};
+    option (entur.http.v1.failure) = {
+      code: "400"
+      description: "An item references a ValidationRule/ValidationFlow that does not exist, or does not share this flow's stage."
+    };
   }
 
   // Update an existing validation flow. Its `id`, if set, must match the path `id`.
@@ -90,6 +94,18 @@ service ValidationFlowService {
       body: "validation_flow"
     };
     option (gnostic.openapi.v3.operation) = {summary: "Update an existing validation flow."};
+    option (entur.http.v1.failure) = {
+      code: "404"
+      description: "No validation flow exists with the given id."
+    };
+    option (entur.http.v1.failure) = {
+      code: "400"
+      description: "An item references a ValidationRule/ValidationFlow that does not exist, or does not share this flow's stage."
+    };
+    option (entur.http.v1.failure) = {
+      code: "412"
+      description: "The `If-Match` header does not match the flow's current ETag."
+    };
   }
 
   // Delete a validation flow. Over REST, this is a conditional request (RFC 7232): it
@@ -101,6 +117,14 @@ service ValidationFlowService {
   rpc DeleteValidationFlow(DeleteValidationFlowRequest) returns (google.protobuf.Empty) {
     option (google.api.http) = {delete: "/validation/v1/flows/{id}"};
     option (gnostic.openapi.v3.operation) = {summary: "Delete a validation flow."};
+    option (entur.http.v1.failure) = {
+      code: "404"
+      description: "No validation flow exists with the given id."
+    };
+    option (entur.http.v1.failure) = {
+      code: "412"
+      description: "The `If-Match` header does not match the flow's current ETag."
+    };
   }
 }
 

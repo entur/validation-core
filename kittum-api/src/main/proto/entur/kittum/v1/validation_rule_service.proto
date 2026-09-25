@@ -63,6 +63,18 @@ service ValidationRuleService {
       body: "validation_rule"
     };
     option (gnostic.openapi.v3.operation) = {summary: "Update an existing validation rule."};
+    option (entur.http.v1.failure) = {
+      code: "404"
+      description: "No validation rule exists with the given id."
+    };
+    option (entur.http.v1.failure) = {
+      code: "400"
+      description: "The `rule` oneof's set field does not match the rule's current type."
+    };
+    option (entur.http.v1.failure) = {
+      code: "412"
+      description: "The `If-Match` header does not match the rule's current ETag."
+    };
   }
 
   // Delete a validation rule. Over REST, this is a conditional request (RFC 7232): it
@@ -73,6 +85,14 @@ service ValidationRuleService {
   rpc DeleteValidationRule(DeleteValidationRuleRequest) returns (google.protobuf.Empty) {
     option (google.api.http) = {delete: "/validation/v1/rules/{id}"};
     option (gnostic.openapi.v3.operation) = {summary: "Delete a validation rule."};
+    option (entur.http.v1.failure) = {
+      code: "404"
+      description: "No validation rule exists with the given id."
+    };
+    option (entur.http.v1.failure) = {
+      code: "412"
+      description: "The `If-Match` header does not match the rule's current ETag."
+    };
   }
 }
 

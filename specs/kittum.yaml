@@ -101,6 +101,19 @@ paths:
                 '200':
                     description: OK
                     content: {}
+                '404':
+                    description: No area exists with the given id.
+                    content:
+                        application/problem+json:
+                            schema:
+                                $ref: '#/components/schemas/ProblemDetail'
+                '412':
+                    description: The `If-Match` header does not match the area's current
+                        ETag.
+                    content:
+                        application/problem+json:
+                            schema:
+                                $ref: '#/components/schemas/ProblemDetail'
         patch:
             tags:
               - AreaService
@@ -141,6 +154,19 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/Area'
+                '404':
+                    description: No area exists with the given id.
+                    content:
+                        application/problem+json:
+                            schema:
+                                $ref: '#/components/schemas/ProblemDetail'
+                '412':
+                    description: The `If-Match` header does not match the area's current
+                        ETag.
+                    content:
+                        application/problem+json:
+                            schema:
+                                $ref: '#/components/schemas/ProblemDetail'
     /validation/v1/flows:
         get:
             tags:
@@ -204,6 +230,13 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/ValidationFlow'
+                '400':
+                    description: An item references a ValidationRule/ValidationFlow
+                        that does not exist, or does not share this flow's stage.
+                    content:
+                        application/problem+json:
+                            schema:
+                                $ref: '#/components/schemas/ProblemDetail'
     /validation/v1/flows/{id}:
         get:
             tags:
@@ -265,6 +298,19 @@ paths:
                 '200':
                     description: OK
                     content: {}
+                '404':
+                    description: No validation flow exists with the given id.
+                    content:
+                        application/problem+json:
+                            schema:
+                                $ref: '#/components/schemas/ProblemDetail'
+                '412':
+                    description: The `If-Match` header does not match the flow's current
+                        ETag.
+                    content:
+                        application/problem+json:
+                            schema:
+                                $ref: '#/components/schemas/ProblemDetail'
         patch:
             tags:
               - ValidationFlowService
@@ -312,6 +358,26 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/ValidationFlow'
+                '404':
+                    description: No validation flow exists with the given id.
+                    content:
+                        application/problem+json:
+                            schema:
+                                $ref: '#/components/schemas/ProblemDetail'
+                '400':
+                    description: An item references a ValidationRule/ValidationFlow
+                        that does not exist, or does not share this flow's stage.
+                    content:
+                        application/problem+json:
+                            schema:
+                                $ref: '#/components/schemas/ProblemDetail'
+                '412':
+                    description: The `If-Match` header does not match the flow's current
+                        ETag.
+                    content:
+                        application/problem+json:
+                            schema:
+                                $ref: '#/components/schemas/ProblemDetail'
     /validation/v1/owners:
         get:
             tags:
@@ -398,6 +464,19 @@ paths:
                 '200':
                     description: OK
                     content: {}
+                '404':
+                    description: No owner exists with the given id.
+                    content:
+                        application/problem+json:
+                            schema:
+                                $ref: '#/components/schemas/ProblemDetail'
+                '412':
+                    description: The `If-Match` header does not match the owner's
+                        current ETag.
+                    content:
+                        application/problem+json:
+                            schema:
+                                $ref: '#/components/schemas/ProblemDetail'
         patch:
             tags:
               - OwnerService
@@ -439,6 +518,19 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/Owner'
+                '404':
+                    description: No owner exists with the given id.
+                    content:
+                        application/problem+json:
+                            schema:
+                                $ref: '#/components/schemas/ProblemDetail'
+                '412':
+                    description: The `If-Match` header does not match the owner's
+                        current ETag.
+                    content:
+                        application/problem+json:
+                            schema:
+                                $ref: '#/components/schemas/ProblemDetail'
     /validation/v1/rules:
         get:
             tags:
@@ -550,6 +642,19 @@ paths:
                 '200':
                     description: OK
                     content: {}
+                '404':
+                    description: No validation rule exists with the given id.
+                    content:
+                        application/problem+json:
+                            schema:
+                                $ref: '#/components/schemas/ProblemDetail'
+                '412':
+                    description: The `If-Match` header does not match the rule's current
+                        ETag.
+                    content:
+                        application/problem+json:
+                            schema:
+                                $ref: '#/components/schemas/ProblemDetail'
         patch:
             tags:
               - ValidationRuleService
@@ -595,6 +700,26 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/ValidationRule'
+                '404':
+                    description: No validation rule exists with the given id.
+                    content:
+                        application/problem+json:
+                            schema:
+                                $ref: '#/components/schemas/ProblemDetail'
+                '400':
+                    description: The `rule` oneof's set field does not match the rule's
+                        current type.
+                    content:
+                        application/problem+json:
+                            schema:
+                                $ref: '#/components/schemas/ProblemDetail'
+                '412':
+                    description: The `If-Match` header does not match the rule's current
+                        ETag.
+                    content:
+                        application/problem+json:
+                            schema:
+                                $ref: '#/components/schemas/ProblemDetail'
     /validation/v1/sources:
         get:
             tags:
@@ -632,6 +757,12 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/Source'
+                '409':
+                    description: A source with the given name already exists.
+                    content:
+                        application/problem+json:
+                            schema:
+                                $ref: '#/components/schemas/ProblemDetail'
     /validation/v1/sources/{name}:
         get:
             tags:
@@ -680,6 +811,19 @@ paths:
                 '200':
                     description: OK
                     content: {}
+                '404':
+                    description: No source exists with the given name.
+                    content:
+                        application/problem+json:
+                            schema:
+                                $ref: '#/components/schemas/ProblemDetail'
+                '412':
+                    description: The `If-Match` header does not match the source's
+                        current ETag.
+                    content:
+                        application/problem+json:
+                            schema:
+                                $ref: '#/components/schemas/ProblemDetail'
         patch:
             tags:
               - SourceService
@@ -721,6 +865,25 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/Source'
+                '404':
+                    description: No source exists with the given name.
+                    content:
+                        application/problem+json:
+                            schema:
+                                $ref: '#/components/schemas/ProblemDetail'
+                '409':
+                    description: A different source with the new name already exists.
+                    content:
+                        application/problem+json:
+                            schema:
+                                $ref: '#/components/schemas/ProblemDetail'
+                '412':
+                    description: The `If-Match` header does not match the source's
+                        current ETag.
+                    content:
+                        application/problem+json:
+                            schema:
+                                $ref: '#/components/schemas/ProblemDetail'
     /validation/v1/sources/{source}/flows/{stage}/{area}:
         get:
             tags:

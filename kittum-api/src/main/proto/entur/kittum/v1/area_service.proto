@@ -57,6 +57,14 @@ service AreaService {
       body: "area"
     };
     option (gnostic.openapi.v3.operation) = {summary: "Update an existing area."};
+    option (entur.http.v1.failure) = {
+      code: "404"
+      description: "No area exists with the given id."
+    };
+    option (entur.http.v1.failure) = {
+      code: "412"
+      description: "The `If-Match` header does not match the area's current ETag."
+    };
   }
 
   // Delete an area. Over REST, this is a conditional request (RFC 7232): it requires a
@@ -66,6 +74,14 @@ service AreaService {
   rpc DeleteArea(DeleteAreaRequest) returns (google.protobuf.Empty) {
     option (google.api.http) = {delete: "/validation/v1/areas/{id}"};
     option (gnostic.openapi.v3.operation) = {summary: "Delete an area."};
+    option (entur.http.v1.failure) = {
+      code: "404"
+      description: "No area exists with the given id."
+    };
+    option (entur.http.v1.failure) = {
+      code: "412"
+      description: "The `If-Match` header does not match the area's current ETag."
+    };
   }
 }
 

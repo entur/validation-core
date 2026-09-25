@@ -45,6 +45,10 @@ service SourceService {
       body: "source"
     };
     option (gnostic.openapi.v3.operation) = {summary: "Create a new source."};
+    option (entur.http.v1.failure) = {
+      code: "409"
+      description: "A source with the given name already exists."
+    };
   }
 
   // Update an existing source. Its `id`, if set, must match the source's own id. Renaming a
@@ -60,6 +64,18 @@ service SourceService {
       body: "source"
     };
     option (gnostic.openapi.v3.operation) = {summary: "Update an existing source."};
+    option (entur.http.v1.failure) = {
+      code: "404"
+      description: "No source exists with the given name."
+    };
+    option (entur.http.v1.failure) = {
+      code: "409"
+      description: "A different source with the new name already exists."
+    };
+    option (entur.http.v1.failure) = {
+      code: "412"
+      description: "The `If-Match` header does not match the source's current ETag."
+    };
   }
 
   // Delete a source. Over REST, this is a conditional request (RFC 7232): it requires a
@@ -69,6 +85,14 @@ service SourceService {
   rpc DeleteSource(DeleteSourceRequest) returns (google.protobuf.Empty) {
     option (google.api.http) = {delete: "/validation/v1/sources/{name}"};
     option (gnostic.openapi.v3.operation) = {summary: "Delete a source."};
+    option (entur.http.v1.failure) = {
+      code: "404"
+      description: "No source exists with the given name."
+    };
+    option (entur.http.v1.failure) = {
+      code: "412"
+      description: "The `If-Match` header does not match the source's current ETag."
+    };
   }
 }
 

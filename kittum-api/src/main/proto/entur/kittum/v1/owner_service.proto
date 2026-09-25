@@ -58,6 +58,14 @@ service OwnerService {
       body: "owner"
     };
     option (gnostic.openapi.v3.operation) = {summary: "Update an existing owner."};
+    option (entur.http.v1.failure) = {
+      code: "404"
+      description: "No owner exists with the given id."
+    };
+    option (entur.http.v1.failure) = {
+      code: "412"
+      description: "The `If-Match` header does not match the owner's current ETag."
+    };
   }
 
   // Delete an owner. Over REST, this is a conditional request (RFC 7232): it requires a
@@ -67,6 +75,14 @@ service OwnerService {
   rpc DeleteOwner(DeleteOwnerRequest) returns (google.protobuf.Empty) {
     option (google.api.http) = {delete: "/validation/v1/owners/{id}"};
     option (gnostic.openapi.v3.operation) = {summary: "Delete an owner."};
+    option (entur.http.v1.failure) = {
+      code: "404"
+      description: "No owner exists with the given id."
+    };
+    option (entur.http.v1.failure) = {
+      code: "412"
+      description: "The `If-Match` header does not match the owner's current ETag."
+    };
   }
 }
 
