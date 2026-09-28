@@ -20,6 +20,7 @@ class OpenApiAugmentationPipeline {
 
         OpenApiFailureAugmenter().augment(files, registry, spec)
         OpenApiExampleAugmenter().augment(files, registry, spec)
+        OpenApiMetaPathAugmenter().augment(spec)
 
         return buildString {
             append("# Generated with protoc-gen-openapi and OpenApiAugmentationPipeline\n")

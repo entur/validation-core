@@ -15,6 +15,30 @@ info:
 servers:
   - url: https://kittum.entur.io
 paths:
+    /v3/api-docs:
+        get:
+            tags:
+              - OpenApi
+            summary: Get the OpenAPI specification for this service
+            description: Returns this specification itself, as YAML by default or
+                JSON when requested via the Accept header.
+            operationId: getOpenApiSpec
+            parameters:
+              - name: Accept
+                in: header
+                required: false
+                schema:
+                    type: string
+            responses:
+                '200':
+                    description: The OpenAPI specification
+                    content:
+                        application/yaml:
+                            schema:
+                                type: string
+                        application/json:
+                            schema:
+                                type: object
     /validation/v1/areas:
         get:
             tags:
