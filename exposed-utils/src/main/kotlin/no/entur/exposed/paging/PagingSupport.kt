@@ -1,4 +1,4 @@
-package no.entur.proto.paging
+package no.entur.exposed.paging
 
 import com.google.protobuf.Message
 import org.jetbrains.exposed.v1.core.Op

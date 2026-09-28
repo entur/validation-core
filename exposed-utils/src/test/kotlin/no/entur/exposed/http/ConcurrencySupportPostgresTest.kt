@@ -1,4 +1,4 @@
-package no.entur.proto.http
+package no.entur.exposed.http
 
 import io.r2dbc.spi.ConnectionFactories
 import io.r2dbc.spi.ConnectionFactoryOptions

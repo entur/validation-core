@@ -21,6 +21,12 @@ modules:
         - STANDARD
     breaking:
       use: []
+  - path: exposed-utils/src/test/proto
+    lint:
+      use:
+        - STANDARD
+    breaking:
+      use: []
 deps:
   - buf.build/googleapis/googleapis
   - buf.build/gnostic/gnostic

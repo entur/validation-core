@@ -1,4 +1,4 @@
-package no.entur.proto.http
+package no.entur.exposed.http
 
 import com.google.protobuf.Message
 import com.google.protobuf.Timestamp

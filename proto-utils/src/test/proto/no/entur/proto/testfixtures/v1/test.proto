@@ -37,22 +37,6 @@ message Note {
   string message = 1;
 }
 
-// A resource with a *string* IDENTIFIER (Widget/Part above are int64) - covers ConcurrencySupport's
-// string-id path, both as a JVM Message and, via a matching Exposed table, round-tripped through Postgres.
-message Label {
-  string id = 1 [(google.api.field_behavior) = IDENTIFIER];
-  string text = 2;
-  google.protobuf.Timestamp updated_at = 3 [(google.api.field_behavior) = OUTPUT_ONLY];
-}
-
-// A resource with a genuinely *composite* id (every other message above has a single-column one) -
-// covers PagingSupport's composite-id tie-break against a real Exposed CompositeIdTable.
-message LineItem {
-  int64 order_id = 1 [(google.api.field_behavior) = IDENTIFIER];
-  int32 line_number = 2 [(google.api.field_behavior) = IDENTIFIER];
-  string description = 3;
-}
-
 // updated_at is missing the OUTPUT_ONLY annotation - a schema bug. Covers ResourceFields' invariant
 // check that an id/updated_at-shaped resource must annotate updated_at as OUTPUT_ONLY.
 message MalformedWidget {

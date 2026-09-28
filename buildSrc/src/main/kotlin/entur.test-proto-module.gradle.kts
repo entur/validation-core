@@ -6,7 +6,10 @@
  * protect published contracts, not throwaway fixtures, so this module is exempted from
  * COMMENTS/UNARY_RPC lint and all breaking-change checks - see the workspace entry in root
  * `buf.yaml` and proto-utils/build.gradle.kts's own comment for why membership itself still can't
- * be dropped entirely.
+ * be dropped entirely. Applied independently by each module that needs its own test-fixtures proto
+ * (`proto-utils` and `exposed-utils` each have their own, deliberately not shared - the two overlap
+ * on a handful of message shapes, but that overlap was judged cheaper to duplicate than to wire up
+ * cross-module test-fixture sharing for).
  *
  * A module applying this plugin only needs:
  * - its `.proto` file(s) under `<module>/src/test/proto`, laid out to match their package (buf's

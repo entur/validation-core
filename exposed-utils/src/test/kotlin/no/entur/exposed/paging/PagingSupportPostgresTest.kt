@@ -1,15 +1,15 @@
-package no.entur.proto.paging
+package no.entur.exposed.paging
 
 import io.r2dbc.spi.ConnectionFactories
 import io.r2dbc.spi.ConnectionFactoryOptions
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
-import no.entur.proto.testfixtures.v1.LineItem
-import no.entur.proto.testfixtures.v1.Widget
-import no.entur.proto.testfixtures.v1.WidgetStatus
-import no.entur.proto.testfixtures.v1.lineItem
-import no.entur.proto.testfixtures.v1.widget
+import no.entur.exposed.testfixtures.v1.LineItem
+import no.entur.exposed.testfixtures.v1.Widget
+import no.entur.exposed.testfixtures.v1.WidgetStatus
+import no.entur.exposed.testfixtures.v1.lineItem
+import no.entur.exposed.testfixtures.v1.widget
 import org.jetbrains.exposed.v1.core.Op
 import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.core.SortOrder

@@ -1,7 +1,7 @@
-package no.entur.proto.paging
+package no.entur.exposed.paging
 
-import no.entur.proto.testfixtures.v1.WidgetStatus
-import no.entur.proto.testfixtures.v1.widget
+import no.entur.exposed.testfixtures.v1.WidgetStatus
+import no.entur.exposed.testfixtures.v1.widget
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertThrows

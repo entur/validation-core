@@ -1,17 +1,19 @@
 # validation-core
 
-Shared protobuf schema for Entur's validation platform, published as Java/Kotlin libraries. Four
+Shared protobuf schema for Entur's validation platform, published as Java/Kotlin libraries. Five
 Gradle modules - `http-model` (the shared `entur.http.v1` `Failure`/`ProblemDetail` types),
 `validation-model` (the `entur.validation.v1` domain messages), `kittum-api` (Kittum's
-`entur.kittum.v1` service definitions), and `proto-utils` (hand-written proto/HTTP plumbing built on
-the other three - see "Non-schema modules" below) - each published as its own Maven artifact.
+`entur.kittum.v1` service definitions), `proto-utils` (hand-written, domain-agnostic proto/HTTP
+plumbing built on the other three), and `exposed-utils` (JetBrains Exposed-specific persistence
+support - ETag concurrency, cursor paging - built on `proto-utils`) - see "Non-schema modules" below
+- each published as its own Maven artifact.
 
-This repository is schema and generated code plus, in `proto-utils` alone, hand-written support code
-built on top of it - see "Non-schema modules" in `README.md`. There is no application implementation,
-no database, no Dockerfile, and nothing deployable (`proto-utils`'s Postgres-backed tests run against
-a throwaway Testcontainers instance, not a real database). The parts of the golden path that assume a
-running service - Helm, Terraform, `compose.yaml`, `.entur/` self-service manifests, `application.yml`
-- do not apply here.
+This repository is schema and generated code plus, in `proto-utils` and `exposed-utils`, hand-written
+support code built on top of it - see "Non-schema modules" in `README.md`. There is no application
+implementation, no database, no Dockerfile, and nothing deployable (`exposed-utils`'s Postgres-backed
+tests run against a throwaway Testcontainers instance, not a real database). The parts of the golden
+path that assume a running service - Helm, Terraform, `compose.yaml`, `.entur/` self-service
+manifests, `application.yml` - do not apply here.
 
 ## Entur Standards
 
@@ -22,7 +24,8 @@ https://github.com/entur/ai/blob/main/AGENTS.md
 
 - Owning team: `team-validering`
 - Artifacts: `no.entur.validation:http-model`, `no.entur.validation:validation-model`,
-  `no.entur.validation:kittum-api`, `no.entur.validation:proto-utils`
+  `no.entur.validation:kittum-api`, `no.entur.validation:proto-utils`,
+  `no.entur.validation:exposed-utils`
 - Published to Entur's JFrog Artifactory (`entur-release-standard`) via `entur/gha-artifactory`.
   Publishing is manual and tag-triggered: pushing a `v<major>.<minor>.<patch>` tag runs CD, which
   publishes that exact version. Merging to `main` does not publish by itself. See "Versioning and
@@ -47,24 +50,29 @@ https://github.com/entur/ai/blob/main/AGENTS.md
   that codegen actually produces working output. (`buildSrc`'s own build logic, e.g.
   `OpenApiFailureAugmenter`, does have unit tests - run separately via `./gradlew :buildSrc:test`,
   since buildSrc is compiled and jar'd automatically before every build but not tested as a side
-  effect of it.) `proto-utils` is the exception: it's hand-written, so it's fully tested, including
-  Postgres-backed integration tests via Testcontainers.
-- **`proto-utils` is not an API module, but does use `buf` for codegen like the others.** It has no
-  `src/main/proto` and needs none of `copyOpenApiSpec`/the `entur.grpc-openapi-module` convention
-  plugin the other API modules use. Its own test-fixtures `.proto`
-  (`src/test/proto/no/entur/proto/testfixtures/v1/test.proto`) still goes through `bufGenerate` -
-  `buf` + `protoc_builtin`, the same mechanism every other module uses, extracted into the
-  `entur.test-proto-module` convention plugin (`buildSrc/src/main/kotlin/entur.test-proto-module.
-  gradle.kts`). It *is* listed under root `buf.yaml`'s `modules:` (buf's PACKAGE_DIRECTORY_MATCH
-  rule and its `google.api.field_behavior` dependency resolution both need workspace membership to
-  work at all), but with a pared-down per-module override - `lint.use: [STANDARD]` only (no
-  COMMENTS, no UNARY_RPC) and `breaking.use: []` - since these are internal fixtures with no
-  compatibility guarantee, not a published contract. Don't widen that override without a reason;
-  don't add `except` entries to work around a real lint failure - fix the `.proto` instead (see the
-  `ENUM_VALUE_PREFIX` fix in its git history for why: excepting a rule some existing code violates
-  just spreads that violation further instead of shrinking it).
-  See "Non-schema modules" in
-  `README.md`.
+  effect of it.) `proto-utils` and `exposed-utils` are the exception: they're hand-written, so
+  they're fully tested - `exposed-utils`'s tests include Postgres-backed integration tests via
+  Testcontainers.
+- **`proto-utils`/`exposed-utils` are not API modules, but both use `buf` for codegen like the
+  others.** Neither has a `src/main/proto`, and neither needs `copyOpenApiSpec`/the
+  `entur.grpc-openapi-module` convention plugin the other API modules use. Each has its own
+  test-fixtures `.proto` (`<module>/src/test/proto/no/entur/{proto,exposed}/testfixtures/v1/test.proto`)
+  that goes through `bufGenerate` - `buf` + `protoc_builtin`, the same mechanism every other module
+  uses, extracted into the `entur.test-proto-module` convention plugin
+  (`buildSrc/src/main/kotlin/entur.test-proto-module.gradle.kts`) and applied independently by both
+  modules. The two fixture files overlap on a handful of message shapes their tests both happen to
+  need (`Widget` and friends, `Note`) - deliberately duplicated rather than shared across the module
+  boundary via a `testFixtures` artifact, since each file is small and self-contained and the overlap
+  has no compatibility guarantee to protect either way. Both are listed under root `buf.yaml`'s
+  `modules:` (buf's PACKAGE_DIRECTORY_MATCH rule and its `google.api.field_behavior` dependency
+  resolution both need workspace membership to work at all), each with the same pared-down
+  per-module override - `lint.use: [STANDARD]` only (no COMMENTS, no UNARY_RPC) and
+  `breaking.use: []` - since these are internal fixtures with no compatibility guarantee, not a
+  published contract. Don't widen that override without a reason; don't add `except` entries to
+  work around a real lint failure - fix the `.proto` instead (see the `ENUM_VALUE_PREFIX` fix in its
+  git history for why: excepting a rule some existing code violates just spreads that violation
+  further instead of shrinking it).
+  See "Non-schema modules" in `README.md`.
 
 ## Critical Rules
 

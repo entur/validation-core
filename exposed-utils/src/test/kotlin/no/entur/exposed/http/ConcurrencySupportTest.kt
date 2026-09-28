@@ -1,8 +1,8 @@
-package no.entur.proto.http
+package no.entur.exposed.http
 
-import no.entur.proto.testfixtures.v1.label
-import no.entur.proto.testfixtures.v1.note
-import no.entur.proto.testfixtures.v1.widget
+import no.entur.exposed.testfixtures.v1.label
+import no.entur.exposed.testfixtures.v1.note
+import no.entur.exposed.testfixtures.v1.widget
 import no.entur.proto.time.toProtoTimestamp
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test

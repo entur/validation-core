@@ -1,4 +1,4 @@
-package no.entur.proto.paging
+package no.entur.exposed.paging
 
 import com.google.protobuf.Descriptors.Descriptor
 import com.google.protobuf.Descriptors.FieldDescriptor

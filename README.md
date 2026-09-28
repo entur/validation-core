@@ -8,14 +8,15 @@ hand-written support library built on top of the generated types.
 
 ## Modules
 
-Four Gradle modules, each published as its own Maven artifact, sharing one version:
+Five Gradle modules, each published as its own Maven artifact, sharing one version:
 
 | Module | Proto package | Artifact | Contents |
 |--------|---------------|----------|----------|
 | [`http-model`](http-model) | `entur.http.v1` | `no.entur.validation:http-model` | `Failure`/`ProblemDetail`, the RFC 9457-style types used to document and render rpc failure responses. |
 | [`validation-model`](validation-model) | `entur.validation.v1` | `no.entur.validation:validation-model` | The domain messages. |
 | [`kittum-api`](kittum-api) | `entur.kittum.v1` | `no.entur.validation:kittum-api` | Kittum's gRPC/REST service definitions and their Request/Response messages. |
-| [`proto-utils`](proto-utils) | — (hand-written, not proto-generated) | `no.entur.validation:proto-utils` | Domain-agnostic proto/HTTP plumbing (ETag concurrency, update masks, cursor paging, protobuf-JSON codecs, `ProblemDetail` error mapping) for WebFlux services built on this schema. See "Non-schema modules" below. |
+| [`proto-utils`](proto-utils) | — (hand-written, not proto-generated) | `no.entur.validation:proto-utils` | Domain-agnostic proto/HTTP plumbing (update masks, protobuf-JSON codecs, `ProblemDetail` error mapping) for WebFlux services built on this schema. See "Non-schema modules" below. |
+| [`exposed-utils`](exposed-utils) | — (hand-written, not proto-generated) | `no.entur.validation:exposed-utils` | JetBrains Exposed-specific persistence support (ETag concurrency, cursor paging) built on `proto-utils`. See "Non-schema modules" below. |
 
 More packages (and modules) are expected as new APIs are added on top of the shared model.
 
@@ -105,22 +106,28 @@ Copy the pattern from [`kittum-api`](kittum-api):
 
 ## Non-schema modules
 
-[`proto-utils`](proto-utils) doesn't fit the "Adding a new API module" pattern above: it has no
-`src/main/proto` of its own, only a test-fixtures `.proto` under `src/test/proto`. That's still
-generated via `buf` + `protoc_builtin` - the same mechanism `http-model`/`validation-model`/
-`kittum-api` use, wired up by the reusable `entur.test-proto-module` convention plugin
-(`buildSrc/src/main/kotlin/entur.test-proto-module.gradle.kts`) rather than its own hand-rolled
-`bufGenerate` task. It *is* listed in the root `buf.yaml` workspace (buf's PACKAGE_DIRECTORY_MATCH
-rule and resolving `google.api.field_behavior` both require workspace membership), but with a
-pared-down per-module override - `lint.use: [STANDARD]` only, `breaking.use: []` - since these are
-internal test fixtures with no compatibility guarantee, not a published contract: the full
-COMMENTS ruleset and wire-compatibility checks exist to protect the latter, not throwaway fixtures.
-It's plain hand-written Kotlin otherwise, applies its own
-`kotlin.plugin.spring` and `ktlint` Gradle plugins directly (the other three modules need neither),
-and is the only module depending on Spring WebFlux, Exposed and Testcontainers - see its own
-`build.gradle.kts` for why each dependency is `api` vs `implementation`. It's still published the
-same way as the other modules (root `subprojects {}` applies `maven-publish` to all of them
-uniformly), so releasing it needs no special handling.
+[`proto-utils`](proto-utils) and [`exposed-utils`](exposed-utils) don't fit the "Adding a new API
+module" pattern above: neither has a `src/main/proto` of its own, only a test-fixtures `.proto` each
+under their own `src/test/proto`, generated via `buf` + `protoc_builtin` - the same mechanism
+`http-model`/`validation-model`/`kittum-api` use, wired up by the reusable `entur.test-proto-module`
+convention plugin (`buildSrc/src/main/kotlin/entur.test-proto-module.gradle.kts`) rather than a
+hand-rolled `bufGenerate` task. The two fixture files overlap on a few message shapes (`Widget` and
+friends, `Note`) that both modules' tests happen to need, deliberately duplicated rather than shared
+across a module boundary - each module's `.proto` is small and self-contained, and the overlap is
+internal test fixtures with no compatibility guarantee anyway. Both are listed in the root `buf.yaml`
+workspace (buf's PACKAGE_DIRECTORY_MATCH rule and resolving `google.api.field_behavior` both require
+workspace membership), each with the same pared-down per-module override - `lint.use: [STANDARD]`
+only, `breaking.use: []` - since the full COMMENTS ruleset and wire-compatibility checks exist to
+protect a published contract, not throwaway fixtures.
+
+`proto-utils` applies its own `kotlin.plugin.spring` and `ktlint` Gradle plugins directly
+(`http-model`/`validation-model`/`kittum-api` need neither) - see its own `build.gradle.kts` for why
+each dependency is `api` vs `implementation`. `exposed-utils` holds every Exposed-specific piece that
+used to live in `proto-utils` (ETag concurrency, cursor paging), applies `ktlint` directly like
+`proto-utils` but not `kotlin.plugin.spring` (it has no `@Configuration`/`@RestControllerAdvice`
+classes), and is the only module depending on Exposed and Testcontainers now that `proto-utils`
+doesn't. Both are still published the same way as the other modules (root `subprojects {}` applies
+`maven-publish` to all of them uniformly), so releasing either needs no special handling.
 
 ## Versioning and publishing
 

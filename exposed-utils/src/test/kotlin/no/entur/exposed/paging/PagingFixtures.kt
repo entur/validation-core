@@ -1,7 +1,7 @@
-package no.entur.proto.paging
+package no.entur.exposed.paging
 
-import no.entur.proto.testfixtures.v1.LineItem
-import no.entur.proto.testfixtures.v1.Widget
+import no.entur.exposed.testfixtures.v1.LineItem
+import no.entur.exposed.testfixtures.v1.Widget
 import org.jetbrains.exposed.v1.core.dao.id.CompositeIdTable
 import org.jetbrains.exposed.v1.core.dao.id.LongIdTable
 import tools.jackson.databind.ObjectMapper
