@@ -62,6 +62,19 @@ internal class UpdateMaskSupportTest {
         assertParse(listOf("name", "status", "detail.generated_note"), "name,status,detail.generatedNote")
     }
 
+    @Test
+    fun `parseUpdateMask rejects a value that breaks the underlying JSON parse with an IllegalArgumentException, not a 500`() {
+        // "\q" isn't a valid JSON escape sequence, so naively wrapping raw as "\"$raw\"" produces
+        // invalid JSON - JsonFormat.parser().merge throws InvalidProtocolBufferException for this,
+        // which must not reach the caller unwrapped: ApiExceptionHandler has no mapping for it, so
+        // it'd otherwise surface as a 500 instead of the documented 400.
+        val exception =
+            assertThrows(IllegalArgumentException::class.java) {
+                UpdateMaskSupport.parse("""foo\qbar""")
+            }
+        assertTrue(exception.message!!.contains("""foo\qbar"""))
+    }
+
     // resolveEffectiveMask
 
     fun assertEffectiveMask(

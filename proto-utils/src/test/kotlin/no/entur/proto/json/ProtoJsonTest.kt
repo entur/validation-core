@@ -35,6 +35,17 @@ internal class ProtoJsonTest {
     }
 
     @Test
+    fun `encode fails fast on a multi-element publisher instead of emitting concatenated, invalid JSON`() {
+        val messages = Flux.just(part { label = "a" }, part { label = "b" })
+
+        assertThrows(IndexOutOfBoundsException::class.java) {
+            encoder
+                .encode(messages, bufferFactory, ResolvableType.forClass(Part::class.java), MediaType.APPLICATION_JSON, null)
+                .blockLast()
+        }
+    }
+
+    @Test
     fun `a message with no enum fields round-trips through encode and decode unchanged`() {
         val original = part { label = "widget-part" }
 

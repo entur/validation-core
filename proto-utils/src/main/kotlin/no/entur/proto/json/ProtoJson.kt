@@ -21,7 +21,11 @@ private fun isProtoMessage(elementType: ResolvableType): Boolean = Message::clas
 
 /**
  * WebFlux [org.springframework.core.codec.Encoder] for generated protobuf [Message]s. Every operation writes exactly
- * one [Message]. Also declares `application/problem+json` support for exception serialization to a
+ * one [Message] - this only implements `application/json` as a single JSON object, not a JSON
+ * array, so a handler returning a multi-element [Flux] (rather than [reactor.core.publisher.Mono])
+ * would otherwise silently emit invalid, undelimited JSON (`{}{}...`). [encode] fails fast instead
+ * ([Flux.single] errors on anything but exactly one element) rather than emit that. Also declares
+ * `application/problem+json` support for exception serialization to a
  * [no.entur.http.proto.v1.ProblemDetail].
  */
 class ProtoJsonEncoder : AbstractEncoder<Message>(MediaType.APPLICATION_JSON, MediaType.APPLICATION_PROBLEM_JSON) {
@@ -45,9 +49,11 @@ class ProtoJsonEncoder : AbstractEncoder<Message>(MediaType.APPLICATION_JSON, Me
     ): Flux<DataBuffer> =
         Flux
             .from(inputStream)
+            .single()
             .map(printer::print)
             .map { json -> json.toByteArray(StandardCharsets.UTF_8) }
             .map(bufferFactory::wrap)
+            .flux()
 }
 
 /**

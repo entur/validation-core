@@ -4,6 +4,7 @@ import com.google.api.FieldBehavior
 import com.google.protobuf.Descriptors.Descriptor
 import com.google.protobuf.Descriptors.FieldDescriptor
 import com.google.protobuf.FieldMask
+import com.google.protobuf.InvalidProtocolBufferException
 import com.google.protobuf.Message
 import com.google.protobuf.util.FieldMaskUtil
 import com.google.protobuf.util.FieldMaskUtil.MergeOptions
@@ -61,12 +62,21 @@ object UpdateMaskSupport {
      * outcomes (full replacement vs. an ordinary partial update - see the class doc), so collapsing
      * them here would lose that distinction. The literal value [FULL_REPLACEMENT] (`*`) has no case
      * to convert and passes through unchanged.
+     *
+     * A malformed or unknown path is a client error (400): [JsonFormat]'s own
+     * [InvalidProtocolBufferException] is translated to [IllegalArgumentException] so
+     * `ApiExceptionHandler` maps it the same way as every other `update_mask` rejection
+     * ([isPathAllowed]'s unknown-field case included), instead of falling through to a 500.
      */
     fun parse(raw: String?): FieldMask? {
         if (raw == null || raw.trim() == "*") return null
         if (raw.isBlank()) return FieldMask.getDefaultInstance()
         val builder = FieldMask.newBuilder()
-        JsonFormat.parser().merge("\"$raw\"", builder)
+        try {
+            JsonFormat.parser().merge("\"$raw\"", builder)
+        } catch (e: InvalidProtocolBufferException) {
+            throw IllegalArgumentException("update_mask is malformed: '$raw'", e)
+        }
         return builder.build()
     }
 

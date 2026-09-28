@@ -47,7 +47,8 @@ dependencies {
 // This module has no src/main/proto - only a test-fixtures .proto (used by ConcurrencySupportTest
 // & co. to exercise real generated Message types), handled by the entur.test-proto-module
 // convention plugin applied above. See its own KDoc for why it's generated via buf like every
-// other module, yet deliberately kept out of the root buf.yaml workspace.
+// other module, yet listed in the root buf.yaml workspace with a pared-down lint/breaking
+// override instead of the full rules a published contract gets.
 
 kotlin {
     compilerOptions {

@@ -14,6 +14,17 @@ internal class IdentifierSupportTest {
     }
 
     @Test
+    fun `requireIdentifierMatchesPath allows a Long path id equal to the resource's int64 id, as a Spring path variable would bind it`() {
+        IdentifierSupport.requireIdentifierMatchesPath(widget { id = 5 }, pathId = 5L)
+    }
+
+    @Test
+    fun `requireIdentifierMatchesPath allows a resource id too large for Int, matched against a Long path id`() {
+        val largeId = Int.MAX_VALUE.toLong() + 1
+        IdentifierSupport.requireIdentifierMatchesPath(widget { id = largeId }, pathId = largeId)
+    }
+
+    @Test
     fun `requireIdentifierMatchesPath allows a zero (absent) resource id regardless of the path id`() {
         IdentifierSupport.requireIdentifierMatchesPath(widget { }, pathId = 5)
     }

@@ -24,6 +24,9 @@ import org.springframework.web.bind.support.WebExchangeBindException
  * [WebExchangeBindException] (with a generic, field-less body). Without an explicit [Order],
  * advice bean precedence is unspecified, so this must outrank it to keep [handleValidation]'s
  * field-level detail winning for exceptions this class explicitly handles.
+ *
+ * Registered in every consuming Boot application via
+ * `META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports`.
  */
 @RestControllerAdvice
 @Order(Ordered.HIGHEST_PRECEDENCE)

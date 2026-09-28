@@ -87,7 +87,7 @@ sealed class SortableProperty<T : Message>(
             JavaType.LONG -> raw.toLong()
             JavaType.FLOAT -> raw.toFloat()
             JavaType.DOUBLE -> raw.toDouble()
-            JavaType.BOOLEAN -> raw.toBoolean()
+            JavaType.BOOLEAN -> raw.toBooleanStrict()
             JavaType.STRING, JavaType.ENUM -> raw
             JavaType.BYTE_STRING, JavaType.MESSAGE -> error("'${descriptor.jsonName}' can't back a sortable column")
         }

@@ -26,7 +26,7 @@ object IdentifierSupport {
             if (identifierField.javaType == FieldDescriptor.JavaType.STRING) {
                 (value as String).isEmpty() || value == pathId
             } else {
-                (value as Number).toInt().let { it == 0 || it == pathId }
+                (value as Number).toLong().let { it == 0L || it == (pathId as Number).toLong() }
             }
         require(matches) {
             "'${identifierField.name}' ($value) does not match the path id ($pathId)"

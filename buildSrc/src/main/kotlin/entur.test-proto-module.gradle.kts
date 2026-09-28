@@ -1,10 +1,12 @@
 /**
  * Convention plugin for a module whose only `.proto` file(s) are test fixtures, not part of its
  * published API. Generates them via buf - the same `protoc_builtin` mechanism every other module
- * uses - but deliberately keeps them out of the root buf.yaml workspace: pulling test-only
- * messages into the shared workspace would subject them to buf lint's COMMENTS rules and buf
- * breaking's wire-compatibility checks, both of which exist to protect published contracts, not
- * throwaway fixtures.
+ * uses - and lists them in the root buf.yaml workspace, but with a pared-down override
+ * (`lint.use: [STANDARD]`, `breaking.use: []`): the full-strength `lint`/`breaking` rules exist to
+ * protect published contracts, not throwaway fixtures, so this module is exempted from
+ * COMMENTS/UNARY_RPC lint and all breaking-change checks - see the workspace entry in root
+ * `buf.yaml` and proto-utils/build.gradle.kts's own comment for why membership itself still can't
+ * be dropped entirely.
  *
  * A module applying this plugin only needs:
  * - its `.proto` file(s) under `<module>/src/test/proto`, laid out to match their package (buf's
