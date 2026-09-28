@@ -146,7 +146,9 @@ paths:
                 in: query
                 description: |-
                     The fields of `area` to update. Fields populated in `area` but not listed here are
-                     left unchanged. Omitting this mask updates every field populated in `area`.
+                     left unchanged. Omitting this mask updates every field of `area`. Setting this mask to an empty
+                     value updates all non-empty fields of `area`. The special value `*` is equivalent to omitting
+                     the mask: full replacement, as if this were a PUT.
                 schema:
                     type: string
                     format: field-mask
@@ -352,8 +354,9 @@ paths:
                 in: query
                 description: |-
                     The fields of `validation_flow` to update. Fields populated in `validation_flow` but not
-                     listed here are left unchanged. Omitting this mask updates every field populated in
-                     `validation_flow`.
+                     listed here are left unchanged. Omitting this mask updates every field of `validation_flow`.
+                     Setting this mask to an empty value updates all non-empty fields of `validation_flow`. The
+                     special value `*` is equivalent to omitting the mask: full replacement, as if this were a PUT.
                 schema:
                     type: string
                     format: field-mask
@@ -521,7 +524,9 @@ paths:
                 in: query
                 description: |-
                     The fields of `owner` to update. Fields populated in `owner` but not listed here are
-                     left unchanged. Omitting this mask updates every field populated in `owner`.
+                     left unchanged. Omitting this mask updates every field of `owner`. Setting this mask to an empty
+                     value updates all non-empty fields of `owner`. The special value `*` is equivalent to omitting
+                     the mask: full replacement, as if this were a PUT.
                 schema:
                     type: string
                     format: field-mask
@@ -704,8 +709,9 @@ paths:
                 in: query
                 description: |-
                     The fields of `validation_rule` to update. Fields populated in `validation_rule` but not
-                     listed here are left unchanged. Omitting this mask updates every field populated in
-                     `validation_rule`.
+                     listed here are left unchanged. Omitting this mask updates every field of `validation_rule`.
+                     Setting this mask to an empty value updates all non-empty fields of `validation_rule`. The
+                     special value `*` is equivalent to omitting the mask: full replacement, as if this were a PUT.
                 schema:
                     type: string
                     format: field-mask
@@ -873,7 +879,9 @@ paths:
                 in: query
                 description: |-
                     The fields of `source` to update. Fields populated in `source` but not listed here are
-                     left unchanged. Omitting this mask updates every field populated in `source`.
+                     left unchanged. Omitting this mask updates every field of `source`. Setting this mask to an empty
+                     value updates all non-empty fields of `source`. The special value `*` is equivalent to omitting
+                     the mask: full replacement, as if this were a PUT.
                 schema:
                     type: string
                     format: field-mask

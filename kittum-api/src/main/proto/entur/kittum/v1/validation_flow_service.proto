@@ -214,8 +214,9 @@ message UpdateValidationFlowRequest {
   // The flow's new field values.
   entur.validation.v1.ValidationFlow validation_flow = 2 [(google.api.field_behavior) = REQUIRED];
   // The fields of `validation_flow` to update. Fields populated in `validation_flow` but not
-  // listed here are left unchanged. Omitting this mask updates every field populated in
-  // `validation_flow`.
+  // listed here are left unchanged. Omitting this mask updates every field of `validation_flow`.
+  // Setting this mask to an empty value updates all non-empty fields of `validation_flow`. The
+  // special value `*` is equivalent to omitting the mask: full replacement, as if this were a PUT.
   optional google.protobuf.FieldMask update_mask = 3;
 }
 
