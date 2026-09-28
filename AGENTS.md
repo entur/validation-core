@@ -49,12 +49,21 @@ https://github.com/entur/ai/blob/main/AGENTS.md
   since buildSrc is compiled and jar'd automatically before every build but not tested as a side
   effect of it.) `proto-utils` is the exception: it's hand-written, so it's fully tested, including
   Postgres-backed integration tests via Testcontainers.
-- **`proto-utils` is not a proto/buf module.** It has no `src/main/proto`, isn't `include`d in the
-  root `buf.yaml` workspace, and needs none of `bufGenerate`/`copyOpenApiSpec`/the `entur.
-  grpc-openapi-module` convention plugin the other API modules use. Its own test-fixtures `.proto`
-  (`src/test/proto/test.proto`) is compiled separately via the `com.google.protobuf` Gradle plugin +
-  `protoc`, entirely outside the `buf` pipeline the rest of the repo standardizes on - don't add it
-  to `buf.yaml` or expect `buf lint`/`buf breaking` to see it. See "Non-schema modules" in
+- **`proto-utils` is not an API module, but does use `buf` for codegen like the others.** It has no
+  `src/main/proto` and needs none of `copyOpenApiSpec`/the `entur.grpc-openapi-module` convention
+  plugin the other API modules use. Its own test-fixtures `.proto`
+  (`src/test/proto/no/entur/proto/testfixtures/v1/test.proto`) still goes through `bufGenerate` -
+  `buf` + `protoc_builtin`, the same mechanism every other module uses, extracted into the
+  `entur.test-proto-module` convention plugin (`buildSrc/src/main/kotlin/entur.test-proto-module.
+  gradle.kts`). It *is* listed under root `buf.yaml`'s `modules:` (buf's PACKAGE_DIRECTORY_MATCH
+  rule and its `google.api.field_behavior` dependency resolution both need workspace membership to
+  work at all), but with a pared-down per-module override - `lint.use: [STANDARD]` only (no
+  COMMENTS, no UNARY_RPC) and `breaking.use: []` - since these are internal fixtures with no
+  compatibility guarantee, not a published contract. Don't widen that override without a reason;
+  don't add `except` entries to work around a real lint failure - fix the `.proto` instead (see the
+  `ENUM_VALUE_PREFIX` fix in its git history for why: excepting a rule some existing code violates
+  just spreads that violation further instead of shrinking it).
+  See "Non-schema modules" in
   `README.md`.
 
 ## Critical Rules

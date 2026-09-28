@@ -122,7 +122,7 @@ internal class PagingSupportTest {
             widget {
                 id = 42L
                 name = "widget-42"
-                status = WidgetStatus.ACTIVE
+                status = WidgetStatus.WIDGET_STATUS_ACTIVE
             }
         val sort = listOf(SortField("status"), SortField("name", ascending = false), SortField("id"))
         val page = Page(content = listOf(last), hasNext = true, sort = sort)
@@ -130,7 +130,7 @@ internal class PagingSupportTest {
         val cursor = requireNotNull(PagingSupport.nextCursor(WIDGET_SORTABLE_PROPERTIES, page, OBJECT_MAPPER))
         val decoded = PagingSupport.decodeCursor(WIDGET_SORTABLE_PROPERTIES, cursor, sort, OBJECT_MAPPER)
 
-        assertEquals(mapOf("status" to "ACTIVE", "name" to "widget-42", "id" to 42L), decoded)
+        assertEquals(mapOf("status" to "WIDGET_STATUS_ACTIVE", "name" to "widget-42", "id" to 42L), decoded)
     }
 
     @Test

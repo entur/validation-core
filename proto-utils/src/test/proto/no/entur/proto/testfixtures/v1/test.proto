@@ -4,8 +4,8 @@ package no.entur.proto.testfixtures.v1;
 import "google/api/field_behavior.proto";
 import "google/protobuf/timestamp.proto";
 
-option java_package = "no.entur.proto.testfixtures.v1";
 option java_multiple_files = true;
+option java_package = "no.entur.proto.testfixtures.v1";
 
 message Widget {
   int64 id = 1 [(google.api.field_behavior) = IDENTIFIER];
@@ -17,8 +17,8 @@ message Widget {
 
 enum WidgetStatus {
   WIDGET_STATUS_UNSPECIFIED = 0;
-  ACTIVE = 1;
-  INACTIVE = 2;
+  WIDGET_STATUS_ACTIVE = 1;
+  WIDGET_STATUS_INACTIVE = 2;
 }
 
 message Part {
@@ -51,4 +51,11 @@ message LineItem {
   int64 order_id = 1 [(google.api.field_behavior) = IDENTIFIER];
   int32 line_number = 2 [(google.api.field_behavior) = IDENTIFIER];
   string description = 3;
+}
+
+// updated_at is missing the OUTPUT_ONLY annotation - a schema bug. Covers ResourceFields' invariant
+// check that an id/updated_at-shaped resource must annotate updated_at as OUTPUT_ONLY.
+message MalformedWidget {
+  int64 id = 1 [(google.api.field_behavior) = IDENTIFIER];
+  string updated_at = 2;
 }

@@ -45,11 +45,11 @@ internal class PagingSupportPostgresTest {
      */
     private val seeded =
         listOf(
-            "bravo" to WidgetStatus.ACTIVE,
-            "alpha" to WidgetStatus.ACTIVE,
-            "alpha" to WidgetStatus.ACTIVE,
-            "delta" to WidgetStatus.INACTIVE,
-            "charlie" to WidgetStatus.INACTIVE,
+            "bravo" to WidgetStatus.WIDGET_STATUS_ACTIVE,
+            "alpha" to WidgetStatus.WIDGET_STATUS_ACTIVE,
+            "alpha" to WidgetStatus.WIDGET_STATUS_ACTIVE,
+            "delta" to WidgetStatus.WIDGET_STATUS_INACTIVE,
+            "charlie" to WidgetStatus.WIDGET_STATUS_INACTIVE,
             "echo" to WidgetStatus.WIDGET_STATUS_UNSPECIFIED,
         )
 
@@ -99,7 +99,7 @@ internal class PagingSupportPostgresTest {
     /**
      * `id` is *always* included in `order` (see [PagingSupport.parseOrderBy]'s tie-break), so
      * reversing every field the client actually named - but not `id` too - only reverses each
-     * group of ties as a whole, not the id-broken order *within* a tied group (`alpha`/`ACTIVE`
+     * group of ties as a whole, not the id-broken order *within* a tied group (`alpha`/`WIDGET_STATUS_ACTIVE`
      * appears as id 2 then 3 either way, since only the explicitly-named fields flipped
      * direction). Naming `id desc` explicitly makes the client's own sort a true, unambiguous
      * total order, so reversing it really does reverse the whole walk.

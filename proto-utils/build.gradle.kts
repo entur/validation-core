@@ -6,7 +6,7 @@ plugins {
     // which breaks Spring's proxying of them) - see ProtoJsonCodecConfig/ApiExceptionHandler.
     alias(libs.plugins.kotlin.spring)
     alias(libs.plugins.ktlint)
-    alias(libs.plugins.protobuf)
+    id("entur.test-proto-module")
 }
 
 dependencies {
@@ -44,18 +44,10 @@ dependencies {
     testRuntimeOnly("org.postgresql:r2dbc-postgresql")
 }
 
-protobuf {
-    protoc {
-        artifact = "com.google.protobuf:protoc:${libs.versions.protobuf.get()}"
-    }
-    generateProtoTasks {
-        all().forEach { task ->
-            task.builtins {
-                create("kotlin")
-            }
-        }
-    }
-}
+// This module has no src/main/proto - only a test-fixtures .proto (used by ConcurrencySupportTest
+// & co. to exercise real generated Message types), handled by the entur.test-proto-module
+// convention plugin applied above. See its own KDoc for why it's generated via buf like every
+// other module, yet deliberately kept out of the root buf.yaml workspace.
 
 kotlin {
     compilerOptions {

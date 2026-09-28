@@ -106,15 +106,21 @@ Copy the pattern from [`kittum-api`](kittum-api):
 ## Non-schema modules
 
 [`proto-utils`](proto-utils) doesn't fit the "Adding a new API module" pattern above: it has no
-`.proto` files of its own (only a test-fixtures `.proto` under `src/test/proto`, compiled locally
-via the `com.google.protobuf` Gradle plugin + `protoc` - not `buf`, and not part of the root
-`buf.yaml` workspace or its lint/format/breaking checks), so it isn't `include`d in that workspace
-and needs no `buf.gen.yaml`. It's plain hand-written Kotlin, applies its own `kotlin.plugin.spring`
-and `ktlint` Gradle plugins directly (the other three modules need neither), and is the only module
-depending on Spring WebFlux, Exposed and Testcontainers - see its own `build.gradle.kts` for why
-each dependency is `api` vs `implementation`. It's still published the same way as the other
-modules (root `subprojects {}` applies `maven-publish` to all of them uniformly), so releasing it
-needs no special handling.
+`src/main/proto` of its own, only a test-fixtures `.proto` under `src/test/proto`. That's still
+generated via `buf` + `protoc_builtin` - the same mechanism `http-model`/`validation-model`/
+`kittum-api` use, wired up by the reusable `entur.test-proto-module` convention plugin
+(`buildSrc/src/main/kotlin/entur.test-proto-module.gradle.kts`) rather than its own hand-rolled
+`bufGenerate` task. It *is* listed in the root `buf.yaml` workspace (buf's PACKAGE_DIRECTORY_MATCH
+rule and resolving `google.api.field_behavior` both require workspace membership), but with a
+pared-down per-module override - `lint.use: [STANDARD]` only, `breaking.use: []` - since these are
+internal test fixtures with no compatibility guarantee, not a published contract: the full
+COMMENTS ruleset and wire-compatibility checks exist to protect the latter, not throwaway fixtures.
+It's plain hand-written Kotlin otherwise, applies its own
+`kotlin.plugin.spring` and `ktlint` Gradle plugins directly (the other three modules need neither),
+and is the only module depending on Spring WebFlux, Exposed and Testcontainers - see its own
+`build.gradle.kts` for why each dependency is `api` vs `implementation`. It's still published the
+same way as the other modules (root `subprojects {}` applies `maven-publish` to all of them
+uniformly), so releasing it needs no special handling.
 
 ## Versioning and publishing
 

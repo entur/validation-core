@@ -47,7 +47,7 @@ internal class ProtoJsonTest {
             widget {
                 id = 1
                 name = "d"
-                status = WidgetStatus.ACTIVE
+                status = WidgetStatus.WIDGET_STATUS_ACTIVE
                 parts += part { label = "p" }
             }
 

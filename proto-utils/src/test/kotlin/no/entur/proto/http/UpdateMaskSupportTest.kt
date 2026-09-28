@@ -85,7 +85,7 @@ internal class UpdateMaskSupportTest {
         assertEffectiveMask(
             widget {
                 name = "d"
-                status = WidgetStatus.ACTIVE
+                status = WidgetStatus.WIDGET_STATUS_ACTIVE
                 parts += part { label = "p" }
                 // id and updated_at left unset (proto3 default) - must not appear below.
                 id = 0
@@ -118,7 +118,7 @@ internal class UpdateMaskSupportTest {
                 widget {
                     id = 1
                     name = "old"
-                    status = WidgetStatus.ACTIVE
+                    status = WidgetStatus.WIDGET_STATUS_ACTIVE
                 },
                 widget { name = "new" },
                 FieldMask.newBuilder().addPaths("name").build(),
@@ -128,7 +128,7 @@ internal class UpdateMaskSupportTest {
             widget {
                 id = 1
                 name = "new"
-                status = WidgetStatus.ACTIVE
+                status = WidgetStatus.WIDGET_STATUS_ACTIVE
             },
             result,
         )
@@ -289,14 +289,14 @@ internal class UpdateMaskSupportTest {
         val result =
             UpdateMaskSupport.applyUpdateMask(
                 widget {
-                    status = WidgetStatus.ACTIVE
+                    status = WidgetStatus.WIDGET_STATUS_ACTIVE
                     name = "old"
                 },
-                widget { status = WidgetStatus.INACTIVE },
+                widget { status = WidgetStatus.WIDGET_STATUS_INACTIVE },
                 FieldMask.newBuilder().addPaths(UpdateMaskSupport.FULL_REPLACEMENT).build(),
             )
 
-        assertEquals(widget { status = WidgetStatus.INACTIVE }, result)
+        assertEquals(widget { status = WidgetStatus.WIDGET_STATUS_INACTIVE }, result)
     }
 
     @Test
@@ -377,14 +377,14 @@ internal class UpdateMaskSupportTest {
         val result =
             UpdateMaskSupport.applyUpdateMask(
                 widget {
-                    status = WidgetStatus.ACTIVE
+                    status = WidgetStatus.WIDGET_STATUS_ACTIVE
                     name = "old"
                 },
-                widget { status = WidgetStatus.INACTIVE },
-                UpdateMaskSupport.resolveEffectiveMask(widget { status = WidgetStatus.INACTIVE }, null),
+                widget { status = WidgetStatus.WIDGET_STATUS_INACTIVE },
+                UpdateMaskSupport.resolveEffectiveMask(widget { status = WidgetStatus.WIDGET_STATUS_INACTIVE }, null),
             )
 
-        assertEquals(widget { status = WidgetStatus.INACTIVE }, result)
+        assertEquals(widget { status = WidgetStatus.WIDGET_STATUS_INACTIVE }, result)
     }
 
     @Test

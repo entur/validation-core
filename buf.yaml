@@ -15,6 +15,12 @@ modules:
   - path: http-model/src/main/proto
   - path: validation-model/src/main/proto
   - path: kittum-api/src/main/proto
+  - path: proto-utils/src/test/proto
+    lint:
+      use:
+        - STANDARD
+    breaking:
+      use: []
 deps:
   - buf.build/googleapis/googleapis
   - buf.build/gnostic/gnostic
