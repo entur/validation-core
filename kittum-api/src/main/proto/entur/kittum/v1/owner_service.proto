@@ -129,7 +129,9 @@ message UpdateOwnerRequest {
   // The owner's new field values.
   entur.validation.v1.Owner owner = 2 [(google.api.field_behavior) = REQUIRED];
   // The fields of `owner` to update. Fields populated in `owner` but not listed here are
-  // left unchanged. Omitting this mask updates every field populated in `owner`.
+  // left unchanged. Omitting this mask updates every field of `owner`. Setting this mask to an empty
+  // value updates all non-empty fields of `owner`. The special value `*` is equivalent to omitting
+  // the mask: full replacement, as if this were a PUT.
   optional google.protobuf.FieldMask update_mask = 3;
 }
 

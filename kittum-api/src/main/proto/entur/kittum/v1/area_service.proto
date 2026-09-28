@@ -129,7 +129,9 @@ message UpdateAreaRequest {
   // The area's new field values.
   entur.validation.v1.Area area = 2 [(google.api.field_behavior) = REQUIRED];
   // The fields of `area` to update. Fields populated in `area` but not listed here are
-  // left unchanged. Omitting this mask updates every field populated in `area`.
+  // left unchanged. Omitting this mask updates every field of `area`. Setting this mask to an empty
+  // value updates all non-empty fields of `area`. The special value `*` is equivalent to omitting
+  // the mask: full replacement, as if this were a PUT.
   optional google.protobuf.FieldMask update_mask = 3;
 }
 

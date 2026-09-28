@@ -3,6 +3,13 @@ kotlin = "2.4.20"
 protobuf = "4.36.2"
 proto-google-common-protos = "2.76.0"
 assertj = "3.27.7"
+# Only proto-utils needs this stack (Spring/Exposed/coroutines) - the other modules are plain
+# protobuf message/schema libraries. Kept aligned with kittum's own catalog, its main consumer.
+springBoot = "4.1.1"
+exposed = "1.5.0"
+kotlinxCoroutines = "1.11.0"
+ktlintPlugin = "14.2.0"
+ktlint = "1.8.0"
 
 [libraries]
 protobuf-java = { group = "com.google.protobuf", name = "protobuf-java", version.ref = "protobuf" }
@@ -11,6 +18,18 @@ protobuf-java-util = { group = "com.google.protobuf", name = "protobuf-java-util
 proto-google-common-protos = { group = "com.google.api.grpc", name = "proto-google-common-protos", version.ref = "proto-google-common-protos" }
 assertj-core = { group = "org.assertj", name = "assertj-core", version.ref = "assertj" }
 kotlin-test = { group = "org.jetbrains.kotlin", name = "kotlin-test", version.ref = "kotlin" }
+kotlin-bom = { module = "org.jetbrains.kotlin:kotlin-bom", version.ref = "kotlin" }
+spring-boot-bom = { module = "org.springframework.boot:spring-boot-dependencies", version.ref = "springBoot" }
+exposed-bom = { module = "org.jetbrains.exposed:exposed-bom", version.ref = "exposed" }
+exposed-core = { module = "org.jetbrains.exposed:exposed-core" }
+exposed-r2dbc = { module = "org.jetbrains.exposed:exposed-r2dbc" }
+exposed-java-time = { module = "org.jetbrains.exposed:exposed-java-time" }
+kotlinx-coroutines-bom = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-bom", version.ref = "kotlinxCoroutines" }
+kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "kotlinxCoroutines" }
 
 [bundles]
 protobuf = ["protobuf-java", "protobuf-kotlin", "protobuf-java-util", "proto-google-common-protos"]
+
+[plugins]
+kotlin-spring = { id = "org.jetbrains.kotlin.plugin.spring", version.ref = "kotlin" }
+ktlint = { id = "org.jlleitschuh.gradle.ktlint", version.ref = "ktlintPlugin" }

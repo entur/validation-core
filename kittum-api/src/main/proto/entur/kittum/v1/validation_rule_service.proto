@@ -153,8 +153,9 @@ message UpdateValidationRuleRequest {
   // The rule's new field values.
   entur.validation.v1.ValidationRule validation_rule = 2 [(google.api.field_behavior) = REQUIRED];
   // The fields of `validation_rule` to update. Fields populated in `validation_rule` but not
-  // listed here are left unchanged. Omitting this mask updates every field populated in
-  // `validation_rule`.
+  // listed here are left unchanged. Omitting this mask updates every field of `validation_rule`.
+  // Setting this mask to an empty value updates all non-empty fields of `validation_rule`. The
+  // special value `*` is equivalent to omitting the mask: full replacement, as if this were a PUT.
   optional google.protobuf.FieldMask update_mask = 3;
 }
 

@@ -132,7 +132,9 @@ message UpdateSourceRequest {
   // The source's new field values.
   entur.validation.v1.Source source = 2 [(google.api.field_behavior) = REQUIRED];
   // The fields of `source` to update. Fields populated in `source` but not listed here are
-  // left unchanged. Omitting this mask updates every field populated in `source`.
+  // left unchanged. Omitting this mask updates every field of `source`. Setting this mask to an empty
+  // value updates all non-empty fields of `source`. The special value `*` is equivalent to omitting
+  // the mask: full replacement, as if this were a PUT.
   optional google.protobuf.FieldMask update_mask = 3;
 }
 
