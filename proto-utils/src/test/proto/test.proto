@@ -1,0 +1,54 @@
+syntax = "proto3";
+package no.entur.proto.testfixtures.v1;
+
+import "google/api/field_behavior.proto";
+import "google/protobuf/timestamp.proto";
+
+option java_package = "no.entur.proto.testfixtures.v1";
+option java_multiple_files = true;
+
+message Widget {
+  int64 id = 1 [(google.api.field_behavior) = IDENTIFIER];
+  string name = 2;
+  google.protobuf.Timestamp updated_at = 3 [(google.api.field_behavior) = OUTPUT_ONLY];
+  WidgetStatus status = 4;
+  repeated Part parts = 5;
+}
+
+enum WidgetStatus {
+  WIDGET_STATUS_UNSPECIFIED = 0;
+  ACTIVE = 1;
+  INACTIVE = 2;
+}
+
+message Part {
+  int64 id = 1 [(google.api.field_behavior) = IDENTIFIER];
+  string label = 2;
+  Detail detail = 3;
+}
+
+message Detail {
+  string generated_note = 1 [(google.api.field_behavior) = OUTPUT_ONLY];
+  string value = 2;
+}
+
+// No IDENTIFIER/OUTPUT_ONLY fields at all - a message with neither convention applied.
+message Note {
+  string message = 1;
+}
+
+// A resource with a *string* IDENTIFIER (Widget/Part above are int64) - covers ConcurrencySupport's
+// string-id path, both as a JVM Message and, via a matching Exposed table, round-tripped through Postgres.
+message Label {
+  string id = 1 [(google.api.field_behavior) = IDENTIFIER];
+  string text = 2;
+  google.protobuf.Timestamp updated_at = 3 [(google.api.field_behavior) = OUTPUT_ONLY];
+}
+
+// A resource with a genuinely *composite* id (every other message above has a single-column one) -
+// covers PagingSupport's composite-id tie-break against a real Exposed CompositeIdTable.
+message LineItem {
+  int64 order_id = 1 [(google.api.field_behavior) = IDENTIFIER];
+  int32 line_number = 2 [(google.api.field_behavior) = IDENTIFIER];
+  string description = 3;
+}

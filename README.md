@@ -3,17 +3,19 @@
 ## Description
 
 This repository contains shared code for Entur's validation platform and its APIs, published as
-Java libraries. It contains schema and generated code only.
+Java libraries. Most of it is schema and generated code; `proto-utils` is the one exception - a
+hand-written support library built on top of the generated types.
 
 ## Modules
 
-Three Gradle modules, each published as its own Maven artifact, sharing one version:
+Four Gradle modules, each published as its own Maven artifact, sharing one version:
 
 | Module | Proto package | Artifact | Contents |
 |--------|---------------|----------|----------|
 | [`http-model`](http-model) | `entur.http.v1` | `no.entur.validation:http-model` | `Failure`/`ProblemDetail`, the RFC 9457-style types used to document and render rpc failure responses. |
 | [`validation-model`](validation-model) | `entur.validation.v1` | `no.entur.validation:validation-model` | The domain messages. |
 | [`kittum-api`](kittum-api) | `entur.kittum.v1` | `no.entur.validation:kittum-api` | Kittum's gRPC/REST service definitions and their Request/Response messages. |
+| [`proto-utils`](proto-utils) | — (hand-written, not proto-generated) | `no.entur.validation:proto-utils` | Domain-agnostic proto/HTTP plumbing (ETag concurrency, update masks, cursor paging, protobuf-JSON codecs, `ProblemDetail` error mapping) for WebFlux services built on this schema. See "Non-schema modules" below. |
 
 More packages (and modules) are expected as new APIs are added on top of the shared model.
 
@@ -100,6 +102,19 @@ Copy the pattern from [`kittum-api`](kittum-api):
 4. Add the new spec to the matrix in [`lint-api.yml`](.github/workflows/lint-api.yml) - the
    `gha-api` `path` input takes no globs, so each spec needs its own entry.
 5. Commit the spec the first build produces, and add the module to the Modules table at the top.
+
+## Non-schema modules
+
+[`proto-utils`](proto-utils) doesn't fit the "Adding a new API module" pattern above: it has no
+`.proto` files of its own (only a test-fixtures `.proto` under `src/test/proto`, compiled locally
+via the `com.google.protobuf` Gradle plugin + `protoc` - not `buf`, and not part of the root
+`buf.yaml` workspace or its lint/format/breaking checks), so it isn't `include`d in that workspace
+and needs no `buf.gen.yaml`. It's plain hand-written Kotlin, applies its own `kotlin.plugin.spring`
+and `ktlint` Gradle plugins directly (the other three modules need neither), and is the only module
+depending on Spring WebFlux, Exposed and Testcontainers - see its own `build.gradle.kts` for why
+each dependency is `api` vs `implementation`. It's still published the same way as the other
+modules (root `subprojects {}` applies `maven-publish` to all of them uniformly), so releasing it
+needs no special handling.
 
 ## Versioning and publishing
 

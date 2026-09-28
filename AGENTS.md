@@ -1,14 +1,17 @@
 # validation-core
 
-Shared protobuf schema for Entur's validation platform, published as Java/Kotlin libraries. Three
+Shared protobuf schema for Entur's validation platform, published as Java/Kotlin libraries. Four
 Gradle modules - `http-model` (the shared `entur.http.v1` `Failure`/`ProblemDetail` types),
-`validation-model` (the `entur.validation.v1` domain messages), and `kittum-api` (Kittum's
-`entur.kittum.v1` service definitions) - each published as its own Maven artifact.
+`validation-model` (the `entur.validation.v1` domain messages), `kittum-api` (Kittum's
+`entur.kittum.v1` service definitions), and `proto-utils` (hand-written proto/HTTP plumbing built on
+the other three - see "Non-schema modules" below) - each published as its own Maven artifact.
 
-This repository contains schema and generated code only. There is no application implementation, no
-database, no Dockerfile, and nothing deployable. The parts of the golden path that assume a running
-service - Helm, Terraform, `compose.yaml`, `.entur/` self-service manifests, `application.yml` - do
-not apply here.
+This repository is schema and generated code plus, in `proto-utils` alone, hand-written support code
+built on top of it - see "Non-schema modules" in `README.md`. There is no application implementation,
+no database, no Dockerfile, and nothing deployable (`proto-utils`'s Postgres-backed tests run against
+a throwaway Testcontainers instance, not a real database). The parts of the golden path that assume a
+running service - Helm, Terraform, `compose.yaml`, `.entur/` self-service manifests, `application.yml`
+- do not apply here.
 
 ## Entur Standards
 
@@ -19,7 +22,7 @@ https://github.com/entur/ai/blob/main/AGENTS.md
 
 - Owning team: `team-validering`
 - Artifacts: `no.entur.validation:http-model`, `no.entur.validation:validation-model`,
-  `no.entur.validation:kittum-api`
+  `no.entur.validation:kittum-api`, `no.entur.validation:proto-utils`
 - Published to Entur's JFrog Artifactory (`entur-release-standard`) via `entur/gha-artifactory`.
   Publishing is manual and tag-triggered: pushing a `v<major>.<minor>.<patch>` tag runs CD, which
   publishes that exact version. Merging to `main` does not publish by itself. See "Versioning and
@@ -38,12 +41,21 @@ https://github.com/entur/ai/blob/main/AGENTS.md
   `specs/*.yaml` is generated from them by `buf generate`, then copied into the source tree so a
   schema change produces a reviewable diff of the resulting HTTP contract. The location matches the
   standard; the direction of authorship is inverted.
-- **No tests in the schema modules.** All three report `test NO-SOURCE`; there is no hand-written
-  code to exercise. This is a known gap rather than a decision - a smoke test proving the generated
-  classes load and round-trip would be cheap insurance that codegen actually produces working
-  output. (`buildSrc`'s own build logic, e.g. `OpenApiFailureAugmenter`, does have unit tests -
-  run separately via `./gradlew :buildSrc:test`, since buildSrc is compiled and jar'd automatically
-  before every build but not tested as a side effect of it.)
+- **No tests in the schema modules.** `http-model`, `validation-model` and `kittum-api` all report
+  `test NO-SOURCE`; there is no hand-written code to exercise. This is a known gap rather than a
+  decision - a smoke test proving the generated classes load and round-trip would be cheap insurance
+  that codegen actually produces working output. (`buildSrc`'s own build logic, e.g.
+  `OpenApiFailureAugmenter`, does have unit tests - run separately via `./gradlew :buildSrc:test`,
+  since buildSrc is compiled and jar'd automatically before every build but not tested as a side
+  effect of it.) `proto-utils` is the exception: it's hand-written, so it's fully tested, including
+  Postgres-backed integration tests via Testcontainers.
+- **`proto-utils` is not a proto/buf module.** It has no `src/main/proto`, isn't `include`d in the
+  root `buf.yaml` workspace, and needs none of `bufGenerate`/`copyOpenApiSpec`/the `entur.
+  grpc-openapi-module` convention plugin the other API modules use. Its own test-fixtures `.proto`
+  (`src/test/proto/test.proto`) is compiled separately via the `com.google.protobuf` Gradle plugin +
+  `protoc`, entirely outside the `buf` pipeline the rest of the repo standardizes on - don't add it
+  to `buf.yaml` or expect `buf lint`/`buf breaking` to see it. See "Non-schema modules" in
+  `README.md`.
 
 ## Critical Rules
 
