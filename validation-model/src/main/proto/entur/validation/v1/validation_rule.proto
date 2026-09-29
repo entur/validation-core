@@ -37,6 +37,7 @@ message ValidationRule {
   // The stage the validation rule runs in.
   ValidationStage stage = 4 [
     (google.api.field_behavior) = REQUIRED,
+    (google.api.field_behavior) = IMMUTABLE,
     (gnostic.openapi.v3.property) = {
       example: {yaml: "\"STRUCTURAL\""}
     }

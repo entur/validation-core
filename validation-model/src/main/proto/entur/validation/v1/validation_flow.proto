@@ -41,6 +41,7 @@ message ValidationFlow {
   // flow must have the same stage.
   ValidationStage stage = 4 [
     (google.api.field_behavior) = REQUIRED,
+    (google.api.field_behavior) = IMMUTABLE,
     (gnostic.openapi.v3.property) = {
       example: {yaml: "\"STRUCTURAL\""}
     }
