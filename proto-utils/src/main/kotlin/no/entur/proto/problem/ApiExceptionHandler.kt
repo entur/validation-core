@@ -5,20 +5,24 @@ import no.entur.http.proto.v1.fieldViolation
 import no.entur.http.proto.v1.problemDetail
 import org.springframework.core.Ordered
 import org.springframework.core.annotation.Order
+import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.RestControllerAdvice
 import org.springframework.web.bind.support.WebExchangeBindException
+import org.springframework.web.server.MissingRequestValueException
 
 /**
  * Maps exceptions raised anywhere in the API to a protobuf [ProblemDetail] response (RFC 7807),
  * so callers always get a structured, uniform error body instead of a container-specific
  * fallback: [ElementNotFoundException] to 404, [IllegalArgumentException] to 400,
- * [ConflictException] to 409, [PreconditionRequiredException] to 428, and
- * [WebExchangeBindException] (Bean Validation failures) to 400 with per-field detail in
- * [ProblemDetail.errors].
+ * [ConflictException] to 409, [PreconditionRequiredException] to 428,
+ * [MissingRequestValueException] (WebFlux's own `required = true` enforcement, for any
+ * `@RequestHeader`/`@RequestParam`/etc.) to 428 when it's specifically a missing `If-Match`
+ * header and 400 otherwise, and [WebExchangeBindException] (Bean Validation failures) to 400
+ * with per-field detail in [ProblemDetail.errors].
  *
  * Boot's `spring.webflux.problemdetails.enabled` fallback advice also knows how to handle
  * [WebExchangeBindException] (with a generic, field-less body). Without an explicit [Order],
@@ -43,6 +47,18 @@ class ApiExceptionHandler {
     @ExceptionHandler(PreconditionRequiredException::class)
     fun handlePreconditionRequired(ex: PreconditionRequiredException): ResponseEntity<ProblemDetail> =
         apiProblem(HttpStatus.PRECONDITION_REQUIRED, ex.message)
+
+    /**
+     * WebFlux throws this generically for any missing required named value. Only the `If-Match`
+     * case gets [PreconditionRequiredException]'s 428; everything else falls back to a plain 400.
+     */
+    @ExceptionHandler(MissingRequestValueException::class)
+    fun handleMissingRequestValue(ex: MissingRequestValueException): ResponseEntity<ProblemDetail> =
+        if (ex.label == "header" && ex.name == HttpHeaders.IF_MATCH) {
+            apiProblem(HttpStatus.PRECONDITION_REQUIRED, "The If-Match header is required")
+        } else {
+            apiProblem(HttpStatus.BAD_REQUEST, ex.message)
+        }
 
     /** [ProblemDetail.errors] carries the per-field detail; `detail` itself stays a generic summary. */
     @ExceptionHandler(WebExchangeBindException::class)
