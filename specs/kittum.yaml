@@ -15,6 +15,48 @@ info:
 servers:
   - url: https://kittum.entur.io
 paths:
+    /v3/api-docs:
+        get:
+            tags:
+              - OpenApi
+            summary: Get the OpenAPI specification for this service
+            description: Returns this specification itself, as YAML by default or
+                JSON when requested via the Accept header.
+            operationId: getOpenApiSpec
+            parameters:
+              - name: Accept
+                in: header
+                description: The desired response format - `application/yaml` (the
+                    default) or `application/json`.
+                required: false
+                schema:
+                    type: string
+            responses:
+                '200':
+                    description: The OpenAPI specification
+                    content:
+                        application/yaml:
+                            schema:
+                                type: string
+                                example: |
+                                    openapi: 3.0.3
+                                    info:
+                                        title: kittum
+                                        version: 0.0.1
+                                    paths: {}
+                                    components:
+                                        schemas: {}
+                        application/json:
+                            schema:
+                                type: object
+                                example:
+                                    openapi: 3.0.3
+                                    info:
+                                        title: kittum
+                                        version: 0.0.1
+                                    paths: {}
+                                    components:
+                                        schemas: {}
     /validation/v1/areas:
         get:
             tags:
@@ -1687,6 +1729,8 @@ components:
 tags:
   - name: AreaService
     description: The gRPC service to view and administrate areas.
+  - name: OpenApi
+    description: This service's own generated OpenAPI specification.
   - name: OwnerService
     description: The gRPC service to view and administrate owners.
   - name: SourceService
