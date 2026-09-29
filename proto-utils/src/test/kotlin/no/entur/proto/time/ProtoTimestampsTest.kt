@@ -5,6 +5,8 @@ import com.google.protobuf.timestamp
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import java.time.Instant
+import java.time.OffsetDateTime
+import java.time.ZoneOffset
 
 internal class ProtoTimestampsTest {
     @Test
@@ -60,5 +62,32 @@ internal class ProtoTimestampsTest {
     fun `nanos at the top of their range are preserved`() {
         val instant = Instant.ofEpochSecond(0L, 999_999_999L)
         assertEquals(instant, instant.toProtoTimestamp().toInstant())
+    }
+
+    @Test
+    fun `an OffsetDateTime's toProtoTimestamp carries seconds and nanos over`() {
+        val offsetDateTime =
+            OffsetDateTime.ofInstant(
+                Instant.ofEpochSecond(1_700_000_000L, 123_456_789L),
+                ZoneOffset.ofHours(2),
+            )
+        val timestamp = offsetDateTime.toProtoTimestamp()
+        assertEquals(1_700_000_000L, timestamp.seconds)
+        assertEquals(123_456_789, timestamp.nanos)
+    }
+
+    @Test
+    fun `an OffsetDateTime survives a round trip through Timestamp`() {
+        val offsetDateTime = OffsetDateTime.of(2023, 11, 14, 22, 13, 20, 123_456_789, ZoneOffset.ofHours(-5))
+        assertEquals(offsetDateTime.toInstant(), offsetDateTime.toProtoTimestamp().toInstant())
+    }
+
+    @Test
+    fun `OffsetDateTimes representing the same instant in different offsets produce the same Timestamp`() {
+        val instant = Instant.ofEpochSecond(1_700_000_000L, 123_456_789L)
+        val atUtc = OffsetDateTime.ofInstant(instant, ZoneOffset.UTC)
+        val atPlusNine = OffsetDateTime.ofInstant(instant, ZoneOffset.ofHours(9))
+
+        assertEquals(atUtc.toProtoTimestamp(), atPlusNine.toProtoTimestamp())
     }
 }
