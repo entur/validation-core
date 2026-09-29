@@ -71,11 +71,11 @@ service ValidationFlowService {
     option (gnostic.openapi.v3.operation) = {summary: "Assign a validation flow to a source, for one stage and area."};
     option (entur.http.v1.failure) = {
       code: "404"
-      description: "The source, the area, or the validation flow referenced by `flow_id` does not exist."
+      description: "The source or area does not exist."
     };
     option (entur.http.v1.failure) = {
       code: "400"
-      description: "The validation flow referenced by `flow_id` has a `stage` that does not match the request's `stage`."
+      description: "The validation flow referenced by `flow_id` does not exist, or has a `stage` that does not match the request's `stage`."
     };
     option (entur.http.v1.failure) = {
       code: "409"
