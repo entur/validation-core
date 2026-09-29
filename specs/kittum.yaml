@@ -26,6 +26,8 @@ paths:
             parameters:
               - name: Accept
                 in: header
+                description: The desired response format - `application/yaml` (the
+                    default) or `application/json`.
                 required: false
                 schema:
                     type: string
@@ -36,9 +38,25 @@ paths:
                         application/yaml:
                             schema:
                                 type: string
+                                example: |
+                                    openapi: 3.0.3
+                                    info:
+                                        title: kittum
+                                        version: 0.0.1
+                                    paths: {}
+                                    components:
+                                        schemas: {}
                         application/json:
                             schema:
                                 type: object
+                                example:
+                                    openapi: 3.0.3
+                                    info:
+                                        title: kittum
+                                        version: 0.0.1
+                                    paths: {}
+                                    components:
+                                        schemas: {}
     /validation/v1/areas:
         get:
             tags:
@@ -1552,6 +1570,8 @@ components:
 tags:
   - name: AreaService
     description: The gRPC service to view and administrate areas.
+  - name: OpenApi
+    description: This service's own generated OpenAPI specification.
   - name: OwnerService
     description: The gRPC service to view and administrate owners.
   - name: SourceService

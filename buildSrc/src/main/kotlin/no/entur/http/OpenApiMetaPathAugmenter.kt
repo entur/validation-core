@@ -20,6 +20,7 @@ class OpenApiMetaPathAugmenter {
                 parameters:
                   - name: Accept
                     in: header
+                    description: The desired response format - `application/yaml` (the default) or `application/json`.
                     required: false
                     schema:
                         type: string
@@ -30,9 +31,33 @@ class OpenApiMetaPathAugmenter {
                             application/yaml:
                                 schema:
                                     type: string
+                                    example: |
+                                        openapi: 3.0.3
+                                        info:
+                                            title: kittum
+                                            version: 0.0.1
+                                        paths: {}
+                                        components:
+                                            schemas: {}
                             application/json:
                                 schema:
                                     type: object
+                                    example:
+                                        openapi: 3.0.3
+                                        info:
+                                            title: kittum
+                                            version: 0.0.1
+                                        paths: {}
+                                        components:
+                                            schemas: {}
+        """.trimIndent()
+
+    // gnostic itself populates the top-level `tags:` list from each real `service`'s own doc
+    // comment - there's no service behind this operation's "OpenApi" tag, so it's added here too.
+    private val apiDocsTagYaml =
+        """
+        name: OpenApi
+        description: This service's own generated OpenAPI specification.
         """.trimIndent()
 
     fun augment(spec: MutableMap<String, Any?>) {
@@ -43,5 +68,14 @@ class OpenApiMetaPathAugmenter {
         }
         paths[path] = pathItem
         spec["paths"] = paths.toSortedMap()
+
+        val tag = yamlMap(Yaml().load(apiDocsTagYaml))
+        @Suppress("UNCHECKED_CAST")
+        val tags = spec.getOrPut("tags") { mutableListOf<Any?>() } as MutableList<Any?>
+        check(tags.none { yamlMapOrNull(it)?.get("name") == tag["name"] }) {
+            "Tag '${tag["name"]}' from OpenApiMetaPathAugmenter collides with an existing tag in the generated spec"
+        }
+        tags += tag
+        tags.sortBy { yamlMap(it)["name"] as String }
     }
 }
