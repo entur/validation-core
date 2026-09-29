@@ -76,20 +76,13 @@ class OpenApiFailureAugmenterTest {
         return spec
     }
 
-    @Suppress("UNCHECKED_CAST")
-    private fun Map<String, Any?>.at(vararg keys: String): Map<String, Any?> {
-        var current = this
-        for (key in keys) current = current[key] as? Map<String, Any?> ?: error("Missing key '$key'")
-        return current
-    }
-
     @Test
     fun `adds the response a failure option declares, and leaves other operations alone`() {
         val spec = augment()
 
         val getThingResponses = spec.at("paths", "/things", "get", "responses")
         assertEquals(setOf("200", "404"), getThingResponses.keys)
-        val notFound = getThingResponses["404"] as Map<String, Any?>
+        val notFound = getThingResponses.at("404")
         assertEquals("Thing not found.", notFound["description"])
         val ref = notFound.at("content", "application/problem+json", "schema")["\$ref"]
         assertEquals("#/components/schemas/ProblemDetail", ref)
@@ -106,17 +99,16 @@ class OpenApiFailureAugmenterTest {
     fun `derives the ref'd schema from the real ProblemDetail message's fields, comments and REQUIRED behavior`() {
         val spec = augment()
 
-        val schema = spec.at("components", "schemas").getValue("ProblemDetail") as Map<String, Any?>
+        val schema = spec.at("components", "schemas", "ProblemDetail")
         assertEquals("object", schema["type"])
         assertEquals(listOf("title", "status"), schema["required"])
 
-        @Suppress("UNCHECKED_CAST")
-        val properties = schema["properties"] as Map<String, Any?>
+        val properties = schema.at("properties")
         assertEquals(setOf("title", "status", "detail", "errors"), properties.keys)
-        val title = properties["title"] as Map<String, Any?>
+        val title = properties.at("title")
         assertEquals("string", title["type"])
         assertEquals("A short, human-readable summary of the problem type.", title["description"])
-        val status = properties["status"] as Map<String, Any?>
+        val status = properties.at("status")
         assertEquals("integer", status["type"])
         assertEquals("int32", status["format"])
     }
@@ -126,16 +118,15 @@ class OpenApiFailureAugmenterTest {
         val spec = augment()
 
         val problemDetailProperties = spec.at("components", "schemas", "ProblemDetail", "properties")
-        val errors = problemDetailProperties["errors"] as Map<String, Any?>
+        val errors = problemDetailProperties.at("errors")
         assertEquals("array", errors["type"])
-        val items = errors["items"] as Map<String, Any?>
+        val items = errors.at("items")
         assertEquals("#/components/schemas/FieldViolation", items["\$ref"])
 
-        val fieldViolationSchema = spec.at("components", "schemas").getValue("FieldViolation") as Map<String, Any?>
+        val fieldViolationSchema = spec.at("components", "schemas", "FieldViolation")
         assertEquals("object", fieldViolationSchema["type"])
         assertEquals(listOf("field", "message"), fieldViolationSchema["required"])
-        @Suppress("UNCHECKED_CAST")
-        val fieldViolationProperties = fieldViolationSchema["properties"] as Map<String, Any?>
+        val fieldViolationProperties = fieldViolationSchema.at("properties")
         assertEquals(setOf("field", "message"), fieldViolationProperties.keys)
     }
 

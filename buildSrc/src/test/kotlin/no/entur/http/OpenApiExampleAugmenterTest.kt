@@ -100,13 +100,6 @@ class OpenApiExampleAugmenterTest {
         return descriptorSetFile.inputStream().use { DescriptorProtos.FileDescriptorSet.parseFrom(it) }
     }
 
-    @Suppress("UNCHECKED_CAST")
-    private fun Map<String, Any?>.at(vararg keys: String): Map<String, Any?> {
-        var current = this
-        for (key in keys) current = current[key] as? Map<String, Any?> ?: error("Missing key '$key'")
-        return current
-    }
-
     private fun result(): Map<String, Any?> {
         val files = buildFileDescriptors(compileFixture())
         val registry = buildExtensionRegistry(files)
