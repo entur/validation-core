@@ -59,6 +59,40 @@ service ValidationFlowService {
     };
   }
 
+  // Assign a validation flow to a source, for one stage and area. At most one flow may be
+  // assigned to a given (source, stage, area) slot: this fails if the slot already has a
+  // flow assigned - call UnassignSourceFlow first to reassign it. `flow_id` must reference
+  // an existing ValidationFlow whose own `stage` matches the request's `stage`.
+  rpc AssignSourceFlow(AssignSourceFlowRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      post: "/validation/v1/sources/{source}/flows/{stage}/{area}"
+      body: "*"
+    };
+    option (gnostic.openapi.v3.operation) = {summary: "Assign a validation flow to a source, for one stage and area."};
+    option (entur.http.v1.failure) = {
+      code: "404"
+      description: "The source or area does not exist."
+    };
+    option (entur.http.v1.failure) = {
+      code: "400"
+      description: "The validation flow referenced by `flow_id` does not exist, or has a `stage` that does not match the request's `stage`."
+    };
+    option (entur.http.v1.failure) = {
+      code: "409"
+      description: "The (source, stage, area) slot already has a flow assigned."
+    };
+  }
+
+  // Unassign the validation flow connected to a source, for one stage and area.
+  rpc UnassignSourceFlow(UnassignSourceFlowRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {delete: "/validation/v1/sources/{source}/flows/{stage}/{area}"};
+    option (gnostic.openapi.v3.operation) = {summary: "Unassign the flow connected to a source, for one stage and area."};
+    option (entur.http.v1.failure) = {
+      code: "404"
+      description: "The source or area does not exist, or no flow is connected for the given stage and area."
+    };
+  }
+
   // Create a new validation flow. Every item's `rule_flow_item.id`/`sub_flow_item.id` must
   // reference an existing ValidationRule/ValidationFlow of the same `stage`; their nested
   // `validation_rule`/`flow` fields are OUTPUT_ONLY and ignored if set. The flow's `id` and
@@ -188,6 +222,68 @@ message GetSourceFlowRequest {
     }
   ];
   // The name of the area to lookup.
+  string area = 3 [
+    (google.api.field_behavior) = REQUIRED,
+    (gnostic.openapi.v3.property) = {
+      example: {yaml: "\"Personalisering\""}
+    }
+  ];
+}
+
+// Request for AssignSourceFlow.
+message AssignSourceFlowRequest {
+  // The name of the source to assign the flow to.
+  string source = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (gnostic.openapi.v3.property) = {
+      example: {yaml: "\"rutedata\""}
+    }
+  ];
+  // The stage of the slot to assign the flow to.
+  //
+  // This field is case insensitive.
+  entur.validation.v1.ValidationStage stage = 2 [
+    (google.api.field_behavior) = REQUIRED,
+    (gnostic.openapi.v3.property) = {
+      example: {yaml: "\"STRUCTURAL\""}
+    }
+  ];
+  // The name of the area of the slot to assign the flow to.
+  string area = 3 [
+    (google.api.field_behavior) = REQUIRED,
+    (gnostic.openapi.v3.property) = {
+      example: {yaml: "\"Personalisering\""}
+    }
+  ];
+  // The database id of the validation flow to assign. Must be an existing flow whose own
+  // `stage` matches this request's `stage`.
+  int32 flow_id = 4 [
+    (google.api.field_behavior) = REQUIRED,
+    (gnostic.openapi.v3.property) = {
+      example: {yaml: "1"}
+    }
+  ];
+}
+
+// Request for UnassignSourceFlow.
+message UnassignSourceFlowRequest {
+  // The name of the source to unassign the flow from.
+  string source = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (gnostic.openapi.v3.property) = {
+      example: {yaml: "\"rutedata\""}
+    }
+  ];
+  // The stage of the slot to unassign the flow from.
+  //
+  // This field is case insensitive.
+  entur.validation.v1.ValidationStage stage = 2 [
+    (google.api.field_behavior) = REQUIRED,
+    (gnostic.openapi.v3.property) = {
+      example: {yaml: "\"STRUCTURAL\""}
+    }
+  ];
+  // The name of the area of the slot to unassign the flow from.
   string area = 3 [
     (google.api.field_behavior) = REQUIRED,
     (gnostic.openapi.v3.property) = {

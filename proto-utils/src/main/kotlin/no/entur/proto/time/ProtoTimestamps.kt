@@ -2,6 +2,7 @@ package no.entur.proto.time
 
 import com.google.protobuf.Timestamp
 import java.time.Instant
+import java.time.OffsetDateTime
 
 /**
  * Converts a java [Instant] to a proto [Timestamp].
@@ -17,3 +18,8 @@ fun Instant.toProtoTimestamp(): Timestamp =
  * Converts a proto [Timestamp] to a java [Instant].
  */
 fun Timestamp.toInstant(): Instant = Instant.ofEpochSecond(seconds, nanos.toLong())
+
+/**
+ * Converts a java [OffsetDateTime] to a proto [Timestamp].
+ */
+fun OffsetDateTime.toProtoTimestamp(): Timestamp = toInstant().toProtoTimestamp()

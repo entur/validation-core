@@ -965,6 +965,122 @@ paths:
                         application/problem+json:
                             schema:
                                 $ref: '#/components/schemas/ProblemDetail'
+        post:
+            tags:
+              - ValidationFlowService
+            summary: Assign a validation flow to a source, for one stage and area.
+            description: |-
+                Assign a validation flow to a source, for one stage and area. At most one flow may be
+                 assigned to a given (source, stage, area) slot: this fails if the slot already has a
+                 flow assigned - call UnassignSourceFlow first to reassign it. `flow_id` must reference
+                 an existing ValidationFlow whose own `stage` matches the request's `stage`.
+            operationId: ValidationFlowService_AssignSourceFlow
+            parameters:
+              - name: source
+                in: path
+                description: The name of the source to assign the flow to.
+                required: true
+                schema:
+                    type: string
+              - name: stage
+                in: path
+                description: |-
+                    The stage of the slot to assign the flow to.
+
+                     This field is case insensitive.
+                required: true
+                schema:
+                    enum:
+                      - VALIDATION_STAGE_UNSPECIFIED
+                      - STRUCTURAL
+                      - LOCAL
+                      - GLOBAL
+                    type: string
+                    format: enum
+              - name: area
+                in: path
+                description: The name of the area of the slot to assign the flow to.
+                required: true
+                schema:
+                    type: string
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/AssignSourceFlowRequest'
+                required: true
+            responses:
+                '200':
+                    description: OK
+                    content: {}
+                '404':
+                    description: The source or area does not exist.
+                    content:
+                        application/problem+json:
+                            schema:
+                                $ref: '#/components/schemas/ProblemDetail'
+                '400':
+                    description: The validation flow referenced by `flow_id` does
+                        not exist, or has a `stage` that does not match the request's
+                        `stage`.
+                    content:
+                        application/problem+json:
+                            schema:
+                                $ref: '#/components/schemas/ProblemDetail'
+                '409':
+                    description: The (source, stage, area) slot already has a flow
+                        assigned.
+                    content:
+                        application/problem+json:
+                            schema:
+                                $ref: '#/components/schemas/ProblemDetail'
+        delete:
+            tags:
+              - ValidationFlowService
+            summary: Unassign the flow connected to a source, for one stage and area.
+            description: Unassign the validation flow connected to a source, for one
+                stage and area.
+            operationId: ValidationFlowService_UnassignSourceFlow
+            parameters:
+              - name: source
+                in: path
+                description: The name of the source to unassign the flow from.
+                required: true
+                schema:
+                    type: string
+              - name: stage
+                in: path
+                description: |-
+                    The stage of the slot to unassign the flow from.
+
+                     This field is case insensitive.
+                required: true
+                schema:
+                    enum:
+                      - VALIDATION_STAGE_UNSPECIFIED
+                      - STRUCTURAL
+                      - LOCAL
+                      - GLOBAL
+                    type: string
+                    format: enum
+              - name: area
+                in: path
+                description: The name of the area of the slot to unassign the flow
+                    from.
+                required: true
+                schema:
+                    type: string
+            responses:
+                '200':
+                    description: OK
+                    content: {}
+                '404':
+                    description: The source or area does not exist, or no flow is
+                        connected for the given stage and area.
+                    content:
+                        application/problem+json:
+                            schema:
+                                $ref: '#/components/schemas/ProblemDetail'
 components:
     schemas:
         Area:
@@ -1002,6 +1118,49 @@ components:
                 name: Personalisering
                 owner: 2
                 updatedAt: '2026-01-01T00:00:00Z'
+        AssignSourceFlowRequest:
+            required:
+              - source
+              - stage
+              - area
+              - flowId
+            type: object
+            properties:
+                source:
+                    example: rutedata
+                    type: string
+                    description: The name of the source to assign the flow to.
+                stage:
+                    example: STRUCTURAL
+                    enum:
+                      - VALIDATION_STAGE_UNSPECIFIED
+                      - STRUCTURAL
+                      - LOCAL
+                      - GLOBAL
+                    type: string
+                    description: |-
+                        The stage of the slot to assign the flow to.
+
+                         This field is case insensitive.
+                    format: enum
+                area:
+                    example: Personalisering
+                    type: string
+                    description: The name of the area of the slot to assign the flow
+                        to.
+                flowId:
+                    example: 1
+                    type: integer
+                    description: |-
+                        The database id of the validation flow to assign. Must be an existing flow whose own
+                         `stage` matches this request's `stage`.
+                    format: int32
+            description: Request for AssignSourceFlow.
+            example:
+                source: rutedata
+                stage: STRUCTURAL
+                area: Personalisering
+                flowId: 1
         FieldViolation:
             description: One request field that failed validation.
             required:
