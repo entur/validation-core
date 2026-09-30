@@ -62,8 +62,32 @@ paths:
             tags:
               - AreaService
             summary: List all existing areas.
-            description: List all existing areas.
+            description: |-
+                List all existing areas.
+
+                 The request is paginated with a default page size of 100.
             operationId: AreaService_ListAreas
+            parameters:
+              - name: cursor
+                in: query
+                description: The cursor to resume listing from, as returned by a previous
+                    call's cursor.
+                schema:
+                    type: string
+              - name: pageSize
+                in: query
+                description: The maximum number of areas to return. The default page
+                    size is 100.
+                schema:
+                    type: integer
+                    format: int32
+              - name: orderBy
+                in: query
+                description: |-
+                    A comma-separated list of fields to order by, each optionally suffixed with " desc"
+                     for descending order (ascending is the default). See https://google.aip.dev/132.
+                schema:
+                    type: string
             responses:
                 '200':
                     description: OK
@@ -440,8 +464,32 @@ paths:
             tags:
               - OwnerService
             summary: List all existing owners.
-            description: List all existing owners.
+            description: |-
+                List all existing owners.
+
+                 The request is paginated with a default page size of 100.
             operationId: OwnerService_ListOwners
+            parameters:
+              - name: cursor
+                in: query
+                description: The cursor to resume listing from, as returned by a previous
+                    call's cursor.
+                schema:
+                    type: string
+              - name: pageSize
+                in: query
+                description: The maximum number of owners to return. The default page
+                    size is 100.
+                schema:
+                    type: integer
+                    format: int32
+              - name: orderBy
+                in: query
+                description: |-
+                    A comma-separated list of fields to order by, each optionally suffixed with " desc"
+                     for descending order (ascending is the default). See https://google.aip.dev/132.
+                schema:
+                    type: string
             responses:
                 '200':
                     description: OK
@@ -795,8 +843,32 @@ paths:
             tags:
               - SourceService
             summary: List all existing sources.
-            description: List all existing sources.
+            description: |-
+                List all existing sources.
+
+                 The request is paginated with a default page size of 100.
             operationId: SourceService_ListSources
+            parameters:
+              - name: cursor
+                in: query
+                description: The cursor to resume listing from, as returned by a previous
+                    call's cursor.
+                schema:
+                    type: string
+              - name: pageSize
+                in: query
+                description: The maximum number of sources to return. The default
+                    page size is 100.
+                schema:
+                    type: integer
+                    format: int32
+              - name: orderBy
+                in: query
+                description: |-
+                    A comma-separated list of fields to order by, each optionally suffixed with " desc"
+                     for descending order (ascending is the default). See https://google.aip.dev/132.
+                schema:
+                    type: string
             responses:
                 '200':
                     description: OK
@@ -1271,7 +1343,13 @@ components:
                     type: array
                     items:
                         $ref: '#/components/schemas/Area'
-                    description: All existing areas.
+                    description: The areas in this page of results.
+                cursor:
+                    example: eyJpZCI6NjJ9
+                    type: string
+                    description: |-
+                        The cursor to pass to a subsequent call to continue listing. Empty
+                         when there are no more results.
             description: Response for ListAreas.
             example:
                 items:
@@ -1279,6 +1357,7 @@ components:
                     name: Personalisering
                     owner: 2
                     updatedAt: '2026-01-01T00:00:00Z'
+                cursor: eyJpZCI6NjJ9
         ListOwnersResponse:
             type: object
             properties:
@@ -1286,13 +1365,20 @@ components:
                     type: array
                     items:
                         $ref: '#/components/schemas/Owner'
-                    description: All existing owners.
+                    description: The owners in this page of results.
+                cursor:
+                    example: eyJpZCI6NjJ9
+                    type: string
+                    description: |-
+                        The cursor to pass to a subsequent call to continue listing. Empty
+                         when there are no more results.
             description: Response for ListOwners.
             example:
                 items:
                   - id: 1
                     name: team-validering
                     updatedAt: '2026-01-01T00:00:00Z'
+                cursor: eyJpZCI6NjJ9
         ListSourcesResponse:
             type: object
             properties:
@@ -1300,7 +1386,13 @@ components:
                     type: array
                     items:
                         $ref: '#/components/schemas/Source'
-                    description: All existing sources.
+                    description: The sources in this page of results.
+                cursor:
+                    example: eyJpZCI6NjJ9
+                    type: string
+                    description: |-
+                        The cursor to pass to a subsequent call to continue listing. Empty
+                         when there are no more results.
             description: Response for ListSources.
             example:
                 items:
@@ -1308,6 +1400,7 @@ components:
                     name: rutedata
                     owner: 3
                     updatedAt: '2026-01-01T00:00:00Z'
+                cursor: eyJpZCI6NjJ9
         ListValidationFlowsResponse:
             type: object
             properties:
