@@ -11,7 +11,7 @@ dependencies {
     implementation("org.yaml:snakeyaml:2.3")
 
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit5:2.4.20")
-    testImplementation("org.junit.jupiter:junit-jupiter:5.11.4")
+    testImplementation("org.junit.jupiter:junit-jupiter:6.1.3")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher:6.1.3")
 }
 
