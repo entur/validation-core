@@ -1026,6 +1026,53 @@ paths:
                         application/problem+json:
                             schema:
                                 $ref: '#/components/schemas/ProblemDetail'
+    /validation/v1/sources/{source}/flows/{stage}:
+        get:
+            tags:
+              - ValidationFlowService
+            summary: List the flows connected to a source for one stage, across every
+                area.
+            description: |-
+                List every validation flow connected to a source for one stage, across every area that
+                 has one assigned. Each returned flow is deep: every rule and sub-flow item it contains,
+                 recursively, carries both the database id of what it refers to and the
+                 referred-to ValidationRule/ValidationFlow itself.
+            operationId: ValidationFlowService_ListSourceFlows
+            parameters:
+              - name: source
+                in: path
+                description: The name of the source to list flows for.
+                required: true
+                schema:
+                    type: string
+              - name: stage
+                in: path
+                description: |-
+                    The stage of the flows to list.
+
+                     This field is case insensitive.
+                required: true
+                schema:
+                    enum:
+                      - VALIDATION_STAGE_UNSPECIFIED
+                      - STRUCTURAL
+                      - LOCAL
+                      - GLOBAL
+                    type: string
+                    format: enum
+            responses:
+                '200':
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ListSourceFlowsResponse'
+                '404':
+                    description: The source does not exist.
+                    content:
+                        application/problem+json:
+                            schema:
+                                $ref: '#/components/schemas/ProblemDetail'
     /validation/v1/sources/{source}/flows/{stage}/{area}:
         get:
             tags:
@@ -1379,6 +1426,17 @@ components:
                     name: team-validering
                     updatedAt: '2026-01-01T00:00:00Z'
                 cursor: eyJpZCI6NjJ9
+        ListSourceFlowsResponse:
+            type: object
+            properties:
+                items:
+                    type: object
+                    additionalProperties:
+                        $ref: '#/components/schemas/ValidationFlow'
+                    description: |-
+                        Keyed by area name - one entry per area that has a flow assigned for the requested
+                         (source, stage). Area names are unique, so this loses no information relative to a list.
+            description: Response for ListSourceFlows.
         ListSourcesResponse:
             type: object
             properties:
