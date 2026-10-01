@@ -1439,6 +1439,7 @@ components:
                                 updatedAt: '2026-01-01T00:00:00Z'
                             severityOverride: WARNING
                         updatedAt: '2026-01-01T00:00:00Z'
+                    owner: 2
                     updatedAt: '2026-01-01T00:00:00Z'
                 cursor: eyJpZCI6NjJ9
         ListValidationRulesResponse:
@@ -1652,12 +1653,14 @@ components:
                                 updatedAt: '2026-01-01T00:00:00Z'
                             severityOverride: WARNING
                         updatedAt: '2026-01-01T00:00:00Z'
+                    owner: 2
                     updatedAt: '2026-01-01T00:00:00Z'
         ValidationFlow:
             required:
               - name
               - description
               - stage
+              - owner
             type: object
             properties:
                 id:
@@ -1690,6 +1693,11 @@ components:
                     items:
                         $ref: '#/components/schemas/FlowItem'
                     description: The validation flow's items, in execution order.
+                owner:
+                    example: 2
+                    type: integer
+                    description: The database id of the owner of the validation flow.
+                    format: int32
                 updatedAt:
                     readOnly: true
                     example: '2026-01-01T00:00:00Z'
@@ -1724,6 +1732,7 @@ components:
                             updatedAt: '2026-01-01T00:00:00Z'
                         severityOverride: WARNING
                     updatedAt: '2026-01-01T00:00:00Z'
+                owner: 2
                 updatedAt: '2026-01-01T00:00:00Z'
         ValidationRule:
             required:

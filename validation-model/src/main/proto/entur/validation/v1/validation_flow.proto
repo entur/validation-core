@@ -48,6 +48,13 @@ message ValidationFlow {
   ];
   // The validation flow's items, in execution order.
   repeated FlowItem items = 5;
+  // The database id of the owner of the validation flow.
+  int32 owner = 6 [
+    (google.api.field_behavior) = REQUIRED,
+    (gnostic.openapi.v3.property) = {
+      example: {yaml: "2"}
+    }
+  ];
   // The timestamp the validation flow was last updated. Always populated by the server; a
   // value set by the client is ignored, not an error.
   google.protobuf.Timestamp updated_at = 100 [
