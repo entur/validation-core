@@ -74,7 +74,8 @@ class OpenApiExampleAugmenter {
 
     /**
      *  One example object per `components.schemas` entry's own `properties`, recursing through a `$ref`
-     *  (bare or `allOf`-wrapped) or a `repeated` field's array wrapper via [resolve]. A field with no example anywhere
+     *  (bare or `allOf`-wrapped), a `repeated` field's array wrapper, or a `map<string, ...>` field's
+     *  `additionalProperties` wrapper via [resolve]. A field with no example anywhere
      *  in its chain, or a cycle is simply left out of the result, since a partial example is still a valid one.
      *
      *  [oneofFieldGroups] is the message's own `oneof` groups (as field-name sets) - a real instance can only ever
@@ -111,6 +112,14 @@ class OpenApiExampleAugmenter {
             val items = yamlMapOrNull(propertySchema["items"]) ?: return null
             val itemValue = items["example"] ?: refName(items)?.let(resolve) ?: return null
             return listOf(itemValue)
+        }
+        if (propertySchema["type"] == "object") {
+            // A protobuf `map<string, ...>` field - gnostic renders it as `additionalProperties`
+            // rather than a `$ref`/`properties` schema of its own, so there's no real key to put in
+            // the example - "additionalProp1" mirrors Swagger UI's own placeholder for the same case.
+            val additionalProperties = yamlMapOrNull(propertySchema["additionalProperties"]) ?: return null
+            val valueExample = additionalProperties["example"] ?: refName(additionalProperties)?.let(resolve) ?: return null
+            return mapOf("additionalProp1" to valueExample)
         }
         return null
     }

@@ -1437,6 +1437,31 @@ components:
                         Keyed by area name - one entry per area that has a flow assigned for the requested
                          (source, stage). Area names are unique, so this loses no information relative to a list.
             description: Response for ListSourceFlows.
+            example:
+                items:
+                    additionalProp1:
+                        id: 1
+                        name: netex-structural
+                        description: Runs structural checks for NeTEx deliveries.
+                        stage: STRUCTURAL
+                        items:
+                          - id: 1
+                            ruleFlowItem:
+                                id: 1
+                                validationRule:
+                                    id: 1
+                                    area: 7
+                                    defaultSeverity: ERROR
+                                    stage: STRUCTURAL
+                                    description: Validates the file against its XSD.
+                                    xsdRule:
+                                        message: File does not match its XSD.
+                                        xsdPath: xsd/netex/NeTEx_publication.xsd
+                                        fileFilter: .*\.xml
+                                    updatedAt: '2026-01-01T00:00:00Z'
+                                severityOverride: WARNING
+                            updatedAt: '2026-01-01T00:00:00Z'
+                        updatedAt: '2026-01-01T00:00:00Z'
         ListSourcesResponse:
             type: object
             properties:

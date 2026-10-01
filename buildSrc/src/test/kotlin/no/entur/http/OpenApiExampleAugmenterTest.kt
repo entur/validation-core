@@ -46,6 +46,10 @@ class OpenApiExampleAugmenterTest {
                             type: array
                             items:
                                 ${'$'}ref: '#/components/schemas/Leaf'
+                        leavesByKey:
+                            type: object
+                            additionalProperties:
+                                ${'$'}ref: '#/components/schemas/Leaf'
                 CycleA:
                     type: object
                     properties:
@@ -124,10 +128,14 @@ class OpenApiExampleAugmenterTest {
     }
 
     @Test
-    fun `recurses into a singular (allOf-ref) and repeated (array-ref) message-typed field's own example`() {
+    fun `recurses into a singular (allOf-ref), repeated (array-ref), and map (additionalProperties-ref) message-typed field's own example`() {
         val wrapper = result().at("components", "schemas", "Wrapper")
         assertEquals(
-            mapOf("leaf" to mapOf("name" to "leaf"), "leaves" to listOf(mapOf("name" to "leaf"))),
+            mapOf(
+                "leaf" to mapOf("name" to "leaf"),
+                "leaves" to listOf(mapOf("name" to "leaf")),
+                "leavesByKey" to mapOf("additionalProp1" to mapOf("name" to "leaf")),
+            ),
             wrapper["example"],
         )
     }
