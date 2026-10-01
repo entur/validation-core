@@ -8,7 +8,7 @@ repositories {
 
 dependencies {
     implementation("com.google.protobuf:protobuf-java:4.36.2")
-    implementation("org.yaml:snakeyaml:2.3")
+    implementation("org.yaml:snakeyaml:2.7")
 
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit5:2.4.20")
     testImplementation("org.junit.jupiter:junit-jupiter:6.1.3")
