@@ -59,6 +59,19 @@ service ValidationFlowService {
     };
   }
 
+  // List every validation flow connected to a source for one stage, across every area that
+  // has one assigned. Each returned flow is deep: every rule and sub-flow item it contains,
+  // recursively, carries both the database id of what it refers to and the
+  // referred-to ValidationRule/ValidationFlow itself.
+  rpc ListSourceFlows(ListSourceFlowsRequest) returns (ListSourceFlowsResponse) {
+    option (google.api.http) = {get: "/validation/v1/sources/{source}/flows/{stage}"};
+    option (gnostic.openapi.v3.operation) = {summary: "List the flows connected to a source for one stage, across every area."};
+    option (entur.http.v1.failure) = {
+      code: "404"
+      description: "The source does not exist."
+    };
+  }
+
   // Assign a validation flow to a source, for one stage and area. At most one flow may be
   // assigned to a given (source, stage, area) slot: this fails if the slot already has a
   // flow assigned - call UnassignSourceFlow first to reassign it. `flow_id` must reference
@@ -228,6 +241,33 @@ message GetSourceFlowRequest {
       example: {yaml: "\"Personalisering\""}
     }
   ];
+}
+
+// Request for ListSourceFlows.
+message ListSourceFlowsRequest {
+  // The name of the source to list flows for.
+  string source = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (gnostic.openapi.v3.property) = {
+      example: {yaml: "\"rutedata\""}
+    }
+  ];
+  // The stage of the flows to list.
+  //
+  // This field is case insensitive.
+  entur.validation.v1.ValidationStage stage = 2 [
+    (google.api.field_behavior) = REQUIRED,
+    (gnostic.openapi.v3.property) = {
+      example: {yaml: "\"STRUCTURAL\""}
+    }
+  ];
+}
+
+// Response for ListSourceFlows.
+message ListSourceFlowsResponse {
+  // Keyed by area name - one entry per area that has a flow assigned for the requested
+  // (source, stage). Area names are unique, so this loses no information relative to a list.
+  map<string, entur.validation.v1.ValidationFlow> items = 1;
 }
 
 // Request for AssignSourceFlow.
