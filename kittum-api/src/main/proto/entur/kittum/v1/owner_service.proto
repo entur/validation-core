@@ -88,7 +88,7 @@ service OwnerService {
     };
     option (entur.http.v1.failure) = {
       code: "409"
-      description: "The `If-Match` header does not match the owner's current ETag, or the owner is still referenced by an area or a source."
+      description: "The `If-Match` header does not match the owner's current ETag, or the owner is still referenced by another resource (e.g. an area, a source, or a validation flow)."
     };
   }
 }
