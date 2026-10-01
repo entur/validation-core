@@ -1,6 +1,7 @@
 syntax = "proto3";
 package no.entur.proto.testfixtures.v1;
 
+import "gnostic/openapi/v3/annotations.proto";
 import "google/api/field_behavior.proto";
 import "google/protobuf/timestamp.proto";
 
@@ -42,4 +43,25 @@ message Note {
 message MalformedWidget {
   int64 id = 1 [(google.api.field_behavior) = IDENTIFIER];
   string updated_at = 2;
+}
+
+// Carries both a repeated (unpacked) google.api.field_behavior and a gnostic.openapi.v3.property -
+// the same shape as a real dual-purpose (REST + Kafka) message - plus a plain field and a nested
+// message, to exercise SchemaRegistrySanitizer.withoutFieldOptionExtensions.
+message Annotated {
+  int64 id = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.field_behavior) = IMMUTABLE,
+    (gnostic.openapi.v3.property) = {
+      example: {yaml: "1"}
+    }
+  ];
+  string plain = 2;
+  Child child = 3;
+
+  message Child {
+    string value = 1 [(gnostic.openapi.v3.property) = {
+      example: {yaml: "\"x\""}
+    }];
+  }
 }
