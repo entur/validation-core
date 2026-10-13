@@ -88,7 +88,7 @@ service AreaService {
     };
     option (entur.http.v1.failure) = {
       code: "409"
-      description: "The `If-Match` header does not match the area's current ETag, or the area is still referenced by a validation rule or a source flow."
+      description: "The `If-Match` header does not match the area's current ETag, or the area is still referenced by a validation rule or a payload type flow."
     };
   }
 }

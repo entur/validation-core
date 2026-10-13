@@ -183,7 +183,7 @@ paths:
                 '409':
                     description: The `If-Match` header does not match the area's current
                         ETag, or the area is still referenced by a validation rule
-                        or a source flow.
+                        or a payload type flow.
                     content:
                         application/problem+json:
                             schema:
@@ -385,7 +385,7 @@ paths:
                 '409':
                     description: The `If-Match` header does not match the flow's current
                         ETag, or the validation flow is still referenced by a sub
-                        flow item or a source flow.
+                        flow item or a payload type flow.
                     content:
                         application/problem+json:
                             schema:
@@ -647,6 +647,412 @@ paths:
                         application/problem+json:
                             schema:
                                 $ref: '#/components/schemas/ProblemDetail'
+    /validation/v1/payload-types:
+        get:
+            tags:
+              - PayloadTypeService
+            summary: List all existing payload types.
+            description: |-
+                List all existing payload types.
+
+                 The request is paginated with a default page size of 100.
+            operationId: PayloadTypeService_ListPayloadTypes
+            parameters:
+              - name: cursor
+                in: query
+                description: The cursor to resume listing from, as returned by a previous
+                    call's cursor.
+                schema:
+                    type: string
+              - name: pageSize
+                in: query
+                description: The maximum number of payload types to return. The default
+                    page size is 100.
+                schema:
+                    type: integer
+                    format: int32
+              - name: orderBy
+                in: query
+                description: |-
+                    A comma-separated list of fields to order by, each optionally suffixed with " desc"
+                     for descending order (ascending is the default). See https://google.aip.dev/132.
+                schema:
+                    type: string
+            responses:
+                '200':
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ListPayloadTypesResponse'
+        post:
+            tags:
+              - PayloadTypeService
+            summary: Create a new payload type.
+            description: |-
+                Create a new payload type. Unlike Area/Owner, a payload type's `name` is chosen by the
+                 caller and is its identifier; the request fails with ALREADY_EXISTS if it is already taken.
+                 Its `id` and `updated_at` are OUTPUT_ONLY and ignored if set; the server assigns both.
+                 Returns the full created payload type, including its server-assigned `id` and `updated_at`.
+            operationId: PayloadTypeService_CreatePayloadType
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/PayloadType'
+                required: true
+            responses:
+                '200':
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/PayloadType'
+                '409':
+                    description: A payload type with the given name already exists.
+                    content:
+                        application/problem+json:
+                            schema:
+                                $ref: '#/components/schemas/ProblemDetail'
+    /validation/v1/payload-types/{name}:
+        get:
+            tags:
+              - PayloadTypeService
+            summary: Get one payload type by its name.
+            description: Get one payload type by its name.
+            operationId: PayloadTypeService_GetPayloadType
+            parameters:
+              - name: name
+                in: path
+                description: The name of the payload type to lookup.
+                required: true
+                schema:
+                    type: string
+            responses:
+                '200':
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/PayloadType'
+                '404':
+                    description: No payload type exists with the given name.
+                    content:
+                        application/problem+json:
+                            schema:
+                                $ref: '#/components/schemas/ProblemDetail'
+        delete:
+            tags:
+              - PayloadTypeService
+            summary: Delete a payload type.
+            description: |-
+                Delete a payload type. Over REST, this is a conditional request: it requires a matching
+                 `If-Match` request header and fails with 409 Conflict (not the RFC 7232-standard 412,
+                 which Entur's API guidelines don't allow) if it no longer matches the payload type's current
+                 `ETag`, e.g. because another update happened concurrently. This is an HTTP-layer
+                 precondition, not a field of DeletePayloadTypeRequest.
+            operationId: PayloadTypeService_DeletePayloadType
+            parameters:
+              - name: name
+                in: path
+                description: The name of the payload type to delete.
+                required: true
+                schema:
+                    type: string
+            responses:
+                '200':
+                    description: OK
+                    content: {}
+                '404':
+                    description: No payload type exists with the given name.
+                    content:
+                        application/problem+json:
+                            schema:
+                                $ref: '#/components/schemas/ProblemDetail'
+                '409':
+                    description: The `If-Match` header does not match the payload
+                        type's current ETag, or the payload type is still referenced
+                        by a payload type flow.
+                    content:
+                        application/problem+json:
+                            schema:
+                                $ref: '#/components/schemas/ProblemDetail'
+        patch:
+            tags:
+              - PayloadTypeService
+            summary: Update an existing payload type.
+            description: |-
+                Update an existing payload type. Its `id`, if set, must match the payload type's own id.
+                 Renaming a payload type is allowed by setting a different `name` in the body (and including
+                 it in the update mask); later requests use the new name. Returns the full updated payload
+                 type, with its new `updated_at`. Over REST, this is a conditional request: it requires a
+                 matching `If-Match` request header and fails with 409 Conflict (not the RFC
+                 7232-standard 412, which Entur's API guidelines don't allow) if it no longer matches
+                 the payload type's current `ETag`, e.g. because another update happened concurrently. This
+                 is an HTTP-layer precondition, not a field of UpdatePayloadTypeRequest.
+            operationId: PayloadTypeService_UpdatePayloadType
+            parameters:
+              - name: name
+                in: path
+                description: The current name of the payload type to update.
+                required: true
+                schema:
+                    type: string
+              - name: updateMask
+                in: query
+                description: |-
+                    The fields of `payload_type` to update. Fields populated in `payload_type` but not listed
+                     here are left unchanged. Omitting this mask updates every field of `payload_type`. Setting
+                     this mask to an empty value updates all non-empty fields of `payload_type`. The special
+                     value `*` is equivalent to omitting the mask: full replacement, as if this were a PUT.
+                schema:
+                    type: string
+                    format: field-mask
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/PayloadType'
+                required: true
+            responses:
+                '200':
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/PayloadType'
+                '404':
+                    description: No payload type exists with the given name.
+                    content:
+                        application/problem+json:
+                            schema:
+                                $ref: '#/components/schemas/ProblemDetail'
+                '409':
+                    description: A different payload type with the new name already
+                        exists, or the `If-Match` header does not match the payload
+                        type's current ETag.
+                    content:
+                        application/problem+json:
+                            schema:
+                                $ref: '#/components/schemas/ProblemDetail'
+    /validation/v1/payload-types/{payloadType}/flows/{stage}:
+        get:
+            tags:
+              - ValidationFlowService
+            summary: List the flows connected to a payload type for one stage, across
+                every area.
+            description: |-
+                List every validation flow connected to a payload type for one stage, across every area
+                 that has one assigned. Each returned flow is deep: every rule and sub-flow item it
+                 contains, recursively, carries both the database id of what it refers to and the
+                 referred-to ValidationRule/ValidationFlow itself.
+            operationId: ValidationFlowService_ListPayloadTypeFlows
+            parameters:
+              - name: payloadType
+                in: path
+                description: The name of the payload type to list flows for.
+                required: true
+                schema:
+                    type: string
+              - name: stage
+                in: path
+                description: |-
+                    The stage of the flows to list.
+
+                     This field is case insensitive.
+                required: true
+                schema:
+                    enum:
+                      - VALIDATION_STAGE_UNSPECIFIED
+                      - STRUCTURAL
+                      - LOCAL
+                      - GLOBAL
+                    type: string
+                    format: enum
+            responses:
+                '200':
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ListPayloadTypeFlowsResponse'
+                '404':
+                    description: The payload type does not exist.
+                    content:
+                        application/problem+json:
+                            schema:
+                                $ref: '#/components/schemas/ProblemDetail'
+    /validation/v1/payload-types/{payloadType}/flows/{stage}/{area}:
+        get:
+            tags:
+              - ValidationFlowService
+            summary: Get the flow connected to a payload type, for one stage and area.
+            description: |-
+                Get the validation flow connected to a payload type, for one stage and area.
+                 The returned flow is deep: every rule and sub-flow item it contains,
+                 recursively, carries both the database id of what it refers to and the
+                 referred-to ValidationRule/ValidationFlow itself.
+            operationId: ValidationFlowService_GetPayloadTypeFlow
+            parameters:
+              - name: payloadType
+                in: path
+                description: The name of the payload type to lookup.
+                required: true
+                schema:
+                    type: string
+              - name: stage
+                in: path
+                description: |-
+                    The stage of the flow to lookup.
+
+                     This field is case insensitive.
+                required: true
+                schema:
+                    enum:
+                      - VALIDATION_STAGE_UNSPECIFIED
+                      - STRUCTURAL
+                      - LOCAL
+                      - GLOBAL
+                    type: string
+                    format: enum
+              - name: area
+                in: path
+                description: The name of the area to lookup.
+                required: true
+                schema:
+                    type: string
+            responses:
+                '200':
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ValidationFlow'
+                '404':
+                    description: The payload type or area does not exist, or no flow
+                        is connected for the given stage and area.
+                    content:
+                        application/problem+json:
+                            schema:
+                                $ref: '#/components/schemas/ProblemDetail'
+        post:
+            tags:
+              - ValidationFlowService
+            summary: Assign a validation flow to a payload type, for one stage and
+                area.
+            description: |-
+                Assign a validation flow to a payload type, for one stage and area. At most one flow may
+                 be assigned to a given (payload_type, stage, area) slot: this fails if the slot already
+                 has a flow assigned - call UnassignPayloadTypeFlow first to reassign it. `flow_id` must
+                 reference an existing ValidationFlow whose own `stage` matches the request's `stage`.
+            operationId: ValidationFlowService_AssignPayloadTypeFlow
+            parameters:
+              - name: payloadType
+                in: path
+                description: The name of the payload type to assign the flow to.
+                required: true
+                schema:
+                    type: string
+              - name: stage
+                in: path
+                description: |-
+                    The stage of the slot to assign the flow to.
+
+                     This field is case insensitive.
+                required: true
+                schema:
+                    enum:
+                      - VALIDATION_STAGE_UNSPECIFIED
+                      - STRUCTURAL
+                      - LOCAL
+                      - GLOBAL
+                    type: string
+                    format: enum
+              - name: area
+                in: path
+                description: The name of the area of the slot to assign the flow to.
+                required: true
+                schema:
+                    type: string
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/AssignPayloadTypeFlowRequest'
+                required: true
+            responses:
+                '200':
+                    description: OK
+                    content: {}
+                '404':
+                    description: The payload type or area does not exist.
+                    content:
+                        application/problem+json:
+                            schema:
+                                $ref: '#/components/schemas/ProblemDetail'
+                '400':
+                    description: The validation flow referenced by `flow_id` does
+                        not exist, or has a `stage` that does not match the request's
+                        `stage`.
+                    content:
+                        application/problem+json:
+                            schema:
+                                $ref: '#/components/schemas/ProblemDetail'
+                '409':
+                    description: The (payload_type, stage, area) slot already has
+                        a flow assigned.
+                    content:
+                        application/problem+json:
+                            schema:
+                                $ref: '#/components/schemas/ProblemDetail'
+        delete:
+            tags:
+              - ValidationFlowService
+            summary: Unassign the flow connected to a payload type, for one stage
+                and area.
+            description: Unassign the validation flow connected to a payload type,
+                for one stage and area.
+            operationId: ValidationFlowService_UnassignPayloadTypeFlow
+            parameters:
+              - name: payloadType
+                in: path
+                description: The name of the payload type to unassign the flow from.
+                required: true
+                schema:
+                    type: string
+              - name: stage
+                in: path
+                description: |-
+                    The stage of the slot to unassign the flow from.
+
+                     This field is case insensitive.
+                required: true
+                schema:
+                    enum:
+                      - VALIDATION_STAGE_UNSPECIFIED
+                      - STRUCTURAL
+                      - LOCAL
+                      - GLOBAL
+                    type: string
+                    format: enum
+              - name: area
+                in: path
+                description: The name of the area of the slot to unassign the flow
+                    from.
+                required: true
+                schema:
+                    type: string
+            responses:
+                '200':
+                    description: OK
+                    content: {}
+                '404':
+                    description: The payload type or area does not exist, or no flow
+                        is connected for the given stage and area.
+                    content:
+                        application/problem+json:
+                            schema:
+                                $ref: '#/components/schemas/ProblemDetail'
     /validation/v1/rules:
         get:
             tags:
@@ -838,410 +1244,6 @@ paths:
                         application/problem+json:
                             schema:
                                 $ref: '#/components/schemas/ProblemDetail'
-    /validation/v1/sources:
-        get:
-            tags:
-              - SourceService
-            summary: List all existing sources.
-            description: |-
-                List all existing sources.
-
-                 The request is paginated with a default page size of 100.
-            operationId: SourceService_ListSources
-            parameters:
-              - name: cursor
-                in: query
-                description: The cursor to resume listing from, as returned by a previous
-                    call's cursor.
-                schema:
-                    type: string
-              - name: pageSize
-                in: query
-                description: The maximum number of sources to return. The default
-                    page size is 100.
-                schema:
-                    type: integer
-                    format: int32
-              - name: orderBy
-                in: query
-                description: |-
-                    A comma-separated list of fields to order by, each optionally suffixed with " desc"
-                     for descending order (ascending is the default). See https://google.aip.dev/132.
-                schema:
-                    type: string
-            responses:
-                '200':
-                    description: OK
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/ListSourcesResponse'
-        post:
-            tags:
-              - SourceService
-            summary: Create a new source.
-            description: |-
-                Create a new source. Unlike Area/Owner, a source's `name` is chosen by the caller and is
-                 its identifier; the request fails with ALREADY_EXISTS if it is already taken. Its `id`
-                 and `updated_at` are OUTPUT_ONLY and ignored if set; the server assigns both. Returns
-                 the full created source, including its server-assigned `id` and `updated_at`.
-            operationId: SourceService_CreateSource
-            requestBody:
-                content:
-                    application/json:
-                        schema:
-                            $ref: '#/components/schemas/Source'
-                required: true
-            responses:
-                '200':
-                    description: OK
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/Source'
-                '409':
-                    description: A source with the given name already exists.
-                    content:
-                        application/problem+json:
-                            schema:
-                                $ref: '#/components/schemas/ProblemDetail'
-    /validation/v1/sources/{name}:
-        get:
-            tags:
-              - SourceService
-            summary: Get one source by its name.
-            description: Get one source by its name.
-            operationId: SourceService_GetSource
-            parameters:
-              - name: name
-                in: path
-                description: The name of the source to lookup.
-                required: true
-                schema:
-                    type: string
-            responses:
-                '200':
-                    description: OK
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/Source'
-                '404':
-                    description: No source exists with the given name.
-                    content:
-                        application/problem+json:
-                            schema:
-                                $ref: '#/components/schemas/ProblemDetail'
-        delete:
-            tags:
-              - SourceService
-            summary: Delete a source.
-            description: |-
-                Delete a source. Over REST, this is a conditional request: it requires a matching
-                 `If-Match` request header and fails with 409 Conflict (not the RFC 7232-standard 412,
-                 which Entur's API guidelines don't allow) if it no longer matches the source's current
-                 `ETag`, e.g. because another update happened concurrently. This is an HTTP-layer
-                 precondition, not a field of DeleteSourceRequest.
-            operationId: SourceService_DeleteSource
-            parameters:
-              - name: name
-                in: path
-                description: The name of the source to delete.
-                required: true
-                schema:
-                    type: string
-            responses:
-                '200':
-                    description: OK
-                    content: {}
-                '404':
-                    description: No source exists with the given name.
-                    content:
-                        application/problem+json:
-                            schema:
-                                $ref: '#/components/schemas/ProblemDetail'
-                '409':
-                    description: The `If-Match` header does not match the source's
-                        current ETag, or the source is still referenced by a source
-                        flow.
-                    content:
-                        application/problem+json:
-                            schema:
-                                $ref: '#/components/schemas/ProblemDetail'
-        patch:
-            tags:
-              - SourceService
-            summary: Update an existing source.
-            description: |-
-                Update an existing source. Its `id`, if set, must match the source's own id. Renaming a
-                 source is allowed by setting a different `name` in the body (and including it in the
-                 update mask); later requests use the new name. Returns the full updated source,
-                 with its new `updated_at`. Over REST, this is a conditional request: it requires a
-                 matching `If-Match` request header and fails with 409 Conflict (not the RFC
-                 7232-standard 412, which Entur's API guidelines don't allow) if it no longer matches
-                 the source's current `ETag`, e.g. because another update happened concurrently. This
-                 is an HTTP-layer precondition, not a field of UpdateSourceRequest.
-            operationId: SourceService_UpdateSource
-            parameters:
-              - name: name
-                in: path
-                description: The current name of the source to update.
-                required: true
-                schema:
-                    type: string
-              - name: updateMask
-                in: query
-                description: |-
-                    The fields of `source` to update. Fields populated in `source` but not listed here are
-                     left unchanged. Omitting this mask updates every field of `source`. Setting this mask to an empty
-                     value updates all non-empty fields of `source`. The special value `*` is equivalent to omitting
-                     the mask: full replacement, as if this were a PUT.
-                schema:
-                    type: string
-                    format: field-mask
-            requestBody:
-                content:
-                    application/json:
-                        schema:
-                            $ref: '#/components/schemas/Source'
-                required: true
-            responses:
-                '200':
-                    description: OK
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/Source'
-                '404':
-                    description: No source exists with the given name.
-                    content:
-                        application/problem+json:
-                            schema:
-                                $ref: '#/components/schemas/ProblemDetail'
-                '409':
-                    description: A different source with the new name already exists,
-                        or the `If-Match` header does not match the source's current
-                        ETag.
-                    content:
-                        application/problem+json:
-                            schema:
-                                $ref: '#/components/schemas/ProblemDetail'
-    /validation/v1/sources/{source}/flows/{stage}:
-        get:
-            tags:
-              - ValidationFlowService
-            summary: List the flows connected to a source for one stage, across every
-                area.
-            description: |-
-                List every validation flow connected to a source for one stage, across every area that
-                 has one assigned. Each returned flow is deep: every rule and sub-flow item it contains,
-                 recursively, carries both the database id of what it refers to and the
-                 referred-to ValidationRule/ValidationFlow itself.
-            operationId: ValidationFlowService_ListSourceFlows
-            parameters:
-              - name: source
-                in: path
-                description: The name of the source to list flows for.
-                required: true
-                schema:
-                    type: string
-              - name: stage
-                in: path
-                description: |-
-                    The stage of the flows to list.
-
-                     This field is case insensitive.
-                required: true
-                schema:
-                    enum:
-                      - VALIDATION_STAGE_UNSPECIFIED
-                      - STRUCTURAL
-                      - LOCAL
-                      - GLOBAL
-                    type: string
-                    format: enum
-            responses:
-                '200':
-                    description: OK
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/ListSourceFlowsResponse'
-                '404':
-                    description: The source does not exist.
-                    content:
-                        application/problem+json:
-                            schema:
-                                $ref: '#/components/schemas/ProblemDetail'
-    /validation/v1/sources/{source}/flows/{stage}/{area}:
-        get:
-            tags:
-              - ValidationFlowService
-            summary: Get the flow connected to a source, for one stage and area.
-            description: |-
-                Get the validation flow connected to a source, for one stage and area.
-                 The returned flow is deep: every rule and sub-flow item it contains,
-                 recursively, carries both the database id of what it refers to and the
-                 referred-to ValidationRule/ValidationFlow itself.
-            operationId: ValidationFlowService_GetSourceFlow
-            parameters:
-              - name: source
-                in: path
-                description: The name of the source to lookup.
-                required: true
-                schema:
-                    type: string
-              - name: stage
-                in: path
-                description: |-
-                    The stage of the flow to lookup.
-
-                     This field is case insensitive.
-                required: true
-                schema:
-                    enum:
-                      - VALIDATION_STAGE_UNSPECIFIED
-                      - STRUCTURAL
-                      - LOCAL
-                      - GLOBAL
-                    type: string
-                    format: enum
-              - name: area
-                in: path
-                description: The name of the area to lookup.
-                required: true
-                schema:
-                    type: string
-            responses:
-                '200':
-                    description: OK
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/ValidationFlow'
-                '404':
-                    description: The source or area does not exist, or no flow is
-                        connected for the given stage and area.
-                    content:
-                        application/problem+json:
-                            schema:
-                                $ref: '#/components/schemas/ProblemDetail'
-        post:
-            tags:
-              - ValidationFlowService
-            summary: Assign a validation flow to a source, for one stage and area.
-            description: |-
-                Assign a validation flow to a source, for one stage and area. At most one flow may be
-                 assigned to a given (source, stage, area) slot: this fails if the slot already has a
-                 flow assigned - call UnassignSourceFlow first to reassign it. `flow_id` must reference
-                 an existing ValidationFlow whose own `stage` matches the request's `stage`.
-            operationId: ValidationFlowService_AssignSourceFlow
-            parameters:
-              - name: source
-                in: path
-                description: The name of the source to assign the flow to.
-                required: true
-                schema:
-                    type: string
-              - name: stage
-                in: path
-                description: |-
-                    The stage of the slot to assign the flow to.
-
-                     This field is case insensitive.
-                required: true
-                schema:
-                    enum:
-                      - VALIDATION_STAGE_UNSPECIFIED
-                      - STRUCTURAL
-                      - LOCAL
-                      - GLOBAL
-                    type: string
-                    format: enum
-              - name: area
-                in: path
-                description: The name of the area of the slot to assign the flow to.
-                required: true
-                schema:
-                    type: string
-            requestBody:
-                content:
-                    application/json:
-                        schema:
-                            $ref: '#/components/schemas/AssignSourceFlowRequest'
-                required: true
-            responses:
-                '200':
-                    description: OK
-                    content: {}
-                '404':
-                    description: The source or area does not exist.
-                    content:
-                        application/problem+json:
-                            schema:
-                                $ref: '#/components/schemas/ProblemDetail'
-                '400':
-                    description: The validation flow referenced by `flow_id` does
-                        not exist, or has a `stage` that does not match the request's
-                        `stage`.
-                    content:
-                        application/problem+json:
-                            schema:
-                                $ref: '#/components/schemas/ProblemDetail'
-                '409':
-                    description: The (source, stage, area) slot already has a flow
-                        assigned.
-                    content:
-                        application/problem+json:
-                            schema:
-                                $ref: '#/components/schemas/ProblemDetail'
-        delete:
-            tags:
-              - ValidationFlowService
-            summary: Unassign the flow connected to a source, for one stage and area.
-            description: Unassign the validation flow connected to a source, for one
-                stage and area.
-            operationId: ValidationFlowService_UnassignSourceFlow
-            parameters:
-              - name: source
-                in: path
-                description: The name of the source to unassign the flow from.
-                required: true
-                schema:
-                    type: string
-              - name: stage
-                in: path
-                description: |-
-                    The stage of the slot to unassign the flow from.
-
-                     This field is case insensitive.
-                required: true
-                schema:
-                    enum:
-                      - VALIDATION_STAGE_UNSPECIFIED
-                      - STRUCTURAL
-                      - LOCAL
-                      - GLOBAL
-                    type: string
-                    format: enum
-              - name: area
-                in: path
-                description: The name of the area of the slot to unassign the flow
-                    from.
-                required: true
-                schema:
-                    type: string
-            responses:
-                '200':
-                    description: OK
-                    content: {}
-                '404':
-                    description: The source or area does not exist, or no flow is
-                        connected for the given stage and area.
-                    content:
-                        application/problem+json:
-                            schema:
-                                $ref: '#/components/schemas/ProblemDetail'
 components:
     schemas:
         Area:
@@ -1279,18 +1281,18 @@ components:
                 name: Personalisering
                 owner: 2
                 updatedAt: '2026-01-01T00:00:00Z'
-        AssignSourceFlowRequest:
+        AssignPayloadTypeFlowRequest:
             required:
-              - source
+              - payloadType
               - stage
               - area
               - flowId
             type: object
             properties:
-                source:
+                payloadType:
                     example: rutedata
                     type: string
-                    description: The name of the source to assign the flow to.
+                    description: The name of the payload type to assign the flow to.
                 stage:
                     example: STRUCTURAL
                     enum:
@@ -1316,9 +1318,9 @@ components:
                         The database id of the validation flow to assign. Must be an existing flow whose own
                          `stage` matches this request's `stage`.
                     format: int32
-            description: Request for AssignSourceFlow.
+            description: Request for AssignPayloadTypeFlow.
             example:
-                source: rutedata
+                payloadType: rutedata
                 stage: STRUCTURAL
                 area: Personalisering
                 flowId: 1
@@ -1426,7 +1428,7 @@ components:
                     name: team-validering
                     updatedAt: '2026-01-01T00:00:00Z'
                 cursor: eyJpZCI6NjJ9
-        ListSourceFlowsResponse:
+        ListPayloadTypeFlowsResponse:
             type: object
             properties:
                 items:
@@ -1435,8 +1437,8 @@ components:
                         $ref: '#/components/schemas/ValidationFlow'
                     description: |-
                         Keyed by area name - one entry per area that has a flow assigned for the requested
-                         (source, stage). Area names are unique, so this loses no information relative to a list.
-            description: Response for ListSourceFlows.
+                         (payload_type, stage). Area names are unique, so this loses no information relative to a list.
+            description: Response for ListPayloadTypeFlows.
             example:
                 items:
                     additionalProp1:
@@ -1463,21 +1465,21 @@ components:
                             updatedAt: '2026-01-01T00:00:00Z'
                         owner: 2
                         updatedAt: '2026-01-01T00:00:00Z'
-        ListSourcesResponse:
+        ListPayloadTypesResponse:
             type: object
             properties:
                 items:
                     type: array
                     items:
-                        $ref: '#/components/schemas/Source'
-                    description: The sources in this page of results.
+                        $ref: '#/components/schemas/PayloadType'
+                    description: The payload types in this page of results.
                 cursor:
                     example: eyJpZCI6NjJ9
                     type: string
                     description: |-
                         The cursor to pass to a subsequent call to continue listing. Empty
                          when there are no more results.
-            description: Response for ListSources.
+            description: Response for ListPayloadTypes.
             example:
                 items:
                   - id: 42
@@ -1581,6 +1583,41 @@ components:
                 id: 1
                 name: team-validering
                 updatedAt: '2026-01-01T00:00:00Z'
+        PayloadType:
+            required:
+              - name
+              - owner
+            type: object
+            properties:
+                id:
+                    example: 42
+                    type: integer
+                    description: The database id of the payload type.
+                    format: int32
+                name:
+                    example: rutedata
+                    type: string
+                    description: The name of the payload type.
+                owner:
+                    example: 3
+                    type: integer
+                    description: The database id of the owner of the payload type.
+                    format: int32
+                updatedAt:
+                    readOnly: true
+                    example: '2026-01-01T00:00:00Z'
+                    type: string
+                    description: |-
+                        The timestamp the payload type was last updated. Always populated by the server; a value set
+                         by the client is ignored, not an error.
+                    format: date-time
+            description: A named intake point for a set of files, owned by exactly
+                one Owner.
+            example:
+                id: 42
+                name: rutedata
+                owner: 3
+                updatedAt: '2026-01-01T00:00:00Z'
         ProblemDetail:
             description: RFC 9457 Problem Details for HTTP APIs.
             required:
@@ -1600,7 +1637,7 @@ components:
                 detail:
                     type: string
                     description: A human-readable explanation specific to this occurrence.
-                    example: No source exists with the name 'rutedata'.
+                    example: No payload type exists with the name 'rutedata'.
                 errors:
                     type: array
                     items:
@@ -1611,7 +1648,7 @@ components:
             example:
                 title: Not Found
                 status: 404
-                detail: No source exists with the name 'rutedata'.
+                detail: No payload type exists with the name 'rutedata'.
                 errors:
                   - field: name
                     message: must not be blank
@@ -1629,7 +1666,7 @@ components:
                       - $ref: '#/components/schemas/ValidationRule'
                     description: |-
                         The full validation rule. Populated on a deep read (GetValidationFlow,
-                         GetSourceFlow); absent on a shallow listing (ListValidationFlows).
+                         GetPayloadTypeFlow); absent on a shallow listing (ListValidationFlows).
                 severityOverride:
                     example: WARNING
                     enum:
@@ -1659,41 +1696,6 @@ components:
                         fileFilter: .*\.xml
                     updatedAt: '2026-01-01T00:00:00Z'
                 severityOverride: WARNING
-        Source:
-            required:
-              - name
-              - owner
-            type: object
-            properties:
-                id:
-                    example: 42
-                    type: integer
-                    description: The database id of the source.
-                    format: int32
-                name:
-                    example: rutedata
-                    type: string
-                    description: The name of the source.
-                owner:
-                    example: 3
-                    type: integer
-                    description: The database id of the owner of the source.
-                    format: int32
-                updatedAt:
-                    readOnly: true
-                    example: '2026-01-01T00:00:00Z'
-                    type: string
-                    description: |-
-                        The timestamp the source was last updated. Always populated by the server; a value set
-                         by the client is ignored, not an error.
-                    format: date-time
-            description: A named intake point for a set of files, owned by exactly
-                one Owner.
-            example:
-                id: 42
-                name: rutedata
-                owner: 3
-                updatedAt: '2026-01-01T00:00:00Z'
         SubFlowItem:
             type: object
             properties:
@@ -1708,7 +1710,7 @@ components:
                       - $ref: '#/components/schemas/ValidationFlow'
                     description: |-
                         The full flow. Populated on a deep read (GetValidationFlow,
-                         GetSourceFlow), recursively for every sub-flow it contains in turn;
+                         GetPayloadTypeFlow), recursively for every sub-flow it contains in turn;
                          absent on a shallow listing (ListValidationFlows).
             description: |-
                 A flow item that runs another ValidationFlow in its entirety, letting
@@ -1919,8 +1921,8 @@ tags:
     description: This service's own generated OpenAPI specification.
   - name: OwnerService
     description: The gRPC service to view and administrate owners.
-  - name: SourceService
-    description: The gRPC service to view and administrate sources.
+  - name: PayloadTypeService
+    description: The gRPC service to view and administrate payload types.
   - name: ValidationFlowService
     description: The gRPC service to view and administrate flows.
   - name: ValidationRuleService

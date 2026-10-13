@@ -46,45 +46,45 @@ service ValidationFlowService {
     };
   }
 
-  // Get the validation flow connected to a source, for one stage and area.
+  // Get the validation flow connected to a payload type, for one stage and area.
   // The returned flow is deep: every rule and sub-flow item it contains,
   // recursively, carries both the database id of what it refers to and the
   // referred-to ValidationRule/ValidationFlow itself.
-  rpc GetSourceFlow(GetSourceFlowRequest) returns (entur.validation.v1.ValidationFlow) {
-    option (google.api.http) = {get: "/validation/v1/sources/{source}/flows/{stage}/{area}"};
-    option (gnostic.openapi.v3.operation) = {summary: "Get the flow connected to a source, for one stage and area."};
+  rpc GetPayloadTypeFlow(GetPayloadTypeFlowRequest) returns (entur.validation.v1.ValidationFlow) {
+    option (google.api.http) = {get: "/validation/v1/payload-types/{payload_type}/flows/{stage}/{area}"};
+    option (gnostic.openapi.v3.operation) = {summary: "Get the flow connected to a payload type, for one stage and area."};
     option (entur.http.v1.failure) = {
       code: "404"
-      description: "The source or area does not exist, or no flow is connected for the given stage and area."
+      description: "The payload type or area does not exist, or no flow is connected for the given stage and area."
     };
   }
 
-  // List every validation flow connected to a source for one stage, across every area that
-  // has one assigned. Each returned flow is deep: every rule and sub-flow item it contains,
-  // recursively, carries both the database id of what it refers to and the
+  // List every validation flow connected to a payload type for one stage, across every area
+  // that has one assigned. Each returned flow is deep: every rule and sub-flow item it
+  // contains, recursively, carries both the database id of what it refers to and the
   // referred-to ValidationRule/ValidationFlow itself.
-  rpc ListSourceFlows(ListSourceFlowsRequest) returns (ListSourceFlowsResponse) {
-    option (google.api.http) = {get: "/validation/v1/sources/{source}/flows/{stage}"};
-    option (gnostic.openapi.v3.operation) = {summary: "List the flows connected to a source for one stage, across every area."};
+  rpc ListPayloadTypeFlows(ListPayloadTypeFlowsRequest) returns (ListPayloadTypeFlowsResponse) {
+    option (google.api.http) = {get: "/validation/v1/payload-types/{payload_type}/flows/{stage}"};
+    option (gnostic.openapi.v3.operation) = {summary: "List the flows connected to a payload type for one stage, across every area."};
     option (entur.http.v1.failure) = {
       code: "404"
-      description: "The source does not exist."
+      description: "The payload type does not exist."
     };
   }
 
-  // Assign a validation flow to a source, for one stage and area. At most one flow may be
-  // assigned to a given (source, stage, area) slot: this fails if the slot already has a
-  // flow assigned - call UnassignSourceFlow first to reassign it. `flow_id` must reference
-  // an existing ValidationFlow whose own `stage` matches the request's `stage`.
-  rpc AssignSourceFlow(AssignSourceFlowRequest) returns (google.protobuf.Empty) {
+  // Assign a validation flow to a payload type, for one stage and area. At most one flow may
+  // be assigned to a given (payload_type, stage, area) slot: this fails if the slot already
+  // has a flow assigned - call UnassignPayloadTypeFlow first to reassign it. `flow_id` must
+  // reference an existing ValidationFlow whose own `stage` matches the request's `stage`.
+  rpc AssignPayloadTypeFlow(AssignPayloadTypeFlowRequest) returns (google.protobuf.Empty) {
     option (google.api.http) = {
-      post: "/validation/v1/sources/{source}/flows/{stage}/{area}"
+      post: "/validation/v1/payload-types/{payload_type}/flows/{stage}/{area}"
       body: "*"
     };
-    option (gnostic.openapi.v3.operation) = {summary: "Assign a validation flow to a source, for one stage and area."};
+    option (gnostic.openapi.v3.operation) = {summary: "Assign a validation flow to a payload type, for one stage and area."};
     option (entur.http.v1.failure) = {
       code: "404"
-      description: "The source or area does not exist."
+      description: "The payload type or area does not exist."
     };
     option (entur.http.v1.failure) = {
       code: "400"
@@ -92,17 +92,17 @@ service ValidationFlowService {
     };
     option (entur.http.v1.failure) = {
       code: "409"
-      description: "The (source, stage, area) slot already has a flow assigned."
+      description: "The (payload_type, stage, area) slot already has a flow assigned."
     };
   }
 
-  // Unassign the validation flow connected to a source, for one stage and area.
-  rpc UnassignSourceFlow(UnassignSourceFlowRequest) returns (google.protobuf.Empty) {
-    option (google.api.http) = {delete: "/validation/v1/sources/{source}/flows/{stage}/{area}"};
-    option (gnostic.openapi.v3.operation) = {summary: "Unassign the flow connected to a source, for one stage and area."};
+  // Unassign the validation flow connected to a payload type, for one stage and area.
+  rpc UnassignPayloadTypeFlow(UnassignPayloadTypeFlowRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {delete: "/validation/v1/payload-types/{payload_type}/flows/{stage}/{area}"};
+    option (gnostic.openapi.v3.operation) = {summary: "Unassign the flow connected to a payload type, for one stage and area."};
     option (entur.http.v1.failure) = {
       code: "404"
-      description: "The source or area does not exist, or no flow is connected for the given stage and area."
+      description: "The payload type or area does not exist, or no flow is connected for the given stage and area."
     };
   }
 
@@ -172,7 +172,7 @@ service ValidationFlowService {
     };
     option (entur.http.v1.failure) = {
       code: "409"
-      description: "The `If-Match` header does not match the flow's current ETag, or the validation flow is still referenced by a sub flow item or a source flow."
+      description: "The `If-Match` header does not match the flow's current ETag, or the validation flow is still referenced by a sub flow item or a payload type flow."
     };
   }
 }
@@ -216,10 +216,10 @@ message GetValidationFlowRequest {
   ];
 }
 
-// Request for GetSourceFlow.
-message GetSourceFlowRequest {
-  // The name of the source to lookup.
-  string source = 1 [
+// Request for GetPayloadTypeFlow.
+message GetPayloadTypeFlowRequest {
+  // The name of the payload type to lookup.
+  string payload_type = 1 [
     (google.api.field_behavior) = REQUIRED,
     (gnostic.openapi.v3.property) = {
       example: {yaml: "\"rutedata\""}
@@ -243,10 +243,10 @@ message GetSourceFlowRequest {
   ];
 }
 
-// Request for ListSourceFlows.
-message ListSourceFlowsRequest {
-  // The name of the source to list flows for.
-  string source = 1 [
+// Request for ListPayloadTypeFlows.
+message ListPayloadTypeFlowsRequest {
+  // The name of the payload type to list flows for.
+  string payload_type = 1 [
     (google.api.field_behavior) = REQUIRED,
     (gnostic.openapi.v3.property) = {
       example: {yaml: "\"rutedata\""}
@@ -263,17 +263,17 @@ message ListSourceFlowsRequest {
   ];
 }
 
-// Response for ListSourceFlows.
-message ListSourceFlowsResponse {
+// Response for ListPayloadTypeFlows.
+message ListPayloadTypeFlowsResponse {
   // Keyed by area name - one entry per area that has a flow assigned for the requested
-  // (source, stage). Area names are unique, so this loses no information relative to a list.
+  // (payload_type, stage). Area names are unique, so this loses no information relative to a list.
   map<string, entur.validation.v1.ValidationFlow> items = 1;
 }
 
-// Request for AssignSourceFlow.
-message AssignSourceFlowRequest {
-  // The name of the source to assign the flow to.
-  string source = 1 [
+// Request for AssignPayloadTypeFlow.
+message AssignPayloadTypeFlowRequest {
+  // The name of the payload type to assign the flow to.
+  string payload_type = 1 [
     (google.api.field_behavior) = REQUIRED,
     (gnostic.openapi.v3.property) = {
       example: {yaml: "\"rutedata\""}
@@ -305,10 +305,10 @@ message AssignSourceFlowRequest {
   ];
 }
 
-// Request for UnassignSourceFlow.
-message UnassignSourceFlowRequest {
-  // The name of the source to unassign the flow from.
-  string source = 1 [
+// Request for UnassignPayloadTypeFlow.
+message UnassignPayloadTypeFlowRequest {
+  // The name of the payload type to unassign the flow from.
+  string payload_type = 1 [
     (google.api.field_behavior) = REQUIRED,
     (gnostic.openapi.v3.property) = {
       example: {yaml: "\"rutedata\""}
