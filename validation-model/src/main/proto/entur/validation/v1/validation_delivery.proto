@@ -1,0 +1,46 @@
+syntax = "proto3";
+
+package entur.validation.v1;
+
+import "gnostic/openapi/v3/annotations.proto";
+import "google/api/field_behavior.proto";
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/entur/validation-core/gen/entur/validation/v1;validationv1";
+option java_multiple_files = true;
+option java_package = "no.entur.validation.proto.v1";
+// A validation delivery is a delivery that has been validated, and the results of that validation.
+message ValidationDelivery {
+  // type of data in delivery, e.g. "rutedata".
+  string data_set = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (gnostic.openapi.v3.property) = {
+      example: {yaml: "\"produktdata\""}
+    }
+  ];
+
+  // The database id of the owner of the validation delivery.
+  string source = 2 [
+    (google.api.field_behavior) = REQUIRED,
+    (gnostic.openapi.v3.property) = {
+      example: {yaml: "2"}
+    }
+  ];
+
+  // The location of the delivery, e.g. a URL to a zip file.
+  string location = 3 [
+    (google.api.field_behavior) = REQUIRED,
+    (gnostic.openapi.v3.property) = {
+      example: {yaml: "\"https://example.com/delivery.zip\""}
+    }
+  ];
+
+  // The timestamp the validation delivery was last updated. Always populated by the server; a
+  // value set by the client is ignored, not an error.
+  google.protobuf.Timestamp updated_at = 100 [
+    (google.api.field_behavior) = OUTPUT_ONLY,
+    (gnostic.openapi.v3.property) = {
+      example: {yaml: "\"2026-01-01T00:00:00Z\""}
+    }
+  ];
+}
