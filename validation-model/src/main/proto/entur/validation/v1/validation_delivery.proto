@@ -20,7 +20,7 @@ message ValidationDelivery {
   ];
 
   // The database id of the owner of the validation delivery.
-  string source = 2 [
+  string organisation = 2 [
     (google.api.field_behavior) = REQUIRED,
     (gnostic.openapi.v3.property) = {
       example: {yaml: "2"}
