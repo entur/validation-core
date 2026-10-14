@@ -1,0 +1,13 @@
+{
+  "extraKnownMarketplaces": {
+    "team-validation": {
+      "source": {
+        "source": "github",
+        "repo": "entur/team-validation-ai"
+      }
+    }
+  },
+  "enabledPlugins": {
+    "team-validation@team-validation": true
+  }
+}
