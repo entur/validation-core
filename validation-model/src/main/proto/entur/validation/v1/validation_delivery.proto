@@ -2,6 +2,7 @@ syntax = "proto3";
 
 package entur.validation.v1;
 
+import "entur/validation/v1/validation_data.proto";
 import "google/protobuf/timestamp.proto";
 
 option go_package = "github.com/entur/validation-core/gen/entur/validation/v1;validationv1";
@@ -23,8 +24,8 @@ message ValidationDelivery {
   // such as a transport operator or a data provider.
   map<string, string> tags = 3;
 
-  // The location of the delivery, e.g. a URL to a zip file.
-  string location = 4;
+  // Metainformation about the data to validate, e.g. a GCS URI or a local file path.
+  ValidationData data = 4;
 
   // The timestamp the validation delivery was initiated. Always populated by the server; a
   // value set by the client is ignored, not an error.
