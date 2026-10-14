@@ -6,7 +6,7 @@ assertj = "3.27.7"
 # Only proto-utils needs this stack (Spring/Exposed/coroutines) - the other modules are plain
 # protobuf message/schema libraries. Kept aligned with kittum's own catalog, its main consumer.
 springBoot = "4.1.1"
-exposed = "1.5.0"
+exposed = "1.5.1"
 kotlinxCoroutines = "1.11.0"
 ktlintPlugin = "14.2.0"
 ktlint = "1.8.0"
