@@ -8,6 +8,9 @@ on:
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
     steps:
       - uses: actions/checkout@v7
 
@@ -35,12 +38,27 @@ jobs:
         # Fails if any .proto file isn't formatted per `buf format -w`.
         run: buf format --diff --exit-code
 
+      - name: Check for updated buf-breaking-change label
+        id: buf-breaking-label
+        if: github.event_name == 'pull_request'
+        # github.event.pull_request.labels is frozen at the moment this run was triggered, so a
+        # label added afterward wouldn't show up there. Querying the PR's current labels
+        # live here picks up a just-added label immediately.
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if gh pr view "${{ github.event.pull_request.number }}" --repo "${{ github.repository }}" --json labels --jq '.labels[].name' | grep -qx "buf-breaking-change"; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: buf breaking
         # Catches field renumbering/removal in either module immediately.
         # No-ops on a push to main (comparing a ref against itself).
         # Skip by adding the 'buf-breaking-change' label to the PR when the
         # break is intentional and consumers are coordinated.
-        if: "!contains(github.event.pull_request.labels.*.name, 'buf-breaking-change')"
+        if: steps.buf-breaking-label.outputs.skip != 'true'
         uses: bufbuild/buf-breaking-action@v1
         with:
           input: "."

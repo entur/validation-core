@@ -104,7 +104,7 @@ message RuleFlowItem {
     }
   ];
   // The full validation rule. Populated on a deep read (GetValidationFlow,
-  // GetSourceFlow); absent on a shallow listing (ListValidationFlows).
+  // GetPayloadTypeFlow); absent on a shallow listing (ListValidationFlows).
   optional ValidationRule validation_rule = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
   // If present, overrides the rule's own default_severity for this inclusion only.
   optional Severity severity_override = 3 [(gnostic.openapi.v3.property) = {
@@ -123,7 +123,7 @@ message SubFlowItem {
     }
   ];
   // The full flow. Populated on a deep read (GetValidationFlow,
-  // GetSourceFlow), recursively for every sub-flow it contains in turn;
+  // GetPayloadTypeFlow), recursively for every sub-flow it contains in turn;
   // absent on a shallow listing (ListValidationFlows).
   optional ValidationFlow flow = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
 }

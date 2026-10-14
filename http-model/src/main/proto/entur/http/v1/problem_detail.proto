@@ -27,7 +27,7 @@ message ProblemDetail {
   ];
   // A human-readable explanation specific to this occurrence.
   string detail = 3 [(gnostic.openapi.v3.property) = {
-    example: {yaml: "\"No source exists with the name 'rutedata'.\""}
+    example: {yaml: "\"No payload type exists with the name 'rutedata'.\""}
   }];
   // Field-level validation errors that caused this problem, if any. This is an RFC 9457 extension
   // member; it is absent when the problem isn't a per-field validation failure.

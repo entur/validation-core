@@ -11,22 +11,22 @@ option java_multiple_files = true;
 option java_package = "no.entur.validation.proto.v1";
 
 // A named intake point for a set of files, owned by exactly one Owner.
-message Source {
-  // The database id of the source.
+message PayloadType {
+  // The database id of the payload type.
   int32 id = 1 [
     (google.api.field_behavior) = IDENTIFIER,
     (gnostic.openapi.v3.property) = {
       example: {yaml: "42"}
     }
   ];
-  // The name of the source.
+  // The name of the payload type.
   string name = 2 [
     (google.api.field_behavior) = REQUIRED,
     (gnostic.openapi.v3.property) = {
       example: {yaml: "\"rutedata\""}
     }
   ];
-  // The database id of the owner of the source.
+  // The database id of the owner of the payload type.
   int32 owner = 3 [
     (google.api.field_behavior) = REQUIRED,
     (gnostic.openapi.v3.property) = {
@@ -34,7 +34,7 @@ message Source {
     }
   ];
 
-  // The timestamp the source was last updated. Always populated by the server; a value set
+  // The timestamp the payload type was last updated. Always populated by the server; a value set
   // by the client is ignored, not an error.
   google.protobuf.Timestamp updated_at = 100 [
     (google.api.field_behavior) = OUTPUT_ONLY,

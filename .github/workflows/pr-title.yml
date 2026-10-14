@@ -1,0 +1,92 @@
+# Server-side counterpart to the `team-validation` plugin's PreToolUse hook
+# (entur/team-validation-ai, declared in .claude/settings.json).
+#
+# That hook binds local agent sessions only, and only for people who installed the
+# plugin. This binds everyone -- a human renaming the PR in the web UI, any tool, any
+# agent -- because it reads the actual PR title from the event payload instead of
+# trying to predict what a shell command would do.
+#
+# Merging here is squash-only, so the PR title becomes the commit subject.
+name: PR title
+
+on:
+  pull_request:
+    # `edited` catches a rename after the PR is open. `labeled`/`unlabeled` matter because the
+    # no-ticket escape hatch is a label: without them, applying the label would leave a required
+    # check sitting red until some unrelated event re-ran it. `opened`/`synchronize` are needed
+    # because a required check is evaluated per head SHA, so the check has to exist on every
+    # SHA or the PR blocks on a check that never ran for that commit.
+    types: [opened, edited, reopened, synchronize, labeled, unlabeled]
+
+permissions:
+  contents: read
+
+jobs:
+  jira-key:
+    # This name is the required-check context. Renaming it detaches the ruleset rule.
+    name: Jira key in title
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Require a Jira ticket key in the PR title
+        env:
+          # Via env, never inline ${{ }} in run: -- a title containing $(...) would
+          # otherwise execute on the runner.
+          TITLE: ${{ github.event.pull_request.title }}
+          ACTOR: ${{ github.event.pull_request.user.login }}
+          LABELS: ${{ toJSON(github.event.pull_request.labels.*.name) }}
+        run: |
+          set -uo pipefail
+
+          # Exemptions are handled inside the step rather than with a job-level `if:`, so the
+          # check always reports a real success. A skipped job's effect on a required check is
+          # ambiguous; a passing one is not.
+          case "$ACTOR" in
+            dependabot\[bot\]|renovate\[bot\])
+              echo "::notice::$ACTOR opened this -- automated dependency PRs are exempt."
+              exit 0 ;;
+          esac
+          # LABELS is a JSON array of names. A quoted exact token match needs no jq, so the
+          # step carries no dependency on what happens to be installed on the runner --
+          # and "no-ticket" does not match a label called no-ticket-please.
+          if printf '%s' "$LABELS" | grep -qF '"no-ticket"'; then
+            echo "::notice::'no-ticket' label is set -- a deliberate exception, allowed."
+            exit 0
+          fi
+
+          # A title is single-line by construction, and only a single-line title is matched
+          # here: grep tests each line on its own, so on a multiline title a later line could
+          # satisfy a pattern below while the squash subject -- the first line -- carries no
+          # key. Anything multiline falls through to the failure path instead.
+          if [ "$(printf '%s' "$TITLE" | wc -l | tr -d ' ')" -eq 0 ]; then
+            if printf '%s' "$TITLE" | grep -qE '^ETU-[0-9]+: +[^ ]'; then
+              echo "Title carries a Jira key."; exit 0
+            fi
+            if printf '%s' "$TITLE" | grep -qE '^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)\(ETU-[0-9]+\)!?: +[^ ]'; then
+              echo "Title carries a Jira key."; exit 0
+            fi
+          fi
+
+          # The title is deliberately NOT interpolated into this annotation. Workflow commands
+          # are line-based, so a title carrying a newline or a % escape could forge further
+          # commands. The summary below shows it instead, as inert fenced text.
+          echo "::error title=PR title needs a Jira ticket key::This PR title has no ETU-#### key. See the job summary for the accepted forms."
+          {
+            echo "### PR title needs a Jira ticket key"
+            echo
+            echo "The title on this PR:"
+            echo
+            echo '````'
+            printf '%s\n' "$TITLE"
+            echo '````'
+            echo
+            echo "Rename the PR to one of:"
+            echo
+            echo '- `feat(ETU-1234): add the thing` — Conventional Commits plus the key (preferred;'
+            echo '  merging here is squash-only, so this title becomes the commit subject)'
+            echo '- `ETU-1234: Add the thing` — also accepted'
+            echo
+            echo "Types: \`feat\` \`fix\` \`docs\` \`style\` \`refactor\` \`perf\` \`test\` \`build\` \`ci\` \`chore\` \`revert\`, with \`!\` for a breaking change."
+            echo
+            echo "If this PR genuinely has no ticket, add the **no-ticket** label — the check re-runs on it."
+          } >> "$GITHUB_STEP_SUMMARY"
+          exit 1

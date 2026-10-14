@@ -21,4 +21,5 @@ out/
 .env
 
 ### Claude Code ###
-.claude/
+.claude/settings.local.json
+.claude/scheduled_tasks.lock

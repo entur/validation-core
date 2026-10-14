@@ -1,0 +1,64 @@
+syntax = "proto3";
+
+package entur.validation.v1;
+
+import "entur/validation/v1/enum.proto";
+import "gnostic/openapi/v3/annotations.proto";
+import "google/api/field_behavior.proto";
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/entur/validation-core/gen/entur/validation/v1;validationv1";
+option java_multiple_files = true;
+option java_package = "no.entur.validation.proto.v1";
+
+// A request to start validating an imported dataset, published on the
+// validation-request Kafka topic. Every validation stage runs unless it is
+// listed in skip_stages.
+message ValidationRequest {
+  // Where the files to validate are stored, e.g. a GCS object URI.
+  message ValidationData {
+    // The location of the files. Exactly one must be set.
+    oneof location {
+      // A file retrieved from GCS.
+      string gcs_uri = 1 [(gnostic.openapi.v3.property) = {
+        example: {yaml: "\"gs://validation-imports/rutedata/2026/10/13/abc123.zip\""}
+      }];
+    }
+  }
+
+  // The data to validate.
+  ValidationData data = 1 [(google.api.field_behavior) = REQUIRED];
+
+  // The key identifying the import this dataset came from.
+  string import_key = 2 [
+    (google.api.field_behavior) = REQUIRED,
+    (gnostic.openapi.v3.property) = {
+      example: {yaml: "\"abc123\""}
+    }
+  ];
+
+  // When the dataset was imported.
+  google.protobuf.Timestamp import_date_time = 3 [
+    (google.api.field_behavior) = REQUIRED,
+    (gnostic.openapi.v3.property) = {
+      example: {yaml: "\"2026-10-13T00:00:00Z\""}
+    }
+  ];
+
+  // The system that sent this request, e.g. the import pipeline or the admin
+  // tool.
+  string requested_by = 4 [
+    (google.api.field_behavior) = REQUIRED,
+    (gnostic.openapi.v3.property) = {
+      example: {yaml: "\"admin-tool\""}
+    }
+  ];
+
+  // The validation stages to skip. Empty means every stage runs.
+  repeated ValidationStage skip_stages = 5 [
+    (google.api.field_behavior) = OPTIONAL,
+    (gnostic.openapi.v3.property) = {
+      example: {yaml: "[\"STRUCTURAL\", \"LOCAL\"]"}
+    }
+  ];
+}
