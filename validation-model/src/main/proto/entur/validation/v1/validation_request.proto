@@ -3,6 +3,7 @@ syntax = "proto3";
 package entur.validation.v1;
 
 import "entur/validation/v1/enum.proto";
+import "entur/validation/v1/validation_data.proto";
 import "gnostic/openapi/v3/annotations.proto";
 import "google/api/field_behavior.proto";
 import "google/protobuf/timestamp.proto";
@@ -15,17 +16,6 @@ option java_package = "no.entur.validation.proto.v1";
 // validation-request Kafka topic. Every validation stage runs unless it is
 // listed in skip_stages.
 message ValidationRequest {
-  // Where the files to validate are stored, e.g. a GCS object URI.
-  message ValidationData {
-    // The location of the files. Exactly one must be set.
-    oneof location {
-      // A file retrieved from GCS.
-      string gcs_uri = 1 [(gnostic.openapi.v3.property) = {
-        example: {yaml: "\"gs://validation-imports/rutedata/2026/10/13/abc123.zip\""}
-      }];
-    }
-  }
-
   // The data to validate.
   ValidationData data = 1 [(google.api.field_behavior) = REQUIRED];
 
