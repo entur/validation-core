@@ -2,6 +2,7 @@ syntax = "proto3";
 
 package entur.validation.v1;
 
+import "entur/validation/v1/enum.proto";
 import "gnostic/openapi/v3/annotations.proto";
 import "google/api/field_behavior.proto";
 import "google/protobuf/timestamp.proto";
@@ -11,16 +12,22 @@ option java_multiple_files = true;
 option java_package = "no.entur.validation.proto.v1";
 
 // A request to start validating an imported dataset, published on the
-// validation-request Kafka topic. Every validation stage runs unless its flag
-// is explicitly set to false; an unset flag means true.
+// validation-request Kafka topic. Every validation stage runs unless it is
+// listed in skip_stages.
 message ValidationRequest {
   // Where the files to validate are stored, e.g. a GCS object URI.
-  string original_dataset_uri = 1 [
-    (google.api.field_behavior) = REQUIRED,
-    (gnostic.openapi.v3.property) = {
-      example: {yaml: "\"gs://validation-imports/rutedata/2026/10/13/abc123.zip\""}
+  message ValidationData {
+    // The location of the files. Exactly one must be set.
+    oneof location {
+      // A file retrieved from GCS.
+      string gcs_uri = 1 [(gnostic.openapi.v3.property) = {
+        example: {yaml: "\"gs://validation-imports/rutedata/2026/10/13/abc123.zip\""}
+      }];
     }
-  ];
+  }
+
+  // The data to validate.
+  ValidationData data = 1 [(google.api.field_behavior) = REQUIRED];
 
   // The key identifying the import this dataset came from.
   string import_key = 2 [
@@ -47,30 +54,11 @@ message ValidationRequest {
     }
   ];
 
-  // Whether to run the STRUCTURAL validation stage. Unset means true.
-  optional bool structure = 5 [
+  // The validation stages to skip. Empty means every stage runs.
+  repeated ValidationStage skip_stages = 5 [
     (google.api.field_behavior) = OPTIONAL,
     (gnostic.openapi.v3.property) = {
-      description: "Whether to run the STRUCTURAL validation stage. Unset means true; set to false to skip the stage."
-      example: {yaml: "true"}
-    }
-  ];
-
-  // Whether to run the LOCAL validation stage. Unset means true.
-  optional bool local = 6 [
-    (google.api.field_behavior) = OPTIONAL,
-    (gnostic.openapi.v3.property) = {
-      description: "Whether to run the LOCAL validation stage. Unset means true; set to false to skip the stage."
-      example: {yaml: "true"}
-    }
-  ];
-
-  // Whether to run the GLOBAL validation stage. Unset means true.
-  optional bool global = 7 [
-    (google.api.field_behavior) = OPTIONAL,
-    (gnostic.openapi.v3.property) = {
-      description: "Whether to run the GLOBAL validation stage. Unset means true; set to false to skip the stage."
-      example: {yaml: "true"}
+      example: {yaml: "[\"STRUCTURAL\", \"LOCAL\"]"}
     }
   ];
 }
