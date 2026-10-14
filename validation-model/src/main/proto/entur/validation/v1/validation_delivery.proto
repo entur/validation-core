@@ -11,11 +11,11 @@ option java_multiple_files = true;
 option java_package = "no.entur.validation.proto.v1";
 // A validation delivery is a delivery that has been validated, and the results of that validation.
 message ValidationDelivery {
-  // type of data in delivery, e.g. "rutedata".
-  string data_set = 1 [
+  // The type of payload the validation delivery contains, e.g. "Rutedata" or "Produktdata".
+  string payload_type = 1 [
     (google.api.field_behavior) = REQUIRED,
     (gnostic.openapi.v3.property) = {
-      example: {yaml: "\"produktdata\""}
+      example: {yaml: "\"Rutedata\""}
     }
   ];
 
