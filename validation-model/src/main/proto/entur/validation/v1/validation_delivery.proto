@@ -11,16 +11,24 @@ option java_multiple_files = true;
 option java_package = "no.entur.validation.proto.v1";
 // A validation delivery is a delivery that has been validated, and the results of that validation.
 message ValidationDelivery {
+  // The key of the validation delivery, which is unique within the organisation. The key is used to identify the delivery throughout the validation system, and is used in the URL of the delivery. The key must be a valid URL path segment, and must not contain any characters that are not allowed in a URL path segment.
+  string key = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (gnostic.openapi.v3.property) = {
+      example: {yaml: "\"delivery-1\""}
+    }
+  ];
+
   // The type of payload the validation delivery contains, e.g. "rutedata" or "produktdata".
-  string payload_type = 1 [
+  string payload_type = 2 [
     (google.api.field_behavior) = REQUIRED,
     (gnostic.openapi.v3.property) = {
       example: {yaml: "\"rutedata\""}
     }
   ];
 
-  // The database id of the owner of the validation delivery.
-  string organisation = 2 [
+  // The responsible participant for the delivery, e.g. a transport operator or a data provider. The participant is used to identify the owner of the delivery. The participant must be a valid URL path segment, and must not contain any characters that are not allowed in a URL path segment.
+  string participant = 3 [
     (google.api.field_behavior) = REQUIRED,
     (gnostic.openapi.v3.property) = {
       example: {yaml: "2"}
@@ -28,7 +36,7 @@ message ValidationDelivery {
   ];
 
   // The location of the delivery, e.g. a URL to a zip file.
-  string location = 3 [
+  string location = 4 [
     (google.api.field_behavior) = REQUIRED,
     (gnostic.openapi.v3.property) = {
       example: {yaml: "\"https://example.com/delivery.zip\""}
