@@ -6,6 +6,7 @@ Gradle modules - `http-model` (the shared `entur.http.v1` `Failure`/`ProblemDeta
 `entur.kittum.v1` service definitions), `proto-utils` (hand-written, domain-agnostic proto/HTTP
 plumbing built on the other three), and `exposed-utils` (JetBrains Exposed-specific persistence
 support - ETag concurrency, cursor paging - built on `proto-utils`) - see "Non-schema modules" below
+
 - each published as its own Maven artifact.
 
 This repository is schema and generated code plus, in `proto-utils` and `exposed-utils`, hand-written
@@ -93,3 +94,17 @@ https://github.com/entur/ai/blob/main/AGENTS.md
   comment is invisible in the generated spec, no matter how detailed. Put real documentation -
   ignored/OUTPUT_ONLY fields, side effects, error conditions - on the rpc's own doc comment
   (which does become the operation's `description`), and keep body-bound field comments minimal.
+
+## Code comments
+
+- Do not add code comments unless they are necessary to explain non-obvious behavior.
+- Prefer self-explanatory code over comments.
+- Do not add comments that merely restate what the code does.
+- Comment only the _why_ the code can't show: a constraint, a non-obvious trade-off, a trap.
+- KDoc: one line by default, 2–3 lines at most unless the contract really is subtle.
+- No history or discovery notes ("we found that…", "previously…"). Those belong in the commit
+  message or PR description.
+- Don't explain another class's internals; link to it with `[Name]` and leave it there. But
+  don't replace explaining _this_ file with a pointer to another file's KDoc.
+- Existing comments may be shortened or deleted like any other code. When you touch a verbose
+  comment, delete it or trim it.
