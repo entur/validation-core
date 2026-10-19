@@ -2,9 +2,7 @@ syntax = "proto3";
 
 package entur.validation.v1;
 
-import "entur/validation/v1/enum.proto";
 import "gnostic/openapi/v3/annotations.proto";
-import "google/api/field_behavior.proto";
 
 option go_package = "github.com/entur/validation-core/gen/entur/validation/v1;validationv1";
 option java_multiple_files = true;
@@ -19,14 +17,4 @@ message ValidationData {
       example: {yaml: "\"gs://validation-imports/rutedata/2026/10/13/abc123.zip\""}
     }];
   }
-
-  // The validation stages to run on this data. Empty means every stage runs.
-  // The opposite of ValidationRequest.skip_stages, which lists the stages to
-  // leave out instead.
-  repeated ValidationStage stages = 2 [
-    (google.api.field_behavior) = OPTIONAL,
-    (gnostic.openapi.v3.property) = {
-      example: {yaml: "[\"STRUCTURAL\", \"LOCAL\", \"GLOBAL\"]"}
-    }
-  ];
 }
