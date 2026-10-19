@@ -14,32 +14,33 @@ option java_package = "no.entur.validation.proto.v1";
 
 // A validation delivery is a delivery of data submitted for validation.
 message ValidationDelivery {
-  // The key of the validation delivery, unique across all validation deliveries. The key is used to
-  // identify the delivery throughout the validation system, and is used in the URL of the delivery.
-  // The key must be a valid URL path segment, and must not contain any characters that are not
+  // The key of the validation delivery, unique across all validation
+  // deliveries. The key is used to identify the delivery throughout the
+  // validation system, and is used in the URL of the delivery. The key must be
+  // a valid URL path segment, and must not contain any characters that are not
   // allowed in a URL path segment.
   string key = 1;
 
-  // The type of payload the validation delivery contains, e.g. "rutedata" or "produktdata".
+  // The type of payload the validation delivery contains, e.g. "rutedata" or
+  // "produktdata".
   string payload_type = 2;
 
-  // Free-form key/value labels attached to the delivery, e.g. the participant responsible for it
-  // such as a transport operator or a data provider.
+  // Free-form key/value labels attached to the delivery, e.g. the participant
+  // responsible for it such as a transport operator or a data provider.
   map<string, string> tags = 3;
 
-  // Metainformation about the data to validate, e.g. a GCS URI or a local file path.
+  // Metainformation about the data to validate, e.g. a GCS URI or a local file
+  // path.
   ValidationData data = 4;
 
-  // The validation stage to run on this delivery. Exactly one of STRUCTURAL,
-  // LOCAL or GLOBAL; VALIDATION_STAGE_UNSPECIFIED is invalid.
+  // The validation stage to run on this delivery. VALIDATION_STAGE_UNSPECIFIED
+  // is invalid.
   ValidationStage stage = 5 [
     (google.api.field_behavior) = REQUIRED,
-    (gnostic.openapi.v3.property) = {
-      example: {yaml: "\"STRUCTURAL\""}
-    }
+    (gnostic.openapi.v3.property) = { example: { yaml: "\"STRUCTURAL\"" } }
   ];
 
-  // The timestamp the validation delivery was initiated. Always populated by the server; a
-  // value set by the client is ignored, not an error.
+  // The timestamp the validation delivery was initiated. Always populated by
+  // the server; a value set by the client is ignored, not an error.
   google.protobuf.Timestamp requested_at = 100;
 }
