@@ -2,19 +2,31 @@ syntax = "proto3";
 
 package entur.validation.v1;
 
-import "gnostic/openapi/v3/annotations.proto";
+import "google/protobuf/timestamp.proto";
 
 option go_package = "github.com/entur/validation-core/gen/entur/validation/v1;validationv1";
 option java_multiple_files = true;
 option java_package = "no.entur.validation.proto.v1";
 
-// Where the files to validate are stored, e.g. a GCS object URI.
+// Information about the data to be validated.
 message ValidationData {
-  // The location of the files. Exactly one must be set.
-  oneof location {
-    // A file retrieved from GCS.
-    string gcs_uri = 1 [(gnostic.openapi.v3.property) = {
-      example: {yaml: "\"gs://validation-imports/rutedata/2026/10/13/abc123.zip\""}
-    }];
+  // The originator of the data.
+  string originator = 1;
+  // A correlation id that identifies this data, usually created upstream.
+  string external_id = 2;
+  // When the data was imported, if known.
+  optional google.protobuf.Timestamp import_date_time = 3;
+  // The payload type of the data.
+  string payload_type = 4;
+  // The location of the data.
+  Location location = 5;
+  // Various places where the data can be stored. One or more must be set.
+  message Location {
+    // A GCS uri to the raw data (XML, ZIP or a folder).
+    string raw_gcs_uri = 1;
+    // A GCS uri to the local parquet data (a folder).
+    string local_parquet_gcs_uri = 2;
+    // A GCS uri to the global parquet data (a folder).
+    string global_parquet_gcs_uri = 3;
   }
 }

@@ -1,0 +1,73 @@
+syntax = "proto3";
+
+package entur.validation.v1;
+
+import "entur/validation/v1/enum.proto";
+import "entur/validation/v1/validation_rule.proto";
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/entur/validation-core/gen/entur/validation/v1;validationv1";
+option java_multiple_files = true;
+option java_package = "no.entur.validation.proto.v1";
+
+// The outcome of running some validation rules in a stage against a delivery.
+message ValidationProgress {
+  // The unique id of the validation run this progress belongs to.
+  string validation_run = 1;
+  // The validation stage this progress applies to.
+  ValidationStage stage = 2;
+  // An overview of the current progress of this stage.
+  Overview overview = 3;
+  // The outcome of each rule that has run since the previous progress was published.
+  repeated RuleResult results = 4;
+
+  // A progress bar for this validation stage. When completed + skipped = total, this stage is complete.
+  // (The progress only reflects the number of rules completed or skipped, not the time it takes to run them.)
+  message Overview {
+    // The total number of rules in this stage.
+    int32 total = 1;
+    // The number of completed rules.
+    int32 completed = 2;
+    // The number of skipped rules.
+    int32 skipped = 3;
+  }
+}
+
+// The outcome of running a single validation rule against a delivery.
+message RuleResult {
+  // The validation rule that produced this result.
+  ValidationRule validation_rule = 1;
+  // The individual findings produced by this validation rule.
+  repeated Message messages = 2;
+  // Whether this result is incomplete because the full set of findings was too large to fit in
+  // one Kafka message. When true, `messages` only contains a partial view and the complete
+  // result can be retrieved from `full_result_url`.
+  bool incomplete = 3;
+  // Where the complete, untruncated result can be retrieved, e.g. a GCS object URL.
+  // Only set when `incomplete` is true.
+  optional string full_result_url = 4;
+  // The timestamp this rule started validating.
+  google.protobuf.Timestamp start_time = 5;
+  // The timestamp this rule was finished validating.
+  google.protobuf.Timestamp end_time = 6;
+}
+
+// A single finding raised while validating a delivery.
+message Message {
+  // A human-readable description of the finding.
+  string message = 1;
+  // How severely this finding should be treated.
+  Severity severity = 3;
+  // Where in the delivery this finding applies, if known.
+  repeated Location location_details = 4;
+}
+
+// A pointer to a specific place in a file, e.g. where a Message applies.
+message Location {
+  // The name of the file this location refers to.
+  string file_name = 1;
+  // The line number within the file, if applicable.
+  optional int32 line_number = 2;
+  // The column number within the line, if applicable.
+  optional int32 column_number = 3;
+}

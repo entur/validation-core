@@ -1,0 +1,14 @@
+syntax = "proto3";
+package no.entur.proto.testfixtures.v1;
+
+import "google/api/field_behavior.proto";
+
+option java_multiple_files = true;
+option java_package = "no.entur.proto.testfixtures.v1";
+
+// Lives in its own file so SchemaRegistrySanitizerTest can exercise recursing into a dependency,
+// not just a nested type in the same file - the same shape as misharum's RuleResult referencing the
+// shared ValidationRule message, which still carries this annotation for its own REST API.
+message External {
+  int64 id = 1 [(google.api.field_behavior) = IDENTIFIER];
+}

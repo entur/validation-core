@@ -4,9 +4,6 @@ package entur.validation.v1;
 
 import "entur/validation/v1/enum.proto";
 import "entur/validation/v1/validation_data.proto";
-import "gnostic/openapi/v3/annotations.proto";
-import "google/api/field_behavior.proto";
-import "google/protobuf/timestamp.proto";
 
 option go_package = "github.com/entur/validation-core/gen/entur/validation/v1;validationv1";
 option java_multiple_files = true;
@@ -17,38 +14,12 @@ option java_package = "no.entur.validation.proto.v1";
 // listed in skip_stages.
 message ValidationRequest {
   // The data to validate.
-  ValidationData data = 1 [(google.api.field_behavior) = REQUIRED];
-
-  // The key identifying the import this dataset came from.
-  string import_key = 2 [
-    (google.api.field_behavior) = REQUIRED,
-    (gnostic.openapi.v3.property) = {
-      example: {yaml: "\"abc123\""}
-    }
-  ];
-
-  // When the dataset was imported.
-  google.protobuf.Timestamp import_date_time = 3 [
-    (google.api.field_behavior) = REQUIRED,
-    (gnostic.openapi.v3.property) = {
-      example: {yaml: "\"2026-10-13T00:00:00Z\""}
-    }
-  ];
+  ValidationData data = 1;
 
   // The system that sent this request, e.g. the import pipeline or the admin
   // tool.
-  string requested_by = 4 [
-    (google.api.field_behavior) = REQUIRED,
-    (gnostic.openapi.v3.property) = {
-      example: {yaml: "\"admin-tool\""}
-    }
-  ];
+  string requested_by = 4;
 
   // The validation stages to skip. Empty means every stage runs.
-  repeated ValidationStage skip_stages = 5 [
-    (google.api.field_behavior) = OPTIONAL,
-    (gnostic.openapi.v3.property) = {
-      example: {yaml: "[\"STRUCTURAL\", \"LOCAL\"]"}
-    }
-  ];
+  repeated ValidationStage skip_stages = 5;
 }

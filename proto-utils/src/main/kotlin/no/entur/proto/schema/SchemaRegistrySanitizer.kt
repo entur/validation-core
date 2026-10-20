@@ -42,6 +42,29 @@ fun FileDescriptor.withoutFieldOptionExtensions(
         .build()
 }
 
+/**
+ * [this] and every file it transitively depends on, each sanitized the same way
+ * [withoutFieldOptionExtensions] sanitizes one file alone. A file reachable more than once in the graph is sanitized
+ * and rebuilt only the first time.
+ */
+fun FileDescriptor.withoutFieldOptionExtensionsDeep(
+    droppedImports: Set<String>,
+    droppedExtensionNumbers: Set<Int>,
+): FileDescriptor {
+    val built = mutableMapOf<String, FileDescriptor>()
+
+    fun sanitize(file: FileDescriptor): FileDescriptor =
+        built.getOrPut(file.name) {
+            val dependencies =
+                file.dependencies
+                    .filterNot { it.name in droppedImports }
+                    .map(::sanitize)
+                    .toTypedArray()
+            FileDescriptor.buildFrom(file.withoutFieldOptionExtensions(droppedImports, droppedExtensionNumbers), dependencies)
+        }
+    return sanitize(this)
+}
+
 private fun DescriptorProto.withoutFieldOptionExtensions(droppedExtensionNumbers: Set<Int>): DescriptorProto =
     toBuilder()
         .clearField()

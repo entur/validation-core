@@ -5,6 +5,7 @@ import com.google.protobuf.Descriptors.FileDescriptor
 import com.google.protobuf.Timestamp
 import com.google.protobuf.UnknownFieldSet
 import no.entur.proto.testfixtures.v1.Annotated
+import no.entur.proto.testfixtures.v1.External
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
@@ -66,6 +67,20 @@ internal class SchemaRegistrySanitizerTest {
 
     @Test
     fun `builds back into a live descriptor using only its remaining dependencies`() {
-        FileDescriptor.buildFrom(sanitized, arrayOf(Timestamp.getDescriptor().file))
+        FileDescriptor.buildFrom(sanitized, arrayOf(Timestamp.getDescriptor().file, External.getDescriptor().file))
+    }
+
+    @Test
+    fun `withoutFieldOptionExtensionsDeep also strips a field's options in an imported file`() {
+        val deepSanitized =
+            Annotated
+                .getDescriptor()
+                .file
+                .withoutFieldOptionExtensionsDeep(droppedImports, droppedExtensionNumbers)
+
+        val externalFile = deepSanitized.dependencies.single { it.name.endsWith("external.proto") }
+        assertFalse(externalFile.dependencies.any { it.name in droppedImports })
+        val id = externalFile.findMessageTypeByName("External").findFieldByName("id")
+        assertTrue(noneDropped(id.options.toByteString()))
     }
 }

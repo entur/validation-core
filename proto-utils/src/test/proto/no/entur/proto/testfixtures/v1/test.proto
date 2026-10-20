@@ -4,6 +4,7 @@ package no.entur.proto.testfixtures.v1;
 import "gnostic/openapi/v3/annotations.proto";
 import "google/api/field_behavior.proto";
 import "google/protobuf/timestamp.proto";
+import "no/entur/proto/testfixtures/v1/external.proto";
 
 option java_multiple_files = true;
 option java_package = "no.entur.proto.testfixtures.v1";
@@ -58,6 +59,7 @@ message Annotated {
   ];
   string plain = 2;
   Child child = 3;
+  External external = 4;
 
   message Child {
     string value = 1 [(gnostic.openapi.v3.property) = {
