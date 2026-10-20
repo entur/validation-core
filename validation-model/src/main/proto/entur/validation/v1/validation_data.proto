@@ -12,7 +12,7 @@ option java_package = "no.entur.validation.proto.v1";
 message ValidationData {
   // The originator of the data.
   string originator = 1;
-  // A correlation id that identifies this data, usually created upstream.
+  // An external id that identifies this data.
   string external_id = 2;
   // When the data was imported, if known.
   optional google.protobuf.Timestamp import_date_time = 3;
