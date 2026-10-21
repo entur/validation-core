@@ -20,6 +20,8 @@ message ValidationProgress {
   Overview overview = 3;
   // The outcome of each rule that has run since the previous progress was published.
   repeated RuleResult results = 4;
+  // Findings about the dataset as a whole, with no particular rule to attribute them to.
+  repeated Message messages = 5;
 
   // A progress bar for this validation stage. When completed + skipped = total, this stage is complete.
   // (The progress only reflects the number of rules completed or skipped, not the time it takes to run them.)
