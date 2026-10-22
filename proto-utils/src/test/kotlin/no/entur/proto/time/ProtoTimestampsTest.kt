@@ -90,4 +90,26 @@ internal class ProtoTimestampsTest {
 
         assertEquals(atUtc.toProtoTimestamp(), atPlusNine.toProtoTimestamp())
     }
+
+    @Test
+    fun `toOffsetDateTime carries seconds and nanos over, at UTC`() {
+        val offsetDateTime =
+            timestamp {
+                seconds = 1_700_000_000L
+                nanos = 123_456_789
+            }.toOffsetDateTime()
+        assertEquals(ZoneOffset.UTC, offsetDateTime.offset)
+        assertEquals(1_700_000_000L, offsetDateTime.toEpochSecond())
+        assertEquals(123_456_789, offsetDateTime.nano)
+    }
+
+    @Test
+    fun `a Timestamp survives a round trip through OffsetDateTime`() {
+        val timestamp =
+            timestamp {
+                seconds = 1_700_000_000L
+                nanos = 123_456_789
+            }
+        assertEquals(timestamp, timestamp.toOffsetDateTime().toProtoTimestamp())
+    }
 }
