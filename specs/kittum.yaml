@@ -1868,6 +1868,10 @@ components:
                     allOf:
                       - $ref: '#/components/schemas/XsdRule'
                     description: An XSD rule.
+                xpathRule:
+                    allOf:
+                      - $ref: '#/components/schemas/XPathRule'
+                    description: An XPath rule.
                 updatedAt:
                     readOnly: true
                     example: '2026-01-01T00:00:00Z'
@@ -1888,6 +1892,45 @@ components:
                     xsdPath: xsd/netex/NeTEx_publication.xsd
                     fileFilter: .*\.xml
                 updatedAt: '2026-01-01T00:00:00Z'
+        XPathRule:
+            required:
+              - message
+              - xpathExpression
+              - cardinality
+            type: object
+            properties:
+                message:
+                    example: File does not match the XPath expression.
+                    type: string
+                    description: The message to print if the validation rule fails.
+                xpathExpression:
+                    example: ServiceFrame[validityConditions or ValidBetween]
+                    type: string
+                    description: An XPath expression to run against the file.
+                cardinality:
+                    example: EXACTLY_ONE
+                    enum:
+                      - CARDINALITY_UNSPECIFIED
+                      - NONE
+                      - EXACTLY_ONE
+                      - AT_LEAST_ONE
+                      - EXACTLY_TWO
+                    type: string
+                    description: The cardinality the expression must resolve to to
+                        be valid.
+                    format: enum
+                fileFilter:
+                    example: .*\.xml
+                    type: string
+                    description: A regexp a file's name must match to be processed
+                        by this rule. Runs against every file when absent.
+            description: A validation rule that runs an XPath expression against one
+                or more XML files and checks the number of matches. Always stage LOCAL.
+            example:
+                message: File does not match the XPath expression.
+                xpathExpression: ServiceFrame[validityConditions or ValidBetween]
+                cardinality: EXACTLY_ONE
+                fileFilter: .*\.xml
         XsdRule:
             required:
               - message

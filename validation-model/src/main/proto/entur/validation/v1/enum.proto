@@ -31,3 +31,17 @@ enum ValidationStage {
   // Cross-validates a file against other data, e.g. references and integrity across the dataset.
   GLOBAL = 3;
 }
+
+// Various cardinalities for existence of fields or values.
+enum Cardinality {
+  // Unspecified cardinality. This is an invalid value.
+  CARDINALITY_UNSPECIFIED = 0;
+  // The specified field should _not_ exist.
+  NONE = 1;
+  // The specified field should exist exactly once.
+  EXACTLY_ONE = 2;
+  // The specified field should exist at least once.
+  AT_LEAST_ONE = 3;
+  // The specified field should exist exactly twice.
+  EXACTLY_TWO = 4;
+}

@@ -54,6 +54,8 @@ message ValidationRule {
   oneof rule {
     // An XSD rule.
     XsdRule xsd_rule = 6;
+    // An XPath rule.
+    XPathRule xpath_rule = 7;
   }
 
   // The timestamp the validation rule was last updated. Always populated by the server; a
@@ -84,6 +86,35 @@ message XsdRule {
   ];
   // A regexp a file's name must match to be processed by this rule. Runs against every file when absent.
   optional string file_filter = 3 [(gnostic.openapi.v3.property) = {
+    example: {yaml: "\".*\\\\.xml\""}
+  }];
+}
+
+// A validation rule that runs an XPath expression against one or more XML files and checks the number of matches. Always stage LOCAL.
+message XPathRule {
+  // The message to print if the validation rule fails.
+  string message = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (gnostic.openapi.v3.property) = {
+      example: {yaml: "\"File does not match the XPath expression.\""}
+    }
+  ];
+  // An XPath expression to run against the file.
+  string xpath_expression = 2 [
+    (google.api.field_behavior) = REQUIRED,
+    (gnostic.openapi.v3.property) = {
+      example: {yaml: "\"ServiceFrame[validityConditions or ValidBetween]\""}
+    }
+  ];
+  // The cardinality the expression must resolve to to be valid.
+  Cardinality cardinality = 3 [
+    (google.api.field_behavior) = REQUIRED,
+    (gnostic.openapi.v3.property) = {
+      example: {yaml: "\"EXACTLY_ONE\""}
+    }
+  ];
+  // A regexp a file's name must match to be processed by this rule. Runs against every file when absent.
+  optional string file_filter = 4 [(gnostic.openapi.v3.property) = {
     example: {yaml: "\".*\\\\.xml\""}
   }];
 }
