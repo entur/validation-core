@@ -56,6 +56,8 @@ message ValidationRule {
     XsdRule xsd_rule = 6;
     // An XPath rule.
     XPathRule xpath_rule = 7;
+    // A SQL rule.
+    SqlRule sql_rule = 8;
   }
 
   // The timestamp the validation rule was last updated. Always populated by the server; a
@@ -99,14 +101,14 @@ message XPathRule {
       example: {yaml: "\"File does not match the XPath expression.\""}
     }
   ];
-  // An XPath expression to run against the file.
+  // An XPath expression to run against the file. The returned nodes are checked against `cardinality` below.
   string xpath_expression = 2 [
     (google.api.field_behavior) = REQUIRED,
     (gnostic.openapi.v3.property) = {
       example: {yaml: "\"ServiceFrame[validityConditions or ValidBetween]\""}
     }
   ];
-  // The cardinality the expression must resolve to to be valid.
+  // The cardinality the expression must resolve to for the validation to succeed.
   Cardinality cardinality = 3 [
     (google.api.field_behavior) = REQUIRED,
     (gnostic.openapi.v3.property) = {
@@ -117,4 +119,30 @@ message XPathRule {
   optional string file_filter = 4 [(gnostic.openapi.v3.property) = {
     example: {yaml: "\".*\\\\.xml\""}
   }];
+}
+
+// A validation rule that runs a SQL statement against a database. Stage is either LOCAL or GLOBAL.
+// (The database implementation and exact SQL language is intentionally undefined.)
+message SqlRule {
+  // The message to print if the validation rule fails.
+  string message = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (gnostic.openapi.v3.property) = {
+      example: {yaml: "\"Data does not match the SQL statement.\""}
+    }
+  ];
+  // A SQL expression to run against the database. The returned rows are checked against `cardinality` below.
+  string sql_expression = 2 [
+    (google.api.field_behavior) = REQUIRED,
+    (gnostic.openapi.v3.property) = {
+      example: {yaml: "\"SELECT e.full_id FROM entities e WHERE e.entity_type='ServiceJourney' AND e.wrapper_path='vehicleJourneys';\""}
+    }
+  ];
+  // The cardinality the returned row set must resolve to for the validation to succeed.
+  Cardinality cardinality = 3 [
+    (google.api.field_behavior) = REQUIRED,
+    (gnostic.openapi.v3.property) = {
+      example: {yaml: "\"EXACTLY_ONE\""}
+    }
+  ];
 }

@@ -1696,6 +1696,43 @@ components:
                         fileFilter: .*\.xml
                     updatedAt: '2026-01-01T00:00:00Z'
                 severityOverride: WARNING
+        SqlRule:
+            required:
+              - message
+              - sqlExpression
+              - cardinality
+            type: object
+            properties:
+                message:
+                    example: Data does not match the SQL statement.
+                    type: string
+                    description: The message to print if the validation rule fails.
+                sqlExpression:
+                    example: SELECT e.full_id FROM entities e WHERE e.entity_type='ServiceJourney'
+                        AND e.wrapper_path='vehicleJourneys';
+                    type: string
+                    description: A SQL expression to run against the database. The
+                        returned rows are checked against `cardinality` below.
+                cardinality:
+                    example: EXACTLY_ONE
+                    enum:
+                      - CARDINALITY_UNSPECIFIED
+                      - NONE
+                      - EXACTLY_ONE
+                      - AT_LEAST_ONE
+                      - EXACTLY_TWO
+                    type: string
+                    description: The cardinality the returned row set must resolve
+                        to for the validation to succeed.
+                    format: enum
+            description: |-
+                A validation rule that runs a SQL statement against a database. Stage is either LOCAL or GLOBAL.
+                 (The database implementation and exact SQL language is intentionally undefined.)
+            example:
+                message: Data does not match the SQL statement.
+                sqlExpression: SELECT e.full_id FROM entities e WHERE e.entity_type='ServiceJourney'
+                    AND e.wrapper_path='vehicleJourneys';
+                cardinality: EXACTLY_ONE
         SubFlowItem:
             type: object
             properties:
@@ -1872,6 +1909,10 @@ components:
                     allOf:
                       - $ref: '#/components/schemas/XPathRule'
                     description: An XPath rule.
+                sqlRule:
+                    allOf:
+                      - $ref: '#/components/schemas/SqlRule'
+                    description: A SQL rule.
                 updatedAt:
                     readOnly: true
                     example: '2026-01-01T00:00:00Z'
@@ -1906,7 +1947,8 @@ components:
                 xpathExpression:
                     example: ServiceFrame[validityConditions or ValidBetween]
                     type: string
-                    description: An XPath expression to run against the file.
+                    description: An XPath expression to run against the file. The
+                        returned nodes are checked against `cardinality` below.
                 cardinality:
                     example: EXACTLY_ONE
                     enum:
@@ -1916,8 +1958,8 @@ components:
                       - AT_LEAST_ONE
                       - EXACTLY_TWO
                     type: string
-                    description: The cardinality the expression must resolve to to
-                        be valid.
+                    description: The cardinality the expression must resolve to for
+                        the validation to succeed.
                     format: enum
                 fileFilter:
                     example: .*\.xml
