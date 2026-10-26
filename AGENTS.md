@@ -1,11 +1,12 @@
 # validation-core
 
-Shared protobuf schema for Entur's validation platform, published as Java/Kotlin libraries. Five
+Shared protobuf schema for Entur's validation platform, published as Java/Kotlin libraries. Six
 Gradle modules - `http-model` (the shared `entur.http.v1` `Failure`/`ProblemDetail` types),
 `validation-model` (the `entur.validation.v1` domain messages), `kittum-api` (Kittum's
-`entur.kittum.v1` service definitions), `proto-utils` (hand-written, domain-agnostic proto/HTTP
-plumbing built on the other three), and `exposed-utils` (JetBrains Exposed-specific persistence
-support - ETag concurrency, cursor paging - built on `proto-utils`) - see "Non-schema modules" below
+`entur.kittum.v1` service definitions), `zagar-api` (Zagar's `entur.zagar.v1` service
+definitions), `proto-utils` (hand-written, domain-agnostic proto/HTTP plumbing built on the other
+three), and `exposed-utils` (JetBrains Exposed-specific persistence support - ETag concurrency,
+cursor paging - built on `proto-utils`) - see "Non-schema modules" below
 
 - each published as its own Maven artifact.
 
@@ -25,8 +26,8 @@ https://github.com/entur/ai/blob/main/AGENTS.md
 
 - Owning team: `team-validering`
 - Artifacts: `no.entur.validation:http-model`, `no.entur.validation:validation-model`,
-  `no.entur.validation:kittum-api`, `no.entur.validation:proto-utils`,
-  `no.entur.validation:exposed-utils`
+  `no.entur.validation:kittum-api`, `no.entur.validation:zagar-api`,
+  `no.entur.validation:proto-utils`, `no.entur.validation:exposed-utils`
 - Published to Entur's JFrog Artifactory (`entur-release-standard`) via `entur/gha-artifactory`.
   Publishing is manual and tag-triggered: pushing a `v<major>.<minor>.<patch>` tag runs CD, which
   publishes that exact version. Merging to `main` does not publish by itself. See "Versioning and

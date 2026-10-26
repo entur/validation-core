@@ -8,13 +8,14 @@ hand-written support library built on top of the generated types.
 
 ## Modules
 
-Five Gradle modules, each published as its own Maven artifact, sharing one version:
+Six Gradle modules, each published as its own Maven artifact, sharing one version:
 
 | Module | Proto package | Artifact | Contents |
 |--------|---------------|----------|----------|
 | [`http-model`](http-model) | `entur.http.v1` | `no.entur.validation:http-model` | `Failure`/`ProblemDetail`, the RFC 9457-style types used to document and render rpc failure responses. |
 | [`validation-model`](validation-model) | `entur.validation.v1` | `no.entur.validation:validation-model` | The domain messages. |
 | [`kittum-api`](kittum-api) | `entur.kittum.v1` | `no.entur.validation:kittum-api` | Kittum's gRPC/REST service definitions and their Request/Response messages. |
+| [`zagar-api`](zagar-api) | `entur.zagar.v1` | `no.entur.validation:zagar-api` | Zagar's gRPC/REST service definitions and their Request/Response messages. |
 | [`proto-utils`](proto-utils) | — (hand-written, not proto-generated) | `no.entur.validation:proto-utils` | Domain-agnostic proto/HTTP plumbing (update masks, protobuf-JSON codecs, `ProblemDetail` error mapping) for WebFlux services built on this schema. See "Non-schema modules" below. |
 | [`exposed-utils`](exposed-utils) | — (hand-written, not proto-generated) | `no.entur.validation:exposed-utils` | JetBrains Exposed-specific persistence support (ETag concurrency, cursor paging) built on `proto-utils`. See "Non-schema modules" below. |
 

@@ -116,13 +116,18 @@ val augmentOpenApi =
 // .proto file shows up as a reviewable diff of the resulting public HTTP contract. The repo-root
 // specs/ directory is Entur's standard location for OpenAPI specs.
 val copyOpenApiSpec =
-    tasks.register<Copy>("copyOpenApiSpec") {
+    tasks.register("copyOpenApiSpec") {
         description = "Copies the augmented OpenAPI spec over the committed specs/${grpcOpenApiModule.specFileName.orNull}."
         group = "documentation"
         dependsOn(augmentOpenApi)
-        from(layout.buildDirectory.file("generated/openapi/openapi-augmented.yaml"))
-        into(rootProject.layout.projectDirectory.dir("specs"))
-        rename { grpcOpenApiModule.specFileName.get() }
+        val source = layout.buildDirectory.file("generated/openapi/openapi-augmented.yaml")
+        val target = grpcOpenApiModule.specFileName.map { rootProject.layout.projectDirectory.file("specs/$it") }
+        inputs.file(source)
+        outputs.file(target)
+        doLast {
+            target.get().asFile.parentFile.mkdirs()
+            source.get().asFile.copyTo(target.get().asFile, overwrite = true)
+        }
     }
 
 // Run copyOpenApiSpec on every build, so specs/<specFileName> is always rewritten
