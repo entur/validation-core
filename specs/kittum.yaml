@@ -1377,6 +1377,7 @@ components:
                         area: 7
                         defaultSeverity: ERROR
                         stage: STRUCTURAL
+                        name: netex-xsd
                         description: Validates the file against its XSD.
                         xsdRule:
                             message: File does not match its XSD.
@@ -1455,6 +1456,7 @@ components:
                                     area: 7
                                     defaultSeverity: ERROR
                                     stage: STRUCTURAL
+                                    name: netex-xsd
                                     description: Validates the file against its XSD.
                                     xsdRule:
                                         message: File does not match its XSD.
@@ -1517,6 +1519,7 @@ components:
                                 area: 7
                                 defaultSeverity: ERROR
                                 stage: STRUCTURAL
+                                name: netex-xsd
                                 description: Validates the file against its XSD.
                                 xsdRule:
                                     message: File does not match its XSD.
@@ -1549,6 +1552,7 @@ components:
                     area: 7
                     defaultSeverity: ERROR
                     stage: STRUCTURAL
+                    name: netex-xsd
                     description: Validates the file against its XSD.
                     xsdRule:
                         message: File does not match its XSD.
@@ -1689,6 +1693,7 @@ components:
                     area: 7
                     defaultSeverity: ERROR
                     stage: STRUCTURAL
+                    name: netex-xsd
                     description: Validates the file against its XSD.
                     xsdRule:
                         message: File does not match its XSD.
@@ -1768,6 +1773,7 @@ components:
                                 area: 7
                                 defaultSeverity: ERROR
                                 stage: STRUCTURAL
+                                name: netex-xsd
                                 description: Validates the file against its XSD.
                                 xsdRule:
                                     message: File does not match its XSD.
@@ -1847,6 +1853,7 @@ components:
                             area: 7
                             defaultSeverity: ERROR
                             stage: STRUCTURAL
+                            name: netex-xsd
                             description: Validates the file against its XSD.
                             xsdRule:
                                 message: File does not match its XSD.
@@ -1862,6 +1869,7 @@ components:
               - area
               - defaultSeverity
               - stage
+              - name
               - description
             type: object
             properties:
@@ -1897,6 +1905,10 @@ components:
                     type: string
                     description: The stage the validation rule runs in.
                     format: enum
+                name:
+                    example: netex-xsd
+                    type: string
+                    description: The name of the validation rule.
                 description:
                     example: Validates the file against its XSD.
                     type: string
@@ -1927,6 +1939,7 @@ components:
                 area: 7
                 defaultSeverity: ERROR
                 stage: STRUCTURAL
+                name: netex-xsd
                 description: Validates the file against its XSD.
                 xsdRule:
                     message: File does not match its XSD.

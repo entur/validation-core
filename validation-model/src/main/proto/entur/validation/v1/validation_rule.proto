@@ -42,6 +42,13 @@ message ValidationRule {
       example: {yaml: "\"STRUCTURAL\""}
     }
   ];
+  // The name of the validation rule.
+  string name = 9 [
+    (google.api.field_behavior) = REQUIRED,
+    (gnostic.openapi.v3.property) = {
+      example: {yaml: "\"netex-xsd\""}
+    }
+  ];
   // A textual description of the validation rule.
   string description = 5 [
     (google.api.field_behavior) = REQUIRED,
