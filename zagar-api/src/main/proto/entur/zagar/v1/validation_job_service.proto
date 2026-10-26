@@ -113,9 +113,9 @@ message ListResultsRequest {
   }];
   // A comma-separated list of fields to order by, each optionally suffixed with " desc"
   // for descending order (ascending is the default). See https://google.aip.dev/132.
-  // Defaults to "started_at".
+  // Defaults to "start_time".
   string order_by = 4 [(gnostic.openapi.v3.property) = {
-    example: {yaml: "\"started_at\""}
+    example: {yaml: "\"start_time\""}
   }];
 }
 
