@@ -8,6 +8,11 @@ info:
     description: OpenAPI contract for zagar - the validation platform's job results
         storage.
     version: 0.0.1
+    x-entur-metadata:
+        id: zagar
+        audience: internal
+        owner: team-validering
+    x-stability-level: draft
 servers:
   - url: https://zagar.entur.io
 paths:
@@ -204,14 +209,17 @@ components:
             type: object
             properties:
                 isComplete:
+                    example: true
                     type: boolean
                     description: True once every rule has either completed or been
                         skipped.
                 overallSuccess:
+                    example: true
                     type: boolean
                     description: Whether every finding recorded so far is below a
                         blocking severity. Unset until the first rule result arrives.
                 worstSeverity:
+                    example: WARNING
                     enum:
                       - SEVERITY_UNSPECIFIED
                       - CRITICAL
@@ -223,27 +231,41 @@ components:
                         so far. Unset until a finding has been recorded.
                     format: enum
                 totalRules:
+                    example: 42
                     type: integer
                     description: The rule counts from the most recently received progress.
                     format: int32
                 completedRules:
+                    example: 42
                     type: integer
                     description: The number of completed rules.
                     format: int32
                 skippedRules:
+                    example: 0
                     type: integer
                     description: The number of skipped rules.
                     format: int32
                 firstProgressReceivedAt:
+                    example: '2026-01-01T00:00:00Z'
                     type: string
                     description: When the first progress was received.
                     format: date-time
                 lastProgressReceivedAt:
+                    example: '2026-01-01T00:05:00Z'
                     type: string
                     description: When the most recent progress was received.
                     format: date-time
             description: 'Progress statistics for a validation scope: either one stage
                 of a job or a job as a whole.'
+            example:
+                isComplete: true
+                overallSuccess: true
+                worstSeverity: WARNING
+                totalRules: 42
+                completedRules: 42
+                skippedRules: 0
+                firstProgressReceivedAt: '2026-01-01T00:00:00Z'
+                lastProgressReceivedAt: '2026-01-01T00:05:00Z'
         ListResultsResponse:
             type: object
             properties:
@@ -290,6 +312,28 @@ components:
                          when there are no more results.
             description: Response for ListValidationJobs.
             example:
+                items:
+                  - validationJobUuid: b6e43c3a-2e3e-4c5a-8f1a-2f6a6e1c9d3b
+                    statistics:
+                        isComplete: true
+                        overallSuccess: true
+                        worstSeverity: WARNING
+                        totalRules: 42
+                        completedRules: 42
+                        skippedRules: 0
+                        firstProgressReceivedAt: '2026-01-01T00:00:00Z'
+                        lastProgressReceivedAt: '2026-01-01T00:05:00Z'
+                    stages:
+                      - stage: STRUCTURAL
+                        statistics:
+                            isComplete: true
+                            overallSuccess: true
+                            worstSeverity: WARNING
+                            totalRules: 42
+                            completedRules: 42
+                            skippedRules: 0
+                            firstProgressReceivedAt: '2026-01-01T00:00:00Z'
+                            lastProgressReceivedAt: '2026-01-01T00:05:00Z'
                 cursor: eyJpZCI6NjJ9
         Location:
             type: object
@@ -451,6 +495,7 @@ components:
             type: object
             properties:
                 stage:
+                    example: STRUCTURAL
                     enum:
                       - VALIDATION_STAGE_UNSPECIFIED
                       - STRUCTURAL
@@ -471,10 +516,22 @@ components:
                         Dataset-wide findings raised during this stage, with no particular rule to attribute them
                          to.
             description: One stage's own progress within a validation job.
+            example:
+                stage: STRUCTURAL
+                statistics:
+                    isComplete: true
+                    overallSuccess: true
+                    worstSeverity: WARNING
+                    totalRules: 42
+                    completedRules: 42
+                    skippedRules: 0
+                    firstProgressReceivedAt: '2026-01-01T00:00:00Z'
+                    lastProgressReceivedAt: '2026-01-01T00:05:00Z'
         ValidationJob:
             type: object
             properties:
                 validationJobUuid:
+                    example: b6e43c3a-2e3e-4c5a-8f1a-2f6a6e1c9d3b
                     type: string
                     description: The unique id of this job.
                 statistics:
@@ -490,6 +547,28 @@ components:
             description: |-
                 A single validation job: the aggregated outcome of validating every stage of one delivery,
                  built up from the ValidationProgress messages received for it so far.
+            example:
+                validationJobUuid: b6e43c3a-2e3e-4c5a-8f1a-2f6a6e1c9d3b
+                statistics:
+                    isComplete: true
+                    overallSuccess: true
+                    worstSeverity: WARNING
+                    totalRules: 42
+                    completedRules: 42
+                    skippedRules: 0
+                    firstProgressReceivedAt: '2026-01-01T00:00:00Z'
+                    lastProgressReceivedAt: '2026-01-01T00:05:00Z'
+                stages:
+                  - stage: STRUCTURAL
+                    statistics:
+                        isComplete: true
+                        overallSuccess: true
+                        worstSeverity: WARNING
+                        totalRules: 42
+                        completedRules: 42
+                        skippedRules: 0
+                        firstProgressReceivedAt: '2026-01-01T00:00:00Z'
+                        lastProgressReceivedAt: '2026-01-01T00:05:00Z'
         ValidationRule:
             required:
               - area

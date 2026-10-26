@@ -1,0 +1,25 @@
+syntax = "proto3";
+
+package entur.zagar.v1;
+
+import "gnostic/openapi/v3/annotations.proto";
+
+option go_package = "github.com/entur/validation-core/gen/entur/zagar/v1;zagarv1";
+option java_multiple_files = true;
+option java_package = "no.entur.zagar.proto.v1";
+option (gnostic.openapi.v3.document) = {
+  info: {
+    specification_extension: [
+      {
+        name: "x-entur-metadata"
+        value: {yaml: "id: zagar\naudience: internal\nowner: team-validering"}
+      }
+    ]
+    specification_extension: [
+      {
+        name: "x-stability-level"
+        value: {yaml: "draft"}
+      }
+    ]
+  }
+};

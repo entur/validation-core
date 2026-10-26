@@ -4,6 +4,7 @@ package entur.validation.v1;
 
 import "entur/validation/v1/enum.proto";
 import "entur/validation/v1/validation_progress.proto";
+import "gnostic/openapi/v3/annotations.proto";
 import "google/protobuf/timestamp.proto";
 
 option go_package = "github.com/entur/validation-core/gen/entur/validation/v1;validationv1";
@@ -14,7 +15,9 @@ option java_package = "no.entur.validation.proto.v1";
 // built up from the ValidationProgress messages received for it so far.
 message ValidationJob {
   // The unique id of this job.
-  string validation_job_uuid = 1;
+  string validation_job_uuid = 1 [(gnostic.openapi.v3.property) = {
+    example: {yaml: "\"b6e43c3a-2e3e-4c5a-8f1a-2f6a6e1c9d3b\""}
+  }];
   // Statistics aggregated across every stage of this job.
   JobStatistics statistics = 2;
   // This job's own progress, one entry per stage.
@@ -24,7 +27,9 @@ message ValidationJob {
 // One stage's own progress within a validation job.
 message StageProgress {
   // The stage this progress applies to.
-  ValidationStage stage = 1;
+  ValidationStage stage = 1 [(gnostic.openapi.v3.property) = {
+    example: {yaml: "\"STRUCTURAL\""}
+  }];
   // This stage's own statistics.
   JobStatistics statistics = 2;
   // Dataset-wide findings raised during this stage, with no particular rule to attribute them
@@ -35,19 +40,35 @@ message StageProgress {
 // Progress statistics for a validation scope: either one stage of a job or a job as a whole.
 message JobStatistics {
   // True once every rule has either completed or been skipped.
-  bool is_complete = 1;
+  bool is_complete = 1 [(gnostic.openapi.v3.property) = {
+    example: {yaml: "true"}
+  }];
   // Whether every finding recorded so far is below a blocking severity. Unset until the first rule result arrives.
-  optional bool overall_success = 2;
+  optional bool overall_success = 2 [(gnostic.openapi.v3.property) = {
+    example: {yaml: "true"}
+  }];
   // The most severe severity seen across every finding so far. Unset until a finding has been recorded.
-  optional Severity worst_severity = 3;
+  optional Severity worst_severity = 3 [(gnostic.openapi.v3.property) = {
+    example: {yaml: "\"WARNING\""}
+  }];
   // The rule counts from the most recently received progress.
-  int32 total_rules = 4;
+  int32 total_rules = 4 [(gnostic.openapi.v3.property) = {
+    example: {yaml: "42"}
+  }];
   // The number of completed rules.
-  int32 completed_rules = 5;
+  int32 completed_rules = 5 [(gnostic.openapi.v3.property) = {
+    example: {yaml: "42"}
+  }];
   // The number of skipped rules.
-  int32 skipped_rules = 6;
+  int32 skipped_rules = 6 [(gnostic.openapi.v3.property) = {
+    example: {yaml: "0"}
+  }];
   // When the first progress was received.
-  google.protobuf.Timestamp first_progress_received_at = 7;
+  google.protobuf.Timestamp first_progress_received_at = 7 [(gnostic.openapi.v3.property) = {
+    example: {yaml: "\"2026-01-01T00:00:00Z\""}
+  }];
   // When the most recent progress was received.
-  google.protobuf.Timestamp last_progress_received_at = 8;
+  google.protobuf.Timestamp last_progress_received_at = 8 [(gnostic.openapi.v3.property) = {
+    example: {yaml: "\"2026-01-01T00:05:00Z\""}
+  }];
 }
