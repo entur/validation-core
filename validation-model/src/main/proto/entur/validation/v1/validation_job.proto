@@ -10,32 +10,44 @@ option go_package = "github.com/entur/validation-core/gen/entur/validation/v1;va
 option java_multiple_files = true;
 option java_package = "no.entur.validation.proto.v1";
 
-// A single validation job: the aggregated outcome of validating one delivery's one stage, built
-// up from the ValidationProgress messages received for it so far.
+// A single validation job: the aggregated outcome of validating every stage of one delivery,
+// built up from the ValidationProgress messages received for it so far.
 message ValidationJob {
-  // The unique id of this job (ValidationDelivery.validation_job_uuid / ValidationProgress.validation_job_uuid).
+  // The unique id of this job.
   string validation_job_uuid = 1;
-  // The single stage this job validates.
-  ValidationStage stage = 2;
-  // True once every rule in this stage has either completed or been skipped.
-  bool is_complete = 3;
-  // Whether every finding recorded so far for this job is below a blocking severity
-  // (CRITICAL/ERROR). Unset until the first rule result arrives.
-  optional bool overall_success = 4;
-  // The most severe severity seen across every finding under this job so far. Unset until a
-  // finding has been recorded.
-  optional Severity worst_severity = 5;
-  // The stage's rule counts from the most recently received progress.
-  int32 total_rules = 6;
+  // Statistics aggregated across every stage of this job.
+  JobStatistics statistics = 2;
+  // This job's own progress, one entry per stage.
+  repeated StageProgress stages = 3;
+}
+
+// One stage's own progress within a validation job.
+message StageProgress {
+  // The stage this progress applies to.
+  ValidationStage stage = 1;
+  // This stage's own statistics.
+  JobStatistics statistics = 2;
+  // Dataset-wide findings raised during this stage, with no particular rule to attribute them
+  // to.
+  repeated Message findings = 3;
+}
+
+// Progress statistics for a validation scope: either one stage of a job or a job as a whole.
+message JobStatistics {
+  // True once every rule has either completed or been skipped.
+  bool is_complete = 1;
+  // Whether every finding recorded so far is below a blocking severity. Unset until the first rule result arrives.
+  optional bool overall_success = 2;
+  // The most severe severity seen across every finding so far. Unset until a finding has been recorded.
+  optional Severity worst_severity = 3;
+  // The rule counts from the most recently received progress.
+  int32 total_rules = 4;
   // The number of completed rules.
-  int32 completed_rules = 7;
+  int32 completed_rules = 5;
   // The number of skipped rules.
-  int32 skipped_rules = 8;
-  // When the first progress for this job was received.
-  google.protobuf.Timestamp first_progress_received_at = 9;
-  // When the most recent progress for this job was received.
-  google.protobuf.Timestamp last_progress_received_at = 10;
-  // Dataset-wide findings, with no particular rule to attribute them to. Expected to be few and
-  // small; a rule-attributed finding is instead found on its own RuleResult (see ListResults).
-  repeated Message findings = 11;
+  int32 skipped_rules = 6;
+  // When the first progress was received.
+  google.protobuf.Timestamp first_progress_received_at = 7;
+  // When the most recent progress was received.
+  google.protobuf.Timestamp last_progress_received_at = 8;
 }

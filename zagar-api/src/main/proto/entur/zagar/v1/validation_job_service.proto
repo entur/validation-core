@@ -3,7 +3,6 @@ syntax = "proto3";
 package entur.zagar.v1;
 
 import "entur/http/v1/failure.proto";
-import "entur/validation/v1/enum.proto";
 import "entur/validation/v1/validation_job.proto";
 import "entur/validation/v1/validation_progress.proto";
 import "gnostic/openapi/v3/annotations.proto";
@@ -37,9 +36,9 @@ service ValidationJobService {
     };
   }
 
-  // List the rule-by-rule results of a validation job. Each result carries its own
-  // rule-attributed findings; dataset-wide findings with no rule to attribute them to are on the
-  // job itself (see GetValidationJob).
+  // List the rule-by-rule results of a validation job, across every stage. Each result carries
+  // its own rule-attributed findings; dataset-wide findings with no rule to attribute them to are
+  // instead on that stage's entry in GetValidationJob's `stages`.
   //
   // The request is paginated with a default page size of 100.
   rpc ListResults(ListResultsRequest) returns (ListResultsResponse) {
@@ -64,17 +63,13 @@ message ListValidationJobsRequest {
   }];
   // A comma-separated list of fields to order by, each optionally suffixed with " desc"
   // for descending order (ascending is the default). See https://google.aip.dev/132.
-  // Defaults to "last_progress_received_at desc".
+  // Defaults to "statistics.last_progress_received_at desc".
   string order_by = 3 [(gnostic.openapi.v3.property) = {
-    example: {yaml: "\"last_progress_received_at desc\""}
+    example: {yaml: "\"statistics.last_progress_received_at desc\""}
   }];
-  // Only return jobs whose `is_complete` matches this value. Unset returns both completed and
-  // still-running jobs.
+  // Only return jobs whose overall `statistics.is_complete` matches this value. Unset returns
+  // both completed and still-running jobs.
   optional bool is_complete = 4;
-  // Only return jobs for this stage. Unset (VALIDATION_STAGE_UNSPECIFIED) returns every stage.
-  entur.validation.v1.ValidationStage stage = 5 [(gnostic.openapi.v3.property) = {
-    example: {yaml: "\"STRUCTURAL\""}
-  }];
 }
 
 // Response for ListValidationJobs.

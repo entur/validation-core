@@ -82,28 +82,16 @@ paths:
                 description: |-
                     A comma-separated list of fields to order by, each optionally suffixed with " desc"
                      for descending order (ascending is the default). See https://google.aip.dev/132.
-                     Defaults to "last_progress_received_at desc".
+                     Defaults to "statistics.last_progress_received_at desc".
                 schema:
                     type: string
               - name: isComplete
                 in: query
                 description: |-
-                    Only return jobs whose `is_complete` matches this value. Unset returns both completed and
-                     still-running jobs.
+                    Only return jobs whose overall `statistics.is_complete` matches this value. Unset returns
+                     both completed and still-running jobs.
                 schema:
                     type: boolean
-              - name: stage
-                in: query
-                description: Only return jobs for this stage. Unset (VALIDATION_STAGE_UNSPECIFIED)
-                    returns every stage.
-                schema:
-                    enum:
-                      - VALIDATION_STAGE_UNSPECIFIED
-                      - STRUCTURAL
-                      - LOCAL
-                      - GLOBAL
-                    type: string
-                    format: enum
             responses:
                 '200':
                     description: OK
@@ -144,9 +132,9 @@ paths:
               - ValidationJobService
             summary: List the rule-by-rule results of a validation job.
             description: |-
-                List the rule-by-rule results of a validation job. Each result carries its own
-                 rule-attributed findings; dataset-wide findings with no rule to attribute them to are on the
-                 job itself (see GetValidationJob).
+                List the rule-by-rule results of a validation job, across every stage. Each result carries
+                 its own rule-attributed findings; dataset-wide findings with no rule to attribute them to are
+                 instead on that stage's entry in GetValidationJob's `stages`.
 
                  The request is paginated with a default page size of 100.
             operationId: ValidationJobService_ListResults
@@ -212,6 +200,50 @@ components:
             example:
                 field: name
                 message: must not be blank
+        JobStatistics:
+            type: object
+            properties:
+                isComplete:
+                    type: boolean
+                    description: True once every rule has either completed or been
+                        skipped.
+                overallSuccess:
+                    type: boolean
+                    description: Whether every finding recorded so far is below a
+                        blocking severity. Unset until the first rule result arrives.
+                worstSeverity:
+                    enum:
+                      - SEVERITY_UNSPECIFIED
+                      - CRITICAL
+                      - ERROR
+                      - WARNING
+                      - INFO
+                    type: string
+                    description: The most severe severity seen across every finding
+                        so far. Unset until a finding has been recorded.
+                    format: enum
+                totalRules:
+                    type: integer
+                    description: The rule counts from the most recently received progress.
+                    format: int32
+                completedRules:
+                    type: integer
+                    description: The number of completed rules.
+                    format: int32
+                skippedRules:
+                    type: integer
+                    description: The number of skipped rules.
+                    format: int32
+                firstProgressReceivedAt:
+                    type: string
+                    description: When the first progress was received.
+                    format: date-time
+                lastProgressReceivedAt:
+                    type: string
+                    description: When the most recent progress was received.
+                    format: date-time
+            description: 'Progress statistics for a validation scope: either one stage
+                of a job or a job as a whole.'
         ListResultsResponse:
             type: object
             properties:
@@ -415,13 +447,9 @@ components:
                 sqlExpression: SELECT e.full_id FROM entities e WHERE e.entity_type='ServiceJourney'
                     AND e.wrapper_path='vehicleJourneys';
                 cardinality: EXACTLY_ONE
-        ValidationJob:
+        StageProgress:
             type: object
             properties:
-                validationJobUuid:
-                    type: string
-                    description: The unique id of this job (ValidationDelivery.validation_job_uuid
-                        / ValidationProgress.validation_job_uuid).
                 stage:
                     enum:
                       - VALIDATION_STAGE_UNSPECIFIED
@@ -429,60 +457,39 @@ components:
                       - LOCAL
                       - GLOBAL
                     type: string
-                    description: The single stage this job validates.
+                    description: The stage this progress applies to.
                     format: enum
-                isComplete:
-                    type: boolean
-                    description: True once every rule in this stage has either completed
-                        or been skipped.
-                overallSuccess:
-                    type: boolean
-                    description: |-
-                        Whether every finding recorded so far for this job is below a blocking severity
-                         (CRITICAL/ERROR). Unset until the first rule result arrives.
-                worstSeverity:
-                    enum:
-                      - SEVERITY_UNSPECIFIED
-                      - CRITICAL
-                      - ERROR
-                      - WARNING
-                      - INFO
-                    type: string
-                    description: |-
-                        The most severe severity seen across every finding under this job so far. Unset until a
-                         finding has been recorded.
-                    format: enum
-                totalRules:
-                    type: integer
-                    description: The stage's rule counts from the most recently received
-                        progress.
-                    format: int32
-                completedRules:
-                    type: integer
-                    description: The number of completed rules.
-                    format: int32
-                skippedRules:
-                    type: integer
-                    description: The number of skipped rules.
-                    format: int32
-                firstProgressReceivedAt:
-                    type: string
-                    description: When the first progress for this job was received.
-                    format: date-time
-                lastProgressReceivedAt:
-                    type: string
-                    description: When the most recent progress for this job was received.
-                    format: date-time
+                statistics:
+                    allOf:
+                      - $ref: '#/components/schemas/JobStatistics'
+                    description: This stage's own statistics.
                 findings:
                     type: array
                     items:
                         $ref: '#/components/schemas/Message'
                     description: |-
-                        Dataset-wide findings, with no particular rule to attribute them to. Expected to be few and
-                         small; a rule-attributed finding is instead found on its own RuleResult (see ListResults).
+                        Dataset-wide findings raised during this stage, with no particular rule to attribute them
+                         to.
+            description: One stage's own progress within a validation job.
+        ValidationJob:
+            type: object
+            properties:
+                validationJobUuid:
+                    type: string
+                    description: The unique id of this job.
+                statistics:
+                    allOf:
+                      - $ref: '#/components/schemas/JobStatistics'
+                    description: Statistics aggregated across every stage of this
+                        job.
+                stages:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/StageProgress'
+                    description: This job's own progress, one entry per stage.
             description: |-
-                A single validation job: the aggregated outcome of validating one delivery's one stage, built
-                 up from the ValidationProgress messages received for it so far.
+                A single validation job: the aggregated outcome of validating every stage of one delivery,
+                 built up from the ValidationProgress messages received for it so far.
         ValidationRule:
             required:
               - area
