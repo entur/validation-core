@@ -13,7 +13,9 @@ data class OneofVariant(
 )
 
 /**
- * Generic persistence for a proto message's `oneof` field.
+ * Generic persistence for a proto message's `oneof` field - every variant must itself be a
+ * message (not a scalar), since a variant's contents are serialized via [JsonFormat], which only
+ * prints/parses whole messages.
  */
 object OneofSerialization {
     private val printer: JsonFormat.Printer = JsonFormat.printer().preservingProtoFieldNames()
@@ -27,6 +29,7 @@ object OneofSerialization {
         val field =
             message.getOneofFieldDescriptor(oneofDescriptor(message.descriptorForType, oneofName))
                 ?: error("${message.descriptorForType.fullName} has no field set for oneof '$oneofName'")
+        requireMessageTyped(field, message.descriptorForType)
         val variantMessage = message.getField(field) as Message
         return OneofVariant(field.name, printer.print(variantMessage))
     }
@@ -42,9 +45,18 @@ object OneofSerialization {
                 ?: error(
                     "Unknown rule kind '${variant.kind}' for oneof '$oneofName' on ${builder.descriptorForType.fullName}.",
                 )
+        requireMessageTyped(field, builder.descriptorForType)
         val fieldBuilder = builder.newBuilderForField(field)
         parser.merge(variant.json, fieldBuilder)
         builder.setField(field, fieldBuilder.build())
+    }
+
+    private fun requireMessageTyped(
+        field: Descriptors.FieldDescriptor,
+        descriptor: Descriptors.Descriptor,
+    ) = check(field.javaType == Descriptors.FieldDescriptor.JavaType.MESSAGE) {
+        "${descriptor.fullName}'s '${field.name}' oneof variant is ${field.javaType}, not a message - " +
+            "OneofSerialization only supports message-valued oneofs"
     }
 
     private fun oneofDescriptor(

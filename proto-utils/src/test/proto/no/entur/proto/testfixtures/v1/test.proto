@@ -67,3 +67,12 @@ message Annotated {
     }];
   }
 }
+
+// A oneof with one message-valued and one scalar-valued variant - OneofSerializationTest's
+// rejection case, since OneofSerialization only supports message-valued oneofs.
+message OneofWithScalar {
+  oneof value {
+    Note message_value = 1;
+    string text_value = 2;
+  }
+}

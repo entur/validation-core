@@ -1,5 +1,8 @@
 package no.entur.proto.oneof
 
+import no.entur.proto.testfixtures.v1.OneofWithScalar
+import no.entur.proto.testfixtures.v1.note
+import no.entur.proto.testfixtures.v1.oneofWithScalar
 import no.entur.validation.proto.v1.Cardinality
 import no.entur.validation.proto.v1.Severity
 import no.entur.validation.proto.v1.ValidationRule
@@ -113,5 +116,35 @@ class OneofSerializationTest {
 
         val exception = assertThrows<IllegalStateException> { OneofSerialization.deserialize(builder, "rule", variant) }
         assertTrue(exception.message!!.contains("Unknown rule kind 'some_future_rule'"))
+    }
+
+    @Test
+    fun `serialize rejects a scalar-valued oneof variant`() {
+        val withScalar = oneofWithScalar { textValue = "x" }
+
+        val exception = assertThrows<IllegalStateException> { OneofSerialization.serialize(withScalar, "value") }
+        assertTrue(exception.message!!.contains("'text_value' oneof variant is STRING, not a message"))
+    }
+
+    @Test
+    fun `deserialize rejects a scalar-valued oneof variant`() {
+        val builder = OneofWithScalar.newBuilder()
+        val variant = OneofVariant("text_value", "\"x\"")
+
+        val exception = assertThrows<IllegalStateException> { OneofSerialization.deserialize(builder, "value", variant) }
+        assertTrue(exception.message!!.contains("'text_value' oneof variant is STRING, not a message"))
+    }
+
+    @Test
+    fun `serialize then deserialize still round-trips the message-valued variant of a mixed oneof`() {
+        val withScalar = oneofWithScalar { messageValue = note { message = "m" } }
+
+        val variant = OneofSerialization.serialize(withScalar, "value")
+        assertEquals("message_value", variant.kind)
+
+        val builder = OneofWithScalar.newBuilder()
+        OneofSerialization.deserialize(builder, "value", variant)
+
+        assertEquals(withScalar.messageValue, builder.build().messageValue)
     }
 }
