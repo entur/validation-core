@@ -28,7 +28,7 @@ service ValidationJobService {
 
   // Get one validation job by its id.
   rpc GetValidationJob(GetValidationJobRequest) returns (entur.validation.v1.ValidationJob) {
-    option (google.api.http) = {get: "/validation/v1/jobs/{validation_job_uuid}"};
+    option (google.api.http) = {get: "/validation/v1/jobs/{validation_job}"};
     option (gnostic.openapi.v3.operation) = {summary: "Get one validation job by its id."};
     option (entur.http.v1.failure) = {
       code: "404"
@@ -42,7 +42,7 @@ service ValidationJobService {
   //
   // The request is paginated with a default page size of 100.
   rpc ListResults(ListResultsRequest) returns (ListResultsResponse) {
-    option (google.api.http) = {get: "/validation/v1/jobs/{validation_job_uuid}/results"};
+    option (google.api.http) = {get: "/validation/v1/jobs/{validation_job}/results"};
     option (gnostic.openapi.v3.operation) = {summary: "List the rule-by-rule results of a validation job."};
     option (entur.http.v1.failure) = {
       code: "404"
@@ -86,7 +86,7 @@ message ListValidationJobsResponse {
 // Request for GetValidationJob.
 message GetValidationJobRequest {
   // The id of the validation job to look up.
-  string validation_job_uuid = 1 [
+  string validation_job = 1 [
     (google.api.field_behavior) = REQUIRED,
     (gnostic.openapi.v3.property) = {
       example: {yaml: "\"b6e43c3a-2e3e-4c5a-8f1a-2f6a6e1c9d3b\""}
@@ -97,7 +97,7 @@ message GetValidationJobRequest {
 // Request for ListResults.
 message ListResultsRequest {
   // The id of the validation job to list results for.
-  string validation_job_uuid = 1 [
+  string validation_job = 1 [
     (google.api.field_behavior) = REQUIRED,
     (gnostic.openapi.v3.property) = {
       example: {yaml: "\"b6e43c3a-2e3e-4c5a-8f1a-2f6a6e1c9d3b\""}

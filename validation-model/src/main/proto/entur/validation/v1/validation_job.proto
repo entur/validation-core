@@ -15,7 +15,7 @@ option java_package = "no.entur.validation.proto.v1";
 // built up from the ValidationProgress messages received for it so far.
 message ValidationJob {
   // The unique id of this job.
-  string validation_job_uuid = 1 [(gnostic.openapi.v3.property) = {
+  string validation_job = 1 [(gnostic.openapi.v3.property) = {
     example: {yaml: "\"b6e43c3a-2e3e-4c5a-8f1a-2f6a6e1c9d3b\""}
   }];
   // Statistics aggregated across every stage of this job.

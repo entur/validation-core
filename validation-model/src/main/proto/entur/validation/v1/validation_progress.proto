@@ -13,7 +13,7 @@ option java_package = "no.entur.validation.proto.v1";
 // The outcome of running some validation rules in a stage against a delivery.
 message ValidationProgress {
   // The unique id of the validation job this progress belongs to.
-  string validation_job_uuid = 1;
+  string validation_job = 1;
   // The validation stage this progress applies to.
   ValidationStage stage = 2;
   // An overview of the current progress of this stage.

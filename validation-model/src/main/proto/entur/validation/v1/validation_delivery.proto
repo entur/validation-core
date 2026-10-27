@@ -14,7 +14,7 @@ option java_package = "no.entur.validation.proto.v1";
 message ValidationDelivery {
   // The id of the validation job this delivery belongs to. Used in the delivery's URL, so it must be a
   // valid URL path segment.
-  string validation_job_uuid = 1;
+  string validation_job = 1;
 
   // The payload type, e.g. "rutedata" or "produktdata".
   string payload_type = 2;

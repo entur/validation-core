@@ -104,7 +104,7 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/ListValidationJobsResponse'
-    /validation/v1/jobs/{validationJobUuid}:
+    /validation/v1/jobs/{validationJob}:
         get:
             tags:
               - ValidationJobService
@@ -112,7 +112,7 @@ paths:
             description: Get one validation job by its id.
             operationId: ValidationJobService_GetValidationJob
             parameters:
-              - name: validationJobUuid
+              - name: validationJob
                 in: path
                 description: The id of the validation job to look up.
                 required: true
@@ -131,7 +131,7 @@ paths:
                         application/problem+json:
                             schema:
                                 $ref: '#/components/schemas/ProblemDetail'
-    /validation/v1/jobs/{validationJobUuid}/results:
+    /validation/v1/jobs/{validationJob}/results:
         get:
             tags:
               - ValidationJobService
@@ -144,7 +144,7 @@ paths:
                  The request is paginated with a default page size of 100.
             operationId: ValidationJobService_ListResults
             parameters:
-              - name: validationJobUuid
+              - name: validationJob
                 in: path
                 description: The id of the validation job to list results for.
                 required: true
@@ -313,7 +313,7 @@ components:
             description: Response for ListValidationJobs.
             example:
                 items:
-                  - validationJobUuid: b6e43c3a-2e3e-4c5a-8f1a-2f6a6e1c9d3b
+                  - validationJob: b6e43c3a-2e3e-4c5a-8f1a-2f6a6e1c9d3b
                     statistics:
                         isComplete: true
                         overallSuccess: true
@@ -530,7 +530,7 @@ components:
         ValidationJob:
             type: object
             properties:
-                validationJobUuid:
+                validationJob:
                     example: b6e43c3a-2e3e-4c5a-8f1a-2f6a6e1c9d3b
                     type: string
                     description: The unique id of this job.
@@ -548,7 +548,7 @@ components:
                 A single validation job: the aggregated outcome of validating every stage of one delivery,
                  built up from the ValidationProgress messages received for it so far.
             example:
-                validationJobUuid: b6e43c3a-2e3e-4c5a-8f1a-2f6a6e1c9d3b
+                validationJob: b6e43c3a-2e3e-4c5a-8f1a-2f6a6e1c9d3b
                 statistics:
                     isComplete: true
                     overallSuccess: true
