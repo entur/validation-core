@@ -28,9 +28,6 @@ dependencies {
 
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
-    // OneofSerializationTest round-trips real generated types (ValidationRule's `rule` oneof)
-    // rather than a synthetic fixture - the schema this code exists to serialize.
-    testImplementation(project(":validation-model"))
 }
 
 // This module has no src/main/proto - only a test-fixtures .proto (used by DescriptorCacheTest &
