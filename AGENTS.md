@@ -1,17 +1,20 @@
 # validation-core
 
-Shared protobuf schema for Entur's validation platform, published as Java/Kotlin libraries. Six
+Shared protobuf schema for Entur's validation platform, published as Java/Kotlin libraries. Seven
 Gradle modules - `http-model` (the shared `entur.http.v1` `Failure`/`ProblemDetail` types),
 `validation-model` (the `entur.validation.v1` domain messages), `kittum-api` (Kittum's
 `entur.kittum.v1` service definitions), `zagar-api` (Zagar's `entur.zagar.v1` service
 definitions), `proto-utils` (hand-written, domain-agnostic proto/HTTP plumbing built on the other
-three), and `exposed-utils` (JetBrains Exposed-specific persistence support - ETag concurrency,
-cursor paging - built on `proto-utils`) - see "Non-schema modules" below
+three), `exposed-utils` (JetBrains Exposed-specific persistence support - ETag concurrency,
+cursor paging - built on `proto-utils`), and `api-utils` (hand-written Spring WebFlux/Security
+support - OpenAPI spec serving, content negotiation, audience-validation and method-security
+configuration) - see "Non-schema modules" below
 
 - each published as its own Maven artifact.
 
-This repository is schema and generated code plus, in `proto-utils` and `exposed-utils`, hand-written
-support code built on top of it - see "Non-schema modules" in `README.md`. There is no application
+This repository is schema and generated code plus, in `proto-utils`, `exposed-utils` and
+`api-utils`, hand-written support code built on top of it - see "Non-schema modules" in
+`README.md`. There is no application
 implementation, no database, no Dockerfile, and nothing deployable (`exposed-utils`'s Postgres-backed
 tests run against a throwaway Testcontainers instance, not a real database). The parts of the golden
 path that assume a running service - Helm, Terraform, `compose.yaml`, `.entur/` self-service
@@ -27,7 +30,8 @@ https://github.com/entur/ai/blob/main/AGENTS.md
 - Owning team: `team-validering`
 - Artifacts: `no.entur.validation:http-model`, `no.entur.validation:validation-model`,
   `no.entur.validation:kittum-api`, `no.entur.validation:zagar-api`,
-  `no.entur.validation:proto-utils`, `no.entur.validation:exposed-utils`
+  `no.entur.validation:proto-utils`, `no.entur.validation:exposed-utils`,
+  `no.entur.validation:api-utils`
 - Published to Entur's JFrog Artifactory (`entur-release-standard`) via `entur/gha-artifactory`.
   Publishing is manual and tag-triggered: pushing a `v<major>.<minor>.<patch>` tag runs CD, which
   publishes that exact version. Merging to `main` does not publish by itself. See "Versioning and

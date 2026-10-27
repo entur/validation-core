@@ -9,4 +9,4 @@ plugins {
 
 rootProject.name = "validation-core"
 
-include("http-model", "validation-model", "kittum-api", "zagar-api", "proto-utils", "exposed-utils")
+include("http-model", "validation-model", "kittum-api", "zagar-api", "proto-utils", "exposed-utils", "api-utils")

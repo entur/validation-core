@@ -10,6 +10,9 @@ exposed = "1.5.1"
 kotlinxCoroutines = "1.11.0"
 ktlintPlugin = "14.2.0"
 ktlint = "1.8.0"
+# Only api-utils needs this - AudienceValidationGuard's constructor takes its EnturAuthProperties
+# directly. Kept aligned with zagar/kittum's own catalogs, its two consumers.
+oidcAuthResourceServer = "3.0.5"
 
 [libraries]
 protobuf-java = { group = "com.google.protobuf", name = "protobuf-java", version.ref = "protobuf" }
@@ -26,6 +29,7 @@ exposed-r2dbc = { module = "org.jetbrains.exposed:exposed-r2dbc" }
 exposed-java-time = { module = "org.jetbrains.exposed:exposed-java-time" }
 kotlinx-coroutines-bom = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-bom", version.ref = "kotlinxCoroutines" }
 kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "kotlinxCoroutines" }
+entur-oidc-rs-webflux-config = { module = "org.entur.auth.resource-server:oidc-rs-spring-boot-webflux-config", version.ref = "oidcAuthResourceServer" }
 
 [bundles]
 protobuf = ["protobuf-java", "protobuf-kotlin", "protobuf-java-util", "proto-google-common-protos"]

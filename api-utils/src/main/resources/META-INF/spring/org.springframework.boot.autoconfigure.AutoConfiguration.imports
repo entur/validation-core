@@ -1,0 +1,3 @@
+no.entur.api.openapi.OpenApiController
+no.entur.api.security.AudienceValidationGuard
+no.entur.api.security.MethodSecurityConfig
