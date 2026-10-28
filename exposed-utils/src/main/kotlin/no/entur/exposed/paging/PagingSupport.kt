@@ -62,6 +62,34 @@ object PagingSupport {
         sort: List<SortField>,
         after: Map<String, Any?>,
     ): Op<Boolean> {
+        val (disjunction, _) = foldKeyset(sortableProperties, sort, after)
+        return requireNotNull(disjunction) { "sort must not be empty" }
+    }
+
+    /**
+     * [keysetCondition] for a resource whose id can't itself be a [SortableProperty] at all -
+     * the same disjunction-of-conjunctions shape, with one more key appended at the very end:
+     * a hand-supplied [idColumn] tie-break, always ascending, standing in for the [SortableProperties.ids]
+     * tie-break [sortableProperties] can't carry.
+     */
+    fun <T : Message, ID : Comparable<ID>> keysetCondition(
+        sortableProperties: SortableProperties<T>,
+        sort: List<SortField>,
+        after: Map<String, Any?>,
+        idColumn: Column<EntityID<ID>>,
+        idAfter: ID,
+    ): Op<Boolean> {
+        val (disjunction, equalitiesSoFar) = foldKeyset(sortableProperties, sort, after)
+        val idClause = (equalitiesSoFar + (idColumn greater idAfter)).reduce { a, b -> a and b }
+        return disjunction?.let { it or idClause } ?: idClause
+    }
+
+    /** The shared fold behind both [keysetCondition] overloads. */
+    private fun <T : Message> foldKeyset(
+        sortableProperties: SortableProperties<T>,
+        sort: List<SortField>,
+        after: Map<String, Any?>,
+    ): Pair<Op<Boolean>?, List<Op<Boolean>>> {
         var disjunction: Op<Boolean>? = null
         val equalitiesSoFar = mutableListOf<Op<Boolean>>()
         for (field in sort) {
@@ -79,7 +107,7 @@ object PagingSupport {
             disjunction = disjunction?.let { it or clause } ?: clause
             equalitiesSoFar += property.equalCondition(value)
         }
-        return requireNotNull(disjunction) { "sort must not be empty" }
+        return disjunction to equalitiesSoFar
     }
 
     /**
@@ -95,10 +123,29 @@ object PagingSupport {
         objectMapper: ObjectMapper,
     ): String? {
         if (!page.hasNext) return null
-        val last = page.content.last()
-        val values = page.sort.map { sortableProperties.byName(it.property).valueOf(last)?.toString() }
-        return Base64.getUrlEncoder().withoutPadding().encodeToString(objectMapper.writeValueAsBytes(values))
+        val values = page.sort.map { sortableProperties.byName(it.property).valueOf(page.content.last())?.toString() }
+        return encodeCursor(values, objectMapper)
     }
+
+    /**
+     * [nextCursor] for the [keysetCondition] overload's case: the same per-field values, plus [id] -
+     * the hand-supplied tie-break column's own value for the last row - appended at the end.
+     */
+    fun <T : Message> nextCursor(
+        sortableProperties: SortableProperties<T>,
+        page: Page<T>,
+        id: String,
+        objectMapper: ObjectMapper,
+    ): String? {
+        if (!page.hasNext) return null
+        val values = page.sort.map { sortableProperties.byName(it.property).valueOf(page.content.last())?.toString() } + id
+        return encodeCursor(values, objectMapper)
+    }
+
+    private fun encodeCursor(
+        values: List<String?>,
+        objectMapper: ObjectMapper,
+    ): String = Base64.getUrlEncoder().withoutPadding().encodeToString(objectMapper.writeValueAsBytes(values))
 
     /**
      * Decodes an opaque cursor back into the keyset it was minted from, zipping its positional
@@ -118,84 +165,53 @@ object PagingSupport {
         sort: List<SortField>,
         objectMapper: ObjectMapper,
     ): Map<String, Any?>? {
-        if (cursor == null) return null
-        return try {
-            val raw: List<String?> =
-                objectMapper.readValue(
-                    Base64.getUrlDecoder().decode(cursor),
-                    object : TypeReference<List<String?>>() {},
-                )
-            require(raw.size == sort.size) { "Invalid cursor" }
-            sort.zip(raw).associate { (field, value) ->
-                field.property to sortableProperties.byName(field.property).decode(value)
-            }
-        } catch (e: Exception) {
-            throw IllegalArgumentException("Invalid cursor", e)
-        }
+        val raw = decodeRawCursor(cursor, objectMapper) ?: return null
+        require(raw.size == sort.size) { "Invalid cursor" }
+        return decodePrimaryValues(sortableProperties, sort, raw)
     }
 
     /**
-     * [parseOrderBy] for a resource whose id can't itself be a [SortableProperty] - just the one named field, or
-     * [default]. The caller mints its own id tie-break by hand instead - see [singleFieldKeysetCondition].
+     * [decodeCursor] for the [keysetCondition] overload's case: the same per-field values, plus
+     * [parseId] applied to the one extra value [nextCursor]'s own overload appended for the
+     * hand-supplied tie-break column.
      */
-    fun <T : Message> parseSingleFieldOrder(
-        orderBy: String?,
+    fun <T : Message, I> decodeCursor(
         sortableProperties: SortableProperties<T>,
-        default: SortField,
-    ): SortField {
-        val trimmed = orderBy?.trim().orEmpty()
-        if (trimmed.isEmpty()) return default
-        val descending = trimmed.endsWith(" desc")
-        val name = if (descending) trimmed.removeSuffix(" desc") else trimmed
-        require(name in sortableProperties) { "Unsupported order_by field: $orderBy" }
-        return SortField(name, ascending = !descending)
-    }
-
-    /**
-     * [keysetCondition] for the [parseSingleFieldOrder] case: one [SortableProperty] field plus a
-     * hand-supplied [idColumn] tie-break, the same disjunction-of-conjunctions shape as
-     * [keysetCondition]'s general case, unrolled for exactly those two keys. [primaryAfter] is only
-     * ever null for a nullable property (see [SortableNullableProperty.create]).
-     */
-    fun <ID : Comparable<ID>> singleFieldKeysetCondition(
-        property: SortableProperty<*>,
-        sort: SortField,
-        primaryAfter: Any?,
-        idColumn: Column<EntityID<ID>>,
-        idAfter: ID,
-    ): Op<Boolean> {
-        val primaryClause = if (sort.ascending) property.greaterCondition(primaryAfter) else property.lessCondition(primaryAfter)
-        val tieBreakClause = property.equalCondition(primaryAfter) and (idColumn greater idAfter)
-        return primaryClause or tieBreakClause
-    }
-
-    /**
-     * [nextCursor] for the [parseSingleFieldOrder] case: mints an opaque cursor from [primary] (the
-     * sort field's own already-[SortableProperty.valueOf]'d, `toString()`'d value - null only for a
-     * nullable property whose value was absent) and [id] (the hand-supplied tie-break column's value).
-     */
-    fun encodeSingleFieldCursor(
-        primary: String?,
-        id: String,
-        objectMapper: ObjectMapper,
-    ): String = Base64.getUrlEncoder().withoutPadding().encodeToString(objectMapper.writeValueAsBytes(listOf(primary, id)))
-
-    /**
-     * The inverse of [encodeSingleFieldCursor] - same "any decode failure is equally not a valid
-     * cursor" policy as [decodeCursor]. [parsePrimary] is typically [SortableProperty.decode] itself.
-     */
-    fun <P, I> decodeSingleFieldCursor(
         cursor: String?,
-        parsePrimary: (String?) -> P,
+        sort: List<SortField>,
         parseId: (String) -> I,
         objectMapper: ObjectMapper,
-    ): Pair<P, I>? {
+    ): Pair<Map<String, Any?>, I>? {
+        val raw = decodeRawCursor(cursor, objectMapper) ?: return null
+        require(raw.size == sort.size + 1) { "Invalid cursor" }
+        val primary = decodePrimaryValues(sortableProperties, sort, raw.dropLast(1))
+        return primary to parseId(requireNotNull(raw.last()) { "Invalid cursor" })
+    }
+
+    private fun <T : Message> decodePrimaryValues(
+        sortableProperties: SortableProperties<T>,
+        sort: List<SortField>,
+        raw: List<String?>,
+    ): Map<String, Any?> =
+        sort.zip(raw).associate { (field, value) ->
+            field.property to sortableProperties.byName(field.property).decode(value)
+        }
+
+    /**
+     * Decodes an opaque cursor back into its raw positional string values, or null for a null
+     * [cursor] - shared by both [decodeCursor] overloads, which each then zip these against their
+     * own, differently-shaped keyset (see their own KDoc). A cursor is client-supplied and opaque,
+     * so any failure to decode it - bad Base64, malformed JSON, a value that doesn't parse as its
+     * property's type - is equally "not a valid cursor" and reported the same way; a value-count
+     * mismatch is each caller's own responsibility to check, since only it knows the expected count.
+     */
+    private fun decodeRawCursor(
+        cursor: String?,
+        objectMapper: ObjectMapper,
+    ): List<String?>? {
         if (cursor == null) return null
         return try {
-            val raw: List<String?> =
-                objectMapper.readValue(Base64.getUrlDecoder().decode(cursor), object : TypeReference<List<String?>>() {})
-            require(raw.size == 2) { "Invalid cursor" }
-            parsePrimary(raw[0]) to parseId(requireNotNull(raw[1]))
+            objectMapper.readValue(Base64.getUrlDecoder().decode(cursor), object : TypeReference<List<String?>>() {})
         } catch (e: Exception) {
             throw IllegalArgumentException("Invalid cursor", e)
         }

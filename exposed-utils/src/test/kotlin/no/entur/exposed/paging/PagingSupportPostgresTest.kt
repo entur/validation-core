@@ -79,14 +79,17 @@ internal class PagingSupportPostgresTest {
 
     /**
      * No `.id(...)` call at all - stands in for a resource whose id genuinely can't be a
-     * [SortableProperty] (e.g. `RuleResult`, which has no id field of its own in its proto at all),
-     * covering [PagingSupport.parseSingleFieldOrder]/[PagingSupport.singleFieldKeysetCondition]
-     * against a real DB, same as [WIDGET_SORTABLE_PROPERTIES] does for the general multi-field case.
+     * [SortableProperty] (e.g. `RuleResult`, which has no id field of its own in its proto at all).
+     * `status`/`name` cover the same multi-field keyset shape [WIDGET_SORTABLE_PROPERTIES] does -
+     * only without an id property of its own to auto-append as the tie-break - covering
+     * [PagingSupport.keysetCondition]'s/[PagingSupport.nextCursor]'s/[PagingSupport.decodeCursor]'s
+     * own hand-supplied-id-tie-break overloads against a real DB.
      */
-    private val widgetSingleFieldProperties: SortableProperties<Widget> =
+    private val widgetNoIdProperties: SortableProperties<Widget> =
         SortableProperties
             .builder<Widget>(Widget.getDescriptor())
             .field("status", WidgetTable.status)
+            .field("name", WidgetTable.name)
             .build()
 
     /**
@@ -309,65 +312,57 @@ internal class PagingSupportPostgresTest {
         }
 
     @Test
-    fun `single-field keyset-scrolling, with a hand-supplied id tie-break, visits every row exactly once, in id order within a tie`() =
+    fun `keyset-scrolling two fields with a hand-supplied id tie-break visits every row exactly once, in id order within a tie`() =
         runTest {
             seed()
-            val sort = PagingSupport.parseSingleFieldOrder("status desc", widgetSingleFieldProperties, SortField("status"))
-            val property = widgetSingleFieldProperties.byName(sort.property)
+            val sort = PagingSupport.parseOrderBy("status desc, name", widgetNoIdProperties)
 
             val visited = mutableListOf<Long>()
             var cursor: String? = null
             do {
-                val after = PagingSupport.decodeSingleFieldCursor(cursor, property::decode, parseId = { it.toLong() }, OBJECT_MAPPER)
-                val page = findAllSingleField(property, sort, pageSize = 2, after = after)
-                visited += page.content.map { it.first }
+                val after = PagingSupport.decodeCursor(widgetNoIdProperties, cursor, sort, parseId = { it.toLong() }, OBJECT_MAPPER)
+                val page = findAllNoId(sort, pageSize = 2, after = after)
+                visited += page.content.map { it.id }
                 cursor =
-                    if (page.hasNext) {
-                        val (id, value) = page.content.last()
-                        PagingSupport.encodeSingleFieldCursor(value, id.toString(), OBJECT_MAPPER)
-                    } else {
-                        null
+                    page.content.lastOrNull()?.let {
+                        PagingSupport.nextCursor(widgetNoIdProperties, page, it.id.toString(), OBJECT_MAPPER)
                     }
             } while (cursor != null)
 
-            val ids = insertionOrder()
-            val expected = seeded.indices.sortedByDescending { seeded[it].second.name }.map { ids[it] }
+            // The same order_by against the full, id-including WIDGET_SORTABLE_PROPERTIES - its own
+            // id tie-break is the very same column/direction findAllNoId's hand-supplied one is, so
+            // this is the oracle for what the no-id, hand-supplied-tie-break walk above should visit.
+            val expectedOrder = PagingSupport.parseOrderBy("status desc, name", WIDGET_SORTABLE_PROPERTIES)
+            val expected = findAll(expectedOrder, pageSize = seeded.size, after = null).content.map { it.id }
             assertEquals(expected, visited)
             assertEquals(seeded.size, visited.toSet().size)
         }
 
     /**
-     * Same shape as [findAll], but via [PagingSupport.singleFieldKeysetCondition] against
-     * [widgetSingleFieldProperties] (one sortable field, no id) instead of [PagingSupport.keysetCondition]
-     * against the full, id-including [WIDGET_SORTABLE_PROPERTIES] - returns each row's own `id`
-     * alongside [property]'s own already-`toString()`'d value, since the caller (not a
-     * [SortableProperties]) owns the id tie-break here.
+     * Same shape as [findAll], but via [PagingSupport.keysetCondition]'s/[PagingSupport.nextCursor]'s
+     * hand-supplied-id-tie-break overloads against [widgetNoIdProperties] (two sortable fields, no
+     * id) instead of the ordinary ones against the full, id-including [WIDGET_SORTABLE_PROPERTIES] -
+     * the caller (not a [SortableProperties]) owns the id tie-break here.
      */
-    private suspend fun findAllSingleField(
-        property: SortableProperty<Widget>,
-        sort: SortField,
+    private suspend fun findAllNoId(
+        sort: List<SortField>,
         pageSize: Int,
-        after: Pair<Any?, Long>?,
-    ): Page<Pair<Long, String?>> =
+        after: Pair<Map<String, Any?>, Long>?,
+    ): Page<Widget> =
         suspendTransaction(db = database, readOnly = true) {
             val condition: Op<Boolean> =
-                after?.let { (primaryAfter, idAfter) ->
-                    PagingSupport.singleFieldKeysetCondition(property, sort, primaryAfter, WidgetTable.id, idAfter)
+                after?.let { (primary, idAfter) ->
+                    PagingSupport.keysetCondition(widgetNoIdProperties, sort, primary, WidgetTable.id, idAfter)
                 } ?: Op.TRUE
-            val rows =
-                WidgetTable
-                    .selectAll()
-                    .where { condition }
-                    .orderBy(property.column, property.sortOrder(sort.ascending))
-                    .orderBy(WidgetTable.id, SortOrder.ASC)
-                    .limit(pageSize + 1)
-                    .toList()
+            var query = WidgetTable.selectAll().where { condition }
+            sort.forEach { field ->
+                val property = widgetNoIdProperties.byName(field.property)
+                query = query.orderBy(property.column, property.sortOrder(field.ascending))
+            }
+            query = query.orderBy(WidgetTable.id, SortOrder.ASC)
+            val rows = query.limit(pageSize + 1).toList()
             val hasNext = rows.size > pageSize
-            Page(
-                rows.take(pageSize).map { it[WidgetTable.id].value to property.valueOf(it.toWidget())?.toString() },
-                hasNext,
-                listOf(sort),
-            )
+            Page(rows.take(pageSize).map { it.toWidget() }, hasNext, sort)
         }
 
     private suspend fun findAll(

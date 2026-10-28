@@ -239,62 +239,70 @@ internal class PagingSupportTest {
     }
 
     @Test
-    fun `parseSingleFieldOrder falls back to the default when order_by is absent or blank`() {
-        val default = SortField("name", ascending = false)
+    fun `nextCursor then decodeCursor round-trips the sort fields' values alongside a hand-supplied id tie-break`() {
+        val last =
+            widget {
+                id = 1
+                name = "widget-42"
+            }
+        val sort = listOf(SortField("name"))
+        val page = Page(content = listOf(last), hasNext = true, sort = sort)
 
-        assertEquals(default, PagingSupport.parseSingleFieldOrder(null, WIDGET_SORTABLE_PROPERTIES, default))
-        assertEquals(default, PagingSupport.parseSingleFieldOrder("  ", WIDGET_SORTABLE_PROPERTIES, default))
+        val cursor = requireNotNull(PagingSupport.nextCursor(WIDGET_SORTABLE_PROPERTIES, page, "7", OBJECT_MAPPER))
+        val decoded = PagingSupport.decodeCursor(WIDGET_SORTABLE_PROPERTIES, cursor, sort, parseId = { it.toLong() }, OBJECT_MAPPER)
+
+        assertEquals(mapOf<String, Any?>("name" to "widget-42") to 7L, decoded)
     }
 
     @Test
-    fun `parseSingleFieldOrder parses exactly one field, in the direction requested`() {
-        assertEquals(
-            SortField("status", ascending = false),
-            PagingSupport.parseSingleFieldOrder("status desc", WIDGET_SORTABLE_PROPERTIES, SortField("name")),
-        )
+    fun `nextCursor then decodeCursor round-trips a nullable field's absent value as null, alongside the id tie-break`() {
+        val last = widget { id = 1 }
+        val sort = listOf(SortField("active"))
+        val page = Page(content = listOf(last), hasNext = true, sort = sort)
+
+        val cursor = requireNotNull(PagingSupport.nextCursor(WIDGET_SORTABLE_PROPERTIES, page, "7", OBJECT_MAPPER))
+        val decoded = PagingSupport.decodeCursor(WIDGET_SORTABLE_PROPERTIES, cursor, sort, parseId = { it.toLong() }, OBJECT_MAPPER)
+
+        assertEquals(mapOf<String, Any?>("active" to null) to 7L, decoded)
     }
 
     @Test
-    fun `parseSingleFieldOrder rejects an unsupported field, same as parseOrderBy`() {
-        assertThrows(IllegalArgumentException::class.java) {
-            PagingSupport.parseSingleFieldOrder("bogus", WIDGET_SORTABLE_PROPERTIES, SortField("name"))
-        }
-    }
-
-    @Test
-    fun `encodeSingleFieldCursor then decodeSingleFieldCursor round-trips both the primary and id values`() {
-        val cursor = PagingSupport.encodeSingleFieldCursor("widget-42", "7", OBJECT_MAPPER)
-
-        val decoded = PagingSupport.decodeSingleFieldCursor(cursor, parsePrimary = { it }, parseId = { it.toLong() }, OBJECT_MAPPER)
-
-        assertEquals("widget-42" to 7L, decoded)
-    }
-
-    @Test
-    fun `encodeSingleFieldCursor then decodeSingleFieldCursor round-trips a null primary, for a nullable property`() {
-        val cursor = PagingSupport.encodeSingleFieldCursor(null, "7", OBJECT_MAPPER)
-
+    fun `decodeCursor with a parseId is null for a null cursor`() {
         val decoded =
-            PagingSupport.decodeSingleFieldCursor(cursor, parsePrimary = { it }, parseId = { it.toLong() }, OBJECT_MAPPER)
+            PagingSupport.decodeCursor(
+                WIDGET_SORTABLE_PROPERTIES,
+                null,
+                listOf(SortField("name")),
+                parseId = { it.toLong() },
+                OBJECT_MAPPER,
+            )
 
-        assertEquals(null to 7L, decoded)
+        assertEquals(null, decoded)
     }
 
     @Test
-    fun `decodeSingleFieldCursor of a null cursor is null`() {
-        assertEquals(null, PagingSupport.decodeSingleFieldCursor<String?, Long>(null, { it }, { it.toLong() }, OBJECT_MAPPER))
-    }
-
-    @Test
-    fun `decodeSingleFieldCursor rejects a cursor whose value count isn't exactly two`() {
-        val mintedForOneValue =
-            java.util.Base64
-                .getUrlEncoder()
-                .withoutPadding()
-                .encodeToString(OBJECT_MAPPER.writeValueAsBytes(listOf("only-one")))
+    fun `decodeCursor with a parseId rejects a cursor minted without the id tie-break appended`() {
+        val sort = listOf(SortField("name"))
+        val mintedWithoutAnId =
+            requireNotNull(
+                PagingSupport.nextCursor(
+                    WIDGET_SORTABLE_PROPERTIES,
+                    Page(
+                        listOf(
+                            widget {
+                                id = 1
+                                name = "a"
+                            },
+                        ),
+                        hasNext = true,
+                        sort = sort,
+                    ),
+                    OBJECT_MAPPER,
+                ),
+            )
 
         assertThrows(IllegalArgumentException::class.java) {
-            PagingSupport.decodeSingleFieldCursor(mintedForOneValue, parsePrimary = { it }, parseId = { it.toLong() }, OBJECT_MAPPER)
+            PagingSupport.decodeCursor(WIDGET_SORTABLE_PROPERTIES, mintedWithoutAnId, sort, parseId = { it.toLong() }, OBJECT_MAPPER)
         }
     }
 }
