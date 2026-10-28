@@ -91,8 +91,10 @@ paths:
                      names. Supported fields: statistics.lastProgressReceivedAt (the default, desc),
                      statistics.firstProgressReceivedAt, statistics.isComplete, statistics.totalRules,
                      statistics.completedRules, statistics.skippedRules, statistics.overallSuccess,
-                     statistics.worstSeverity. The last two are unset until the first finding is recorded - sorting
-                     by either always places a job without one yet last, regardless of direction.
+                     statistics.worstSeverity, validationJob. The middle two are unset until the first finding is
+                     recorded - sorting by either always places a job without one yet last, regardless of
+                     direction. validationJob is always implicitly appended as a final tie-break regardless of
+                     whether it's named explicitly.
                 schema:
                     type: string
               - name: isComplete

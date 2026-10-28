@@ -50,26 +50,34 @@ class SortableProperties<T : Message> internal constructor(
         private val ids = mutableListOf<SortableProperty<T>>()
         private val fields = mutableListOf<SortableProperty<T>>()
 
-        /** An id/FK-reference column, part of this resource's own id. */
+        /**
+         * An id/FK-reference column, part of this resource's own id. [decode] overrides
+         * [SortableProperty]'s own built-in per-field-type decoding - see its KDoc - for a column
+         * whose stored type the engine doesn't otherwise know how to validate/decode, e.g. a
+         * `string` proto field backed by a native UUID column (`decode = Uuid::parse`).
+         */
         fun <V : Comparable<V>> id(
             name: String,
             column: Column<EntityID<V>>,
-        ): Builder<T> = apply { ids += SortableEntityIdProperty.create(pathNamed(name), column) }
+            decode: ((String) -> V)? = null,
+        ): Builder<T> = apply { ids += SortableEntityIdProperty.create(pathNamed(name), column, decode) }
 
         /**
-         * A FK-reference column, *not* part of this resource's own id.
+         * A FK-reference column, *not* part of this resource's own id - [decode] is [id]'s own.
          */
         @JvmName("fieldEntityId")
         fun <V : Comparable<V>> field(
             name: String,
             column: Column<EntityID<V>>,
-        ): Builder<T> = apply { fields += SortableEntityIdProperty.create(pathNamed(name), column) }
+            decode: ((String) -> V)? = null,
+        ): Builder<T> = apply { fields += SortableEntityIdProperty.create(pathNamed(name), column, decode) }
 
-        /** A plain (non-`EntityID`), [Comparable]-valued column. */
+        /** A plain (non-`EntityID`), [Comparable]-valued column - [decode] is [id]'s own. */
         fun <V : Comparable<V>> field(
             name: String,
             column: Column<V>,
-        ): Builder<T> = apply { fields += SortableComparableProperty.create(pathNamed(name), column) }
+            decode: ((String) -> V)? = null,
+        ): Builder<T> = apply { fields += SortableComparableProperty.create(pathNamed(name), column, decode) }
 
         /**
          * A `bytes` field's column.

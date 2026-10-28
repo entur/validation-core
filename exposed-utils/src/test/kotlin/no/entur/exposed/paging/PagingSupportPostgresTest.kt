@@ -15,6 +15,7 @@ import no.entur.exposed.testfixtures.v1.widgetStats
 import no.entur.proto.time.toProtoTimestamp
 import org.jetbrains.exposed.v1.core.Op
 import org.jetbrains.exposed.v1.core.ResultRow
+import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.vendors.PostgreSQLDialect
 import org.jetbrains.exposed.v1.r2dbc.R2dbcDatabase
 import org.jetbrains.exposed.v1.r2dbc.R2dbcDatabaseConfig
@@ -74,6 +75,18 @@ internal class PagingSupportPostgresTest {
             .builder<Widget>(Widget.getDescriptor())
             .id("id", WidgetTable.id)
             .fieldNullsFirst("active", WidgetTable.active)
+            .build()
+
+    /**
+     * No `.id(...)` call at all - stands in for a resource whose id genuinely can't be a
+     * [SortableProperty] (e.g. `RuleResult`, which has no id field of its own in its proto at all),
+     * covering [PagingSupport.parseSingleFieldOrder]/[PagingSupport.singleFieldKeysetCondition]
+     * against a real DB, same as [WIDGET_SORTABLE_PROPERTIES] does for the general multi-field case.
+     */
+    private val widgetSingleFieldProperties: SortableProperties<Widget> =
+        SortableProperties
+            .builder<Widget>(Widget.getDescriptor())
+            .field("status", WidgetTable.status)
             .build()
 
     /**
@@ -222,7 +235,10 @@ internal class PagingSupportPostgresTest {
             var ascendingCursor: String? = null
             do {
                 val after = PagingSupport.decodeCursor(WIDGET_SORTABLE_PROPERTIES, ascendingCursor, ascending, OBJECT_MAPPER)
-                val page = findAll(ascending, pageSize = 2, after = after)
+                // pageSize 1, not the seeded absent group's own size (2): a page boundary splitting
+                // a tied group is what actually forces equalCondition(null) - a same-size page
+                // would always fetch both absent rows together, never needing it to resume from one.
+                val page = findAll(ascending, pageSize = 1, after = after)
                 ascendingVisited += page.content.map { it.id }
                 ascendingCursor = PagingSupport.nextCursor(WIDGET_SORTABLE_PROPERTIES, page, OBJECT_MAPPER)
             } while (ascendingCursor != null)
@@ -231,7 +247,7 @@ internal class PagingSupportPostgresTest {
             var descendingCursor: String? = null
             do {
                 val after = PagingSupport.decodeCursor(WIDGET_SORTABLE_PROPERTIES, descendingCursor, descending, OBJECT_MAPPER)
-                val page = findAll(descending, pageSize = 2, after = after)
+                val page = findAll(descending, pageSize = 1, after = after)
                 descendingVisited += page.content.map { it.id }
                 descendingCursor = PagingSupport.nextCursor(WIDGET_SORTABLE_PROPERTIES, page, OBJECT_MAPPER)
             } while (descendingCursor != null)
@@ -256,7 +272,7 @@ internal class PagingSupportPostgresTest {
             var ascendingCursor: String? = null
             do {
                 val after = PagingSupport.decodeCursor(widgetNullsFirstProperties, ascendingCursor, ascending, OBJECT_MAPPER)
-                val page = findAll(ascending, pageSize = 2, after = after, sortableProperties = widgetNullsFirstProperties)
+                val page = findAll(ascending, pageSize = 1, after = after, sortableProperties = widgetNullsFirstProperties)
                 ascendingVisited += page.content.map { it.id }
                 ascendingCursor = PagingSupport.nextCursor(widgetNullsFirstProperties, page, OBJECT_MAPPER)
             } while (ascendingCursor != null)
@@ -265,7 +281,7 @@ internal class PagingSupportPostgresTest {
             var descendingCursor: String? = null
             do {
                 val after = PagingSupport.decodeCursor(widgetNullsFirstProperties, descendingCursor, descending, OBJECT_MAPPER)
-                val page = findAll(descending, pageSize = 2, after = after, sortableProperties = widgetNullsFirstProperties)
+                val page = findAll(descending, pageSize = 1, after = after, sortableProperties = widgetNullsFirstProperties)
                 descendingVisited += page.content.map { it.id }
                 descendingCursor = PagingSupport.nextCursor(widgetNullsFirstProperties, page, OBJECT_MAPPER)
             } while (descendingCursor != null)
@@ -290,6 +306,68 @@ internal class PagingSupportPostgresTest {
             } while (cursor != null)
 
             assertEquals(listOf(100L to 1, 100L to 2, 100L to 3, 200L to 1), visited)
+        }
+
+    @Test
+    fun `single-field keyset-scrolling, with a hand-supplied id tie-break, visits every row exactly once, in id order within a tie`() =
+        runTest {
+            seed()
+            val sort = PagingSupport.parseSingleFieldOrder("status desc", widgetSingleFieldProperties, SortField("status"))
+            val property = widgetSingleFieldProperties.byName(sort.property)
+
+            val visited = mutableListOf<Long>()
+            var cursor: String? = null
+            do {
+                val after = PagingSupport.decodeSingleFieldCursor(cursor, property::decode, parseId = { it.toLong() }, OBJECT_MAPPER)
+                val page = findAllSingleField(property, sort, pageSize = 2, after = after)
+                visited += page.content.map { it.first }
+                cursor =
+                    if (page.hasNext) {
+                        val (id, value) = page.content.last()
+                        PagingSupport.encodeSingleFieldCursor(value, id.toString(), OBJECT_MAPPER)
+                    } else {
+                        null
+                    }
+            } while (cursor != null)
+
+            val ids = insertionOrder()
+            val expected = seeded.indices.sortedByDescending { seeded[it].second.name }.map { ids[it] }
+            assertEquals(expected, visited)
+            assertEquals(seeded.size, visited.toSet().size)
+        }
+
+    /**
+     * Same shape as [findAll], but via [PagingSupport.singleFieldKeysetCondition] against
+     * [widgetSingleFieldProperties] (one sortable field, no id) instead of [PagingSupport.keysetCondition]
+     * against the full, id-including [WIDGET_SORTABLE_PROPERTIES] - returns each row's own `id`
+     * alongside [property]'s own already-`toString()`'d value, since the caller (not a
+     * [SortableProperties]) owns the id tie-break here.
+     */
+    private suspend fun findAllSingleField(
+        property: SortableProperty<Widget>,
+        sort: SortField,
+        pageSize: Int,
+        after: Pair<Any?, Long>?,
+    ): Page<Pair<Long, String?>> =
+        suspendTransaction(db = database, readOnly = true) {
+            val condition: Op<Boolean> =
+                after?.let { (primaryAfter, idAfter) ->
+                    PagingSupport.singleFieldKeysetCondition(property, sort, primaryAfter, WidgetTable.id, idAfter)
+                } ?: Op.TRUE
+            val rows =
+                WidgetTable
+                    .selectAll()
+                    .where { condition }
+                    .orderBy(property.column, property.sortOrder(sort.ascending))
+                    .orderBy(WidgetTable.id, SortOrder.ASC)
+                    .limit(pageSize + 1)
+                    .toList()
+            val hasNext = rows.size > pageSize
+            Page(
+                rows.take(pageSize).map { it[WidgetTable.id].value to property.valueOf(it.toWidget())?.toString() },
+                hasNext,
+                listOf(sort),
+            )
         }
 
     private suspend fun findAll(

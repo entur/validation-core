@@ -74,16 +74,25 @@ enum class NullsOrder {
  *
  * [valueOf]/[decode] are also derived from [descriptor] rather than hand-written per property:
  * every [JavaType] a single DB column could plausibly store maps onto exactly one of `ORDER BY`'s
- * own comparable SQL types, so there's nothing left for a caller to customize - including the two
- * [FieldCodec] handles, `google.protobuf.Timestamp` (the only [JavaType.MESSAGE] this supports, as
- * the only sub-message type with a single, universally comparable value) and [JavaType.BYTE_STRING].
- * Every other [JavaType.MESSAGE] field is rejected outright - it isn't one comparable column.
+ * own comparable SQL types, so there's nothing left for a caller to customize - including
+ * `google.protobuf.Timestamp` (the only [JavaType.MESSAGE] this supports, as the only sub-message
+ * type with a single, universally comparable value) and [JavaType.BYTE_STRING]. Every other
+ * [JavaType.MESSAGE] field is rejected outright - it isn't one comparable column.
+ *
+ * A column whose stored type isn't one of the above at all - e.g. a `string` proto field backed by
+ * a native UUID column - isn't rejected outright either: [SortableEntityIdProperty.create]/
+ * [SortableComparableProperty.create] both take an optional [decode] of their own (e.g.
+ * `Uuid::parse`), which bypasses both this class's own type-compatibility check and its built-in
+ * per-[JavaType] decoding for that one property. [valueOf] never needs the same escape hatch -
+ * whatever [Message.getField] returns for it already round-trips through its own `toString()`.
  */
 sealed class SortableProperty<T : Message>(
     /** The chain of proto fields **/
     val path: List<FieldDescriptor>,
     /** The column to `ORDER BY`. */
     val column: Column<*>,
+    /** A caller-supplied override of [decode]'s own built-in per-[JavaType] dispatch - see this class's own KDoc. */
+    private val decoder: ((String) -> Any)? = null,
 ) {
     /** This property's own (leaf) field. */
     val descriptor: FieldDescriptor get() = path.last()
@@ -96,7 +105,7 @@ sealed class SortableProperty<T : Message>(
 
     init {
         requirePathValid(path)
-        requireColumnMatches(descriptor, column.columnType)
+        if (decoder == null) requireColumnMatches(descriptor, column.columnType)
     }
 
     /**
@@ -117,10 +126,12 @@ sealed class SortableProperty<T : Message>(
     /**
      * The inverse of [valueOf]'s implicit `toString()` - reconstructs a decoded cursor value from
      * the raw string a client sent back, `null` (only ever passed for a [nullsOrder] property) back
-     * to `null`.
+     * to `null`. A caller-supplied [decoder] takes over entirely when there is one - see this
+     * class's own KDoc.
      */
     fun decode(raw: String?): Any? {
         if (raw == null) return null
+        decoder?.let { return it(raw) }
         return when (descriptor.javaType) {
             JavaType.INT -> raw.toInt()
             JavaType.LONG -> raw.toLong()
@@ -195,7 +206,8 @@ sealed class SortableProperty<T : Message>(
         /**
          * The other half of [requirePathValid]: the leaf field itself must be singular and must actually resolve to
          * one comparable SQL column - every [JavaType] maps onto exactly one SQL scalar type except [JavaType.MESSAGE],
-         * accepted only for a `google.protobuf.Timestamp` field backed by an [OffsetDateTimeColumnType] column.
+         * accepted only for a `google.protobuf.Timestamp` field backed by an [OffsetDateTimeColumnType] column. Skipped
+         * entirely for a property with its own caller-supplied `decode` - see [SortableProperty]'s own KDoc.
          */
         private fun requireColumnMatches(
             descriptor: FieldDescriptor,

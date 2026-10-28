@@ -1,8 +1,11 @@
 package no.entur.exposed.paging
 
 import com.google.protobuf.Message
+import org.jetbrains.exposed.v1.core.Column
 import org.jetbrains.exposed.v1.core.Op
 import org.jetbrains.exposed.v1.core.and
+import org.jetbrains.exposed.v1.core.dao.id.EntityID
+import org.jetbrains.exposed.v1.core.greater
 import org.jetbrains.exposed.v1.core.or
 import tools.jackson.core.type.TypeReference
 import tools.jackson.databind.ObjectMapper
@@ -126,6 +129,73 @@ object PagingSupport {
             sort.zip(raw).associate { (field, value) ->
                 field.property to sortableProperties.byName(field.property).decode(value)
             }
+        } catch (e: Exception) {
+            throw IllegalArgumentException("Invalid cursor", e)
+        }
+    }
+
+    /**
+     * [parseOrderBy] for a resource whose id can't itself be a [SortableProperty] - just the one named field, or
+     * [default]. The caller mints its own id tie-break by hand instead - see [singleFieldKeysetCondition].
+     */
+    fun <T : Message> parseSingleFieldOrder(
+        orderBy: String?,
+        sortableProperties: SortableProperties<T>,
+        default: SortField,
+    ): SortField {
+        val trimmed = orderBy?.trim().orEmpty()
+        if (trimmed.isEmpty()) return default
+        val descending = trimmed.endsWith(" desc")
+        val name = if (descending) trimmed.removeSuffix(" desc") else trimmed
+        require(name in sortableProperties) { "Unsupported order_by field: $orderBy" }
+        return SortField(name, ascending = !descending)
+    }
+
+    /**
+     * [keysetCondition] for the [parseSingleFieldOrder] case: one [SortableProperty] field plus a
+     * hand-supplied [idColumn] tie-break, the same disjunction-of-conjunctions shape as
+     * [keysetCondition]'s general case, unrolled for exactly those two keys. [primaryAfter] is only
+     * ever null for a nullable property (see [SortableNullableProperty.create]).
+     */
+    fun <ID : Comparable<ID>> singleFieldKeysetCondition(
+        property: SortableProperty<*>,
+        sort: SortField,
+        primaryAfter: Any?,
+        idColumn: Column<EntityID<ID>>,
+        idAfter: ID,
+    ): Op<Boolean> {
+        val primaryClause = if (sort.ascending) property.greaterCondition(primaryAfter) else property.lessCondition(primaryAfter)
+        val tieBreakClause = property.equalCondition(primaryAfter) and (idColumn greater idAfter)
+        return primaryClause or tieBreakClause
+    }
+
+    /**
+     * [nextCursor] for the [parseSingleFieldOrder] case: mints an opaque cursor from [primary] (the
+     * sort field's own already-[SortableProperty.valueOf]'d, `toString()`'d value - null only for a
+     * nullable property whose value was absent) and [id] (the hand-supplied tie-break column's value).
+     */
+    fun encodeSingleFieldCursor(
+        primary: String?,
+        id: String,
+        objectMapper: ObjectMapper,
+    ): String = Base64.getUrlEncoder().withoutPadding().encodeToString(objectMapper.writeValueAsBytes(listOf(primary, id)))
+
+    /**
+     * The inverse of [encodeSingleFieldCursor] - same "any decode failure is equally not a valid
+     * cursor" policy as [decodeCursor]. [parsePrimary] is typically [SortableProperty.decode] itself.
+     */
+    fun <P, I> decodeSingleFieldCursor(
+        cursor: String?,
+        parsePrimary: (String?) -> P,
+        parseId: (String) -> I,
+        objectMapper: ObjectMapper,
+    ): Pair<P, I>? {
+        if (cursor == null) return null
+        return try {
+            val raw: List<String?> =
+                objectMapper.readValue(Base64.getUrlDecoder().decode(cursor), object : TypeReference<List<String?>>() {})
+            require(raw.size == 2) { "Invalid cursor" }
+            parsePrimary(raw[0]) to parseId(requireNotNull(raw[1]))
         } catch (e: Exception) {
             throw IllegalArgumentException("Invalid cursor", e)
         }

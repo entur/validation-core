@@ -158,6 +158,31 @@ internal class SortablePropertyTest {
     }
 
     @Test
+    fun `a column type mismatch is rejected, unless the caller supplies its own decode`() {
+        // "name" (STRING) against WidgetTable.id (a Long id column) - a real mismatch, standing in
+        // for the motivating case (a `string` proto field backed by a native UUID column).
+        val exception =
+            assertThrows(IllegalArgumentException::class.java) {
+                SortableProperties.builder<Widget>(Widget.getDescriptor()).field("name", WidgetTable.id)
+            }
+        assertTrue(exception.message!!.contains("STRING"))
+
+        val property =
+            SortableProperties
+                .builder<Widget>(Widget.getDescriptor())
+                .field("name", WidgetTable.id, decode = { it.toLong() })
+                .build()
+                .byName("name")
+
+        assertEquals(
+            "hello",
+            property.valueOf(widget { name = "hello" }),
+            "valueOf never needs its own decode - see SortableProperty's KDoc",
+        )
+        assertEquals(42L, property.decode("42"))
+    }
+
+    @Test
     fun `ofNullable rejects a field that isn't declared optional - its absence can't be tracked at all`() {
         val statusField = Widget.getDescriptor().findFieldByName("status")
 

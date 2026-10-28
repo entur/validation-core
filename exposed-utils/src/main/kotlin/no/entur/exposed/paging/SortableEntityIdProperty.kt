@@ -9,11 +9,12 @@ import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.core.greater
 import org.jetbrains.exposed.v1.core.less
 
-/** [SortableProperty] for an id/FK-reference column. */
+/** [SortableProperty] for an id/FK-reference column - [decode] is [create]'s own optional parameter, see [SortableProperty]'s KDoc. */
 internal class SortableEntityIdProperty<T : Message, V : Comparable<V>>(
     path: List<Descriptors.FieldDescriptor>,
     private val typedColumn: Column<EntityID<V>>,
-) : SortableProperty<T>(path, typedColumn) {
+    decode: ((String) -> V)? = null,
+) : SortableProperty<T>(path, typedColumn, decode) {
     @Suppress("UNCHECKED_CAST")
     private fun safeCast(value: Any?): V = requireNotNull(value) { "'$name' isn't nullable" } as V
 
@@ -27,6 +28,7 @@ internal class SortableEntityIdProperty<T : Message, V : Comparable<V>>(
         fun <T : Message, V : Comparable<V>> create(
             path: List<Descriptors.FieldDescriptor>,
             column: Column<EntityID<V>>,
-        ): SortableProperty<T> = SortableEntityIdProperty(path, column)
+            decode: ((String) -> V)? = null,
+        ): SortableProperty<T> = SortableEntityIdProperty(path, column, decode)
     }
 }
