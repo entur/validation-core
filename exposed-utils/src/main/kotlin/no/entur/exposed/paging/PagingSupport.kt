@@ -19,9 +19,9 @@ object PagingSupport {
     /**
      * Turns an AIP-132 `order_by` string (a comma-separated list of fields, each optionally
      * suffixed with " desc") into a [SortField] list, restricted to [sortableProperties] (each
-     * looked up by its own [SortableProperty.descriptor] JSON name - see [SortableProperties.byName]),
-     * always ending in a stable tie-break on every [SortableProperties.ids] property not already
-     * named, appended in the order [sortableProperties] itself declares them - a resource with a
+     * looked up by its own [SortableProperty.name] - see [SortableProperties.byName]), always
+     * ending in a stable tie-break on every [SortableProperties.ids] property not already named,
+     * appended in the order [sortableProperties] itself declares them - a resource with a
      * composite id thus gets every one of its id fields appended, not just a single hardcoded
      * `"id"`. That total ordering is also what keyset scrolling itself requires to resume correctly.
      */
@@ -40,7 +40,7 @@ object PagingSupport {
                 require(name in sortableProperties) { "Unsupported order_by field: $field" }
                 orders[name] = SortField(name, ascending = !descending)
             }
-        sortableProperties.ids.forEach { orders.putIfAbsent(it.descriptor.jsonName, SortField(it.descriptor.jsonName)) }
+        sortableProperties.ids.forEach { orders.putIfAbsent(it.name, SortField(it.name)) }
         return orders.values.toList()
     }
 
@@ -48,12 +48,16 @@ object PagingSupport {
      * The standard keyset/seek-method predicate for scrolling past [after]: a row-wise comparison
      * unrolled into a disjunction of conjunctions, e.g. for two keys
      * `(k1 cmp v1) OR (k1 = v1 AND k2 cmp v2)`, so that ties on an earlier key still resolve by
-     * comparing the next one.
+     * comparing the next one. A value in [after] is null only for a nullable property (see
+     * [SortableNullableProperty.create]) resuming from a row whose own value for it was absent -
+     * [SortableProperty.greaterCondition]/[SortableProperty.lessCondition]/[SortableProperty.equalCondition]
+     * already know what that means for *that* property alone; this function itself stays oblivious
+     * to nullability.
      */
     fun <T : Message> keysetCondition(
         sortableProperties: SortableProperties<T>,
         sort: List<SortField>,
-        after: Map<String, Any>,
+        after: Map<String, Any?>,
     ): Op<Boolean> {
         var disjunction: Op<Boolean>? = null
         val equalitiesSoFar = mutableListOf<Op<Boolean>>()
@@ -78,7 +82,9 @@ object PagingSupport {
     /**
      * The opaque cursor pointing just past the last item of [page], or null if it has no next
      * page: one value per [Page.sort] field, in that same order. Consistent paging therefore relies on
-     * the client resending the same `order_by` on every page of one listing.
+     * the client resending the same `order_by` on every page of one listing. A field's own value is
+     * itself null only when it's a nullable property (see [SortableNullableProperty.create]) and the
+     * last item's own value for it is absent.
      */
     fun <T : Message> nextCursor(
         sortableProperties: SortableProperties<T>,
@@ -87,7 +93,7 @@ object PagingSupport {
     ): String? {
         if (!page.hasNext) return null
         val last = page.content.last()
-        val values = page.sort.map { sortableProperties.byName(it.property).valueOf(last).toString() }
+        val values = page.sort.map { sortableProperties.byName(it.property).valueOf(last)?.toString() }
         return Base64.getUrlEncoder().withoutPadding().encodeToString(objectMapper.writeValueAsBytes(values))
     }
 
@@ -97,20 +103,24 @@ object PagingSupport {
      * [sort] decodes into nonsense rather than failing loudly. A cursor is client-supplied and opaque,
      * so any failure to decode it - bad Base64, malformed JSON, a value count that
      * doesn't match [sort], or a value that doesn't parse as its property's type - is equally
-     * "not a valid cursor" and reported the same way.
+     * "not a valid cursor" and reported the same way. A null value is only ever valid for a nullable
+     * property (see [SortableNullableProperty.create]) - [SortableProperty.decode] itself passes a null
+     * straight through regardless, so a cursor claiming a null value for a non-nullable property
+     * decodes without complaint here, only to fail once [SortableProperty.lessCondition]/
+     * [SortableProperty.greaterCondition]/[SortableProperty.equalCondition] actually try to use it.
      */
     fun <T : Message> decodeCursor(
         sortableProperties: SortableProperties<T>,
         cursor: String?,
         sort: List<SortField>,
         objectMapper: ObjectMapper,
-    ): Map<String, Any>? {
+    ): Map<String, Any?>? {
         if (cursor == null) return null
         return try {
-            val raw: List<String> =
+            val raw: List<String?> =
                 objectMapper.readValue(
                     Base64.getUrlDecoder().decode(cursor),
-                    object : TypeReference<List<String>>() {},
+                    object : TypeReference<List<String?>>() {},
                 )
             require(raw.size == sort.size) { "Invalid cursor" }
             sort.zip(raw).associate { (field, value) ->

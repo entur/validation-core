@@ -62,10 +62,15 @@ message ListValidationJobsRequest {
     example: {yaml: "20"}
   }];
   // A comma-separated list of fields to order by, each optionally suffixed with " desc"
-  // for descending order (ascending is the default). See https://google.aip.dev/132.
-  // Defaults to "statistics.last_progress_received_at desc".
+  // for descending order (ascending is the default). See https://google.aip.dev/132. Field names
+  // are camelCase, e.g. "statistics.lastProgressReceivedAt", not the proto's own snake_case field
+  // names. Supported fields: statistics.lastProgressReceivedAt (the default, desc),
+  // statistics.firstProgressReceivedAt, statistics.isComplete, statistics.totalRules,
+  // statistics.completedRules, statistics.skippedRules, statistics.overallSuccess,
+  // statistics.worstSeverity. The last two are unset until the first finding is recorded - sorting
+  // by either always places a job without one yet last, regardless of direction.
   string order_by = 3 [(gnostic.openapi.v3.property) = {
-    example: {yaml: "\"statistics.last_progress_received_at desc\""}
+    example: {yaml: "\"statistics.lastProgressReceivedAt desc\""}
   }];
   // Only return jobs whose overall `statistics.is_complete` matches this value. Unset returns
   // both completed and still-running jobs.
@@ -112,10 +117,12 @@ message ListResultsRequest {
     example: {yaml: "20"}
   }];
   // A comma-separated list of fields to order by, each optionally suffixed with " desc"
-  // for descending order (ascending is the default). See https://google.aip.dev/132.
-  // Defaults to "start_time".
+  // for descending order (ascending is the default). See https://google.aip.dev/132. Field names
+  // are camelCase, e.g. "startTime", not the proto's own snake_case field names. Supported fields:
+  // startTime (the default), endTime, incomplete, fullResultUrl. The last is only set when
+  // `incomplete` is - sorting by it always places a result without one last, regardless of direction.
   string order_by = 4 [(gnostic.openapi.v3.property) = {
-    example: {yaml: "\"start_time\""}
+    example: {yaml: "\"startTime\""}
   }];
 }
 

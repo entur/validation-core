@@ -13,6 +13,19 @@ message Widget {
   google.protobuf.Timestamp updated_at = 3 [(google.api.field_behavior) = OUTPUT_ONLY];
   WidgetStatus status = 4;
   repeated Part parts = 5;
+  // A nested timestamp field - covers SortableProperty's nested-field support, the way
+  // ValidationJob.statistics.last_progress_received_at does in zagar.
+  WidgetStats stats = 6;
+  // A bytes field - covers SortableProperty's bytes-field support.
+  bytes raw_id = 7;
+  // An optional field - covers SortableProperty's nullable-field support.
+  optional bool active = 8;
+}
+
+// Progress statistics nested inside Widget - exists only to cover a *nested* sortable field, the
+// way Widget.updated_at (a top-level one) covers a top-level one.
+message WidgetStats {
+  google.protobuf.Timestamp last_updated_at = 1;
 }
 
 enum WidgetStatus {

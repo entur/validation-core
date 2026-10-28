@@ -2,10 +2,13 @@ package no.entur.exposed.paging
 
 import no.entur.exposed.testfixtures.v1.WidgetStatus
 import no.entur.exposed.testfixtures.v1.widget
+import no.entur.exposed.testfixtures.v1.widgetStats
+import no.entur.proto.time.toProtoTimestamp
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Test
+import java.time.OffsetDateTime
 
 /**
  * Unit-level coverage for [PagingSupport] - no DB, no Spring context, since none of the logic
@@ -168,6 +171,59 @@ internal class PagingSupportTest {
         assertThrows(IllegalArgumentException::class.java) {
             PagingSupport.decodeCursor(WIDGET_SORTABLE_PROPERTIES, "not a cursor", listOf(SortField("id")), OBJECT_MAPPER)
         }
+    }
+
+    @Test
+    fun `a dotted order_by name resolves a nested field, same as a top-level one`() {
+        val sort = PagingSupport.parseOrderBy("stats.lastUpdatedAt desc", WIDGET_SORTABLE_PROPERTIES)
+
+        assertEquals(listOf(SortField("stats.lastUpdatedAt", ascending = false), SortField("id", ascending = true)), sort)
+    }
+
+    @Test
+    fun `nextCursor then decodeCursor round-trips a Timestamp field's value as an OffsetDateTime, not a String`() {
+        val instant = OffsetDateTime.parse("2026-01-01T12:00:00Z")
+        val last =
+            widget {
+                id = 1
+                updatedAt = instant.toProtoTimestamp()
+                stats = widgetStats { lastUpdatedAt = instant.toProtoTimestamp() }
+            }
+        val sort = listOf(SortField("updatedAt"), SortField("stats.lastUpdatedAt"), SortField("id"))
+        val page = Page(content = listOf(last), hasNext = true, sort = sort)
+
+        val cursor = requireNotNull(PagingSupport.nextCursor(WIDGET_SORTABLE_PROPERTIES, page, OBJECT_MAPPER))
+        val decoded = PagingSupport.decodeCursor(WIDGET_SORTABLE_PROPERTIES, cursor, sort, OBJECT_MAPPER)
+
+        assertEquals(mapOf("updatedAt" to instant, "stats.lastUpdatedAt" to instant, "id" to 1L), decoded)
+    }
+
+    @Test
+    fun `nextCursor then decodeCursor round-trips a nullable field's absent value as null, not a literal null string`() {
+        val last = widget { id = 1 }
+        val sort = listOf(SortField("active"), SortField("id"))
+        val page = Page(content = listOf(last), hasNext = true, sort = sort)
+
+        val cursor = requireNotNull(PagingSupport.nextCursor(WIDGET_SORTABLE_PROPERTIES, page, OBJECT_MAPPER))
+        val decoded = PagingSupport.decodeCursor(WIDGET_SORTABLE_PROPERTIES, cursor, sort, OBJECT_MAPPER)
+
+        assertEquals(mapOf<String, Any?>("active" to null, "id" to 1L), decoded)
+    }
+
+    @Test
+    fun `nextCursor then decodeCursor round-trips a nullable field's present value normally`() {
+        val last =
+            widget {
+                id = 1
+                active = true
+            }
+        val sort = listOf(SortField("active"), SortField("id"))
+        val page = Page(content = listOf(last), hasNext = true, sort = sort)
+
+        val cursor = requireNotNull(PagingSupport.nextCursor(WIDGET_SORTABLE_PROPERTIES, page, OBJECT_MAPPER))
+        val decoded = PagingSupport.decodeCursor(WIDGET_SORTABLE_PROPERTIES, cursor, sort, OBJECT_MAPPER)
+
+        assertEquals(mapOf<String, Any?>("active" to true, "id" to 1L), decoded)
     }
 
     @Test
