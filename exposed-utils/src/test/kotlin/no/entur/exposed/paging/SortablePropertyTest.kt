@@ -130,6 +130,20 @@ internal class SortablePropertyTest {
     }
 
     @Test
+    fun `decode of a malformed Timestamp field raises IllegalArgumentException, not DateTimeParseException`() {
+        val property =
+            SortableProperties
+                .builder<Widget>(Widget.getDescriptor())
+                .field("updated_at", WidgetTable.updatedAt)
+                .build()
+                .byName("updatedAt")
+
+        val exception = assertThrows(IllegalArgumentException::class.java) { property.decode("not-a-timestamp") }
+
+        assertTrue(exception.message!!.contains("updatedAt"))
+    }
+
+    @Test
     fun `a bytes field backed by a non-binary column is rejected`() {
         val exception =
             assertThrows(IllegalArgumentException::class.java) {

@@ -22,6 +22,7 @@ import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.StringColumnType
 import org.jetbrains.exposed.v1.core.datetime.OffsetDateTimeColumnType
 import java.time.OffsetDateTime
+import java.time.format.DateTimeParseException
 import java.util.Base64
 
 /** One field a paginated query sorts and keyset-scrolls by - see [SortableProperty]. */
@@ -127,7 +128,8 @@ sealed class SortableProperty<T : Message>(
      * The inverse of [valueOf]'s implicit `toString()` - reconstructs a decoded cursor value from
      * the raw string a client sent back, `null` (only ever passed for a [nullsOrder] property) back
      * to `null`. A caller-supplied [decoder] takes over entirely when there is one - see this
-     * class's own KDoc.
+     * class's own KDoc. Every branch throws [IllegalArgumentException] (or a subtype of it) on
+     * malformed input - see [parseTimestamp] for the one branch that needs help doing so.
      */
     fun decode(raw: String?): Any? {
         if (raw == null) return null
@@ -139,10 +141,22 @@ sealed class SortableProperty<T : Message>(
             JavaType.DOUBLE -> raw.toDouble()
             JavaType.BOOLEAN -> raw.toBooleanStrict()
             JavaType.STRING, JavaType.ENUM -> raw
-            JavaType.MESSAGE -> OffsetDateTime.parse(raw)
+            JavaType.MESSAGE -> parseTimestamp(raw)
             JavaType.BYTE_STRING -> Base64.getDecoder().decode(raw)
         }
     }
+
+    /**
+     * [OffsetDateTime.parse], rewrapping its [DateTimeParseException] as an [IllegalArgumentException] -
+     * unlike every other branch of [decode], which already throws [IllegalArgumentException] (or a
+     * subtype of it, e.g. [NumberFormatException]) on malformed input on its own.
+     */
+    private fun parseTimestamp(raw: String): OffsetDateTime =
+        try {
+            OffsetDateTime.parse(raw)
+        } catch (e: DateTimeParseException) {
+            throw IllegalArgumentException("Invalid value for '$name': '$raw' is not a valid Timestamp", e)
+        }
 
     /** `column < value` - see [PagingSupport.keysetCondition]. `value` is only ever null for a [nullsOrder] property. */
     abstract fun lessCondition(value: Any?): Op<Boolean>
