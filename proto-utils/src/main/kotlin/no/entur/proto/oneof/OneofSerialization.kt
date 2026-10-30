@@ -14,8 +14,7 @@ data class OneofVariant(
 
 /**
  * Generic persistence for a proto message's `oneof` field - every variant must itself be a
- * message (not a scalar), since a variant's contents are serialized via [JsonFormat], which only
- * prints/parses whole messages.
+ * message (not a scalar), since a variant's contents are serialized via [JsonFormat].
  */
 object OneofSerialization {
     private val printer: JsonFormat.Printer = JsonFormat.printer().preservingProtoFieldNames()
@@ -34,7 +33,9 @@ object OneofSerialization {
         return OneofVariant(field.name, printer.print(variantMessage))
     }
 
-    /** Sets [variant] as [builder]'s `oneofName` oneof variant. */
+    /**
+     * Sets [variant] as [builder]'s `oneofName` oneof variant. Unknown fields are ignored.
+     */
     fun deserialize(
         builder: Message.Builder,
         oneofName: String,

@@ -17,22 +17,17 @@ import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 import java.nio.charset.StandardCharsets
 
-private fun isProtoMessage(elementType: ResolvableType): Boolean = Message::class.java.isAssignableFrom(elementType.toClass())
+private fun isProtoMessage(elementType: ResolvableType): Boolean =
+    Message::class.java.isAssignableFrom(elementType.toClass())
 
 /**
  * WebFlux [org.springframework.core.codec.Encoder] for generated protobuf [Message]s. Every operation writes exactly
- * one [Message] - this only implements `application/json` as a single JSON object, not a JSON
- * array, so a handler returning a multi-element [Flux] (rather than [reactor.core.publisher.Mono])
- * would otherwise silently emit invalid, undelimited JSON (`{}{}...`). [encode] fails fast instead
- * ([Flux.single] errors on anything but exactly one element) rather than emit that. Also declares
- * `application/problem+json` support for exception serialization to a
- * [no.entur.http.proto.v1.ProblemDetail].
+ * one [Message]. [encode] fails fast instead rather than emit that. Also declares `application/problem+json` support
+ * for exception serialization to a [no.entur.http.proto.v1.ProblemDetail].
+ *
+ * Empty `repeated` field are omitted (no key at all, rather than `[]`).
  */
 class ProtoJsonEncoder : AbstractEncoder<Message>(MediaType.APPLICATION_JSON, MediaType.APPLICATION_PROBLEM_JSON) {
-    /**
-     * Note: `JsonFormat` omits an empty `repeated` field by default (no key at all, rather than `[]`).
-     * This should be fine downstream.
-     */
     private val printer: JsonFormat.Printer = JsonFormat.printer()
 
     override fun canEncode(
@@ -59,13 +54,11 @@ class ProtoJsonEncoder : AbstractEncoder<Message>(MediaType.APPLICATION_JSON, Me
 /**
  * WebFlux [org.springframework.core.codec.Decoder] for generated protobuf [Message]s.
  * Reads the whole request body before parsing (via [DataBufferUtils.join]).
+ *
+ * Rejects unknown fields: A client sending a field this message type doesn't have is treated as a malformed
+ * request (400) and not silently ignored. We might want to revisit this in the future.
  */
 class ProtoJsonDecoder : AbstractDecoder<Message>(MediaType.APPLICATION_JSON) {
-    /**
-     * Rejects unknown fields by default (no `.ignoringUnknownFields()`). A client sending a field
-     * this message type doesn't have is treated as a malformed request (400), not silently ignored.
-     * We might want to revisit this in the future.
-     */
     private val parser: JsonFormat.Parser = JsonFormat.parser()
 
     override fun canDecode(
