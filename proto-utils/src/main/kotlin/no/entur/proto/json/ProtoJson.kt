@@ -17,8 +17,7 @@ import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 import java.nio.charset.StandardCharsets
 
-private fun isProtoMessage(elementType: ResolvableType): Boolean =
-    Message::class.java.isAssignableFrom(elementType.toClass())
+private fun isProtoMessage(elementType: ResolvableType): Boolean = Message::class.java.isAssignableFrom(elementType.toClass())
 
 /**
  * WebFlux [org.springframework.core.codec.Encoder] for generated protobuf [Message]s. Every operation writes exactly

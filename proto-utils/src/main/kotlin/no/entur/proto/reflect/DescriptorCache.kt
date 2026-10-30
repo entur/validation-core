@@ -16,8 +16,7 @@ class DescriptorCache<T : Any>(
 ) {
     private val cache = ConcurrentHashMap<Descriptor, Optional<T>>()
 
-    operator fun get(descriptor: Descriptor): T? =
-        cache.computeIfAbsent(descriptor) { Optional.ofNullable(resolve(it)) }.orElse(null)
+    operator fun get(descriptor: Descriptor): T? = cache.computeIfAbsent(descriptor) { Optional.ofNullable(resolve(it)) }.orElse(null)
 }
 
 /**
@@ -55,7 +54,7 @@ data class ResourceFields(
             }
             check(
                 updatedAtField.type == FieldDescriptor.Type.MESSAGE &&
-                        updatedAtField.messageType.fullName == Timestamp.getDescriptor().fullName,
+                    updatedAtField.messageType.fullName == Timestamp.getDescriptor().fullName,
             ) {
                 "${updatedAtField.fullName} is declared OUTPUT_ONLY but is a ${updatedAtField.type}, not google.protobuf.Timestamp"
             }

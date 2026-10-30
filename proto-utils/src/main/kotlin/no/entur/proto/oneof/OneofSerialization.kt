@@ -3,6 +3,7 @@ package no.entur.proto.oneof
 import com.google.protobuf.Descriptors
 import com.google.protobuf.Message
 import com.google.protobuf.util.JsonFormat
+import no.entur.proto.reflect.DescriptorCache
 
 /** Serialization of a protobuf oneof value. */
 data class OneofVariant(
@@ -19,6 +20,8 @@ data class OneofVariant(
 object OneofSerialization {
     private val printer: JsonFormat.Printer = JsonFormat.printer().preservingProtoFieldNames()
     private val parser: JsonFormat.Parser = JsonFormat.parser().ignoringUnknownFields()
+    private val oneofsByDescriptor =
+        DescriptorCache { descriptor: Descriptors.Descriptor -> descriptor.oneofs.associateBy { it.name } }
 
     /** [message]'s set variant of its `oneofName` oneof. */
     fun serialize(
@@ -26,11 +29,10 @@ object OneofSerialization {
         oneofName: String,
     ): OneofVariant {
         val field =
-            message.getOneofFieldDescriptor(oneofDescriptor(message.descriptorForType, oneofName))
+            message.getOneofFieldDescriptor(message.descriptorForType.oneofDescriptor(oneofName))
                 ?: error("${message.descriptorForType.fullName} has no field set for oneof '$oneofName'")
         requireMessageTyped(field, message.descriptorForType)
-        val variantMessage = message.getField(field) as Message
-        return OneofVariant(field.name, printer.print(variantMessage))
+        return OneofVariant(field.name, printer.print(message.getField(field) as Message))
     }
 
     /**
@@ -42,10 +44,11 @@ object OneofSerialization {
         variant: OneofVariant,
     ) {
         val field =
-            oneofDescriptor(builder.descriptorForType, oneofName).fields.find { it.name == variant.kind }
-                ?: error(
-                    "Unknown rule kind '${variant.kind}' for oneof '$oneofName' on ${builder.descriptorForType.fullName}.",
-                )
+            builder.descriptorForType
+                .oneofDescriptor(oneofName)
+                .fields
+                .find { it.name == variant.kind }
+                ?: error("Unknown field '${variant.kind}' for oneof '$oneofName' on ${builder.descriptorForType.fullName}.")
         requireMessageTyped(field, builder.descriptorForType)
         val fieldBuilder = builder.newBuilderForField(field)
         parser.merge(variant.json, fieldBuilder)
@@ -60,9 +63,7 @@ object OneofSerialization {
             "OneofSerialization only supports message-valued oneofs"
     }
 
-    private fun oneofDescriptor(
-        descriptor: Descriptors.Descriptor,
-        oneofName: String,
-    ) = descriptor.oneofs.find { it.name == oneofName }
-        ?: error("${descriptor.fullName} has no oneof named '$oneofName'")
+    private fun Descriptors.Descriptor.oneofDescriptor(oneofName: String) =
+        oneofsByDescriptor[this]?.get(oneofName)
+            ?: error("${this.fullName} has no oneof named '$oneofName'")
 }

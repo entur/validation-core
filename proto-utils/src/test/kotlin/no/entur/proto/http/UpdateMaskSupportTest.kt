@@ -3,6 +3,8 @@ package no.entur.proto.http
 import com.google.protobuf.FieldMask
 import com.google.protobuf.Message
 import com.google.protobuf.Timestamp
+import com.google.protobuf.fieldMask
+import com.google.protobuf.timestamp
 import no.entur.proto.testfixtures.v1.WidgetStatus
 import no.entur.proto.testfixtures.v1.detail
 import no.entur.proto.testfixtures.v1.part
@@ -112,13 +114,13 @@ internal class UpdateMaskSupportTest {
 
     @Test
     fun `resolveEffectiveMask returns a mask naming real paths unchanged, ignoring patch entirely`() {
-        val mask = FieldMask.newBuilder().addPaths("status").build()
+        val mask = fieldMask { paths += "status" }
         assertEquals(mask, UpdateMaskSupport.resolveEffectiveMask(widget { name = "d" }, mask))
     }
 
     @Test
     fun `resolveEffectiveMask returns an explicit full-replacement mask unchanged`() {
-        val mask = FieldMask.newBuilder().addPaths(UpdateMaskSupport.FULL_REPLACEMENT).build()
+        val mask = fieldMask { paths += UpdateMaskSupport.FULL_REPLACEMENT }
         assertEquals(mask, UpdateMaskSupport.resolveEffectiveMask(widget { name = "d" }, mask))
     }
 
@@ -134,7 +136,7 @@ internal class UpdateMaskSupportTest {
                     status = WidgetStatus.WIDGET_STATUS_ACTIVE
                 },
                 widget { name = "new" },
-                FieldMask.newBuilder().addPaths("name").build(),
+                fieldMask { paths += "name" },
             )
 
         assertEquals(
@@ -153,7 +155,7 @@ internal class UpdateMaskSupportTest {
             UpdateMaskSupport.applyUpdateMask(
                 widget { id = 1 },
                 widget { id = 999 },
-                FieldMask.newBuilder().addPaths("id").build(),
+                fieldMask { paths += "id" },
             )
 
         assertEquals(1, result.id)
@@ -161,12 +163,12 @@ internal class UpdateMaskSupportTest {
 
     @Test
     fun `applyUpdateMask silently drops an OUTPUT_ONLY path instead of applying it`() {
-        val originalTimestamp = Timestamp.newBuilder().setSeconds(1_000).build()
+        val originalTimestamp = timestamp { seconds = 1_000 }
         val result =
             UpdateMaskSupport.applyUpdateMask(
                 widget { updatedAt = originalTimestamp },
-                widget { updatedAt = Timestamp.newBuilder().setSeconds(2_000).build() },
-                FieldMask.newBuilder().addPaths("updated_at").build(),
+                widget { updatedAt = timestamp { seconds = 1_000 } },
+                fieldMask { paths += "updated_at" },
             )
 
         assertEquals(originalTimestamp, result.updatedAt)
@@ -179,7 +181,7 @@ internal class UpdateMaskSupportTest {
                 UpdateMaskSupport.applyUpdateMask(
                     widget { name = "d" },
                     widget { name = "d" },
-                    FieldMask.newBuilder().addPaths("bogusField").build(),
+                    fieldMask { paths += "bogusField" },
                 )
             }
         assertTrue(exception.message!!.contains("bogusField"))
@@ -207,7 +209,7 @@ internal class UpdateMaskSupportTest {
                             value = "new"
                         }
                 },
-                FieldMask.newBuilder().addPaths("detail.value").build(),
+                fieldMask { paths += "detail.value" },
             )
         assertEquals(
             detail {
@@ -236,7 +238,7 @@ internal class UpdateMaskSupportTest {
                             value = "new"
                         }
                 },
-                FieldMask.newBuilder().addPaths("detail").build(),
+                fieldMask { paths += "detail" },
             )
         assertEquals(
             detail {
@@ -260,7 +262,7 @@ internal class UpdateMaskSupportTest {
                             value = "old"
                         }
                 },
-                FieldMask.newBuilder().addPaths("detail.generated_note").build(),
+                fieldMask { paths += "detail.generated_note" },
             )
         assertEquals("", result.detail.generatedNote)
     }
@@ -276,7 +278,7 @@ internal class UpdateMaskSupportTest {
                     parts += part { id = 11 }
                 },
                 widget { parts += part { id = 12 } },
-                FieldMask.newBuilder().addPaths("parts").build(),
+                fieldMask { paths += "parts" },
             )
 
         assertEquals(listOf(12L), result.partsList.map { it.id })
@@ -289,7 +291,7 @@ internal class UpdateMaskSupportTest {
                 UpdateMaskSupport.applyUpdateMask(
                     widget { parts += part { id = 1 } },
                     widget { parts += part { id = 1 } },
-                    FieldMask.newBuilder().addPaths("parts.id").build(),
+                    fieldMask { paths += "parts.id" },
                 )
             }
         assertTrue(exception.message!!.contains("parts"))
@@ -306,7 +308,7 @@ internal class UpdateMaskSupportTest {
                     name = "old"
                 },
                 widget { status = WidgetStatus.WIDGET_STATUS_INACTIVE },
-                FieldMask.newBuilder().addPaths(UpdateMaskSupport.FULL_REPLACEMENT).build(),
+                fieldMask { paths += UpdateMaskSupport.FULL_REPLACEMENT },
             )
 
         assertEquals(widget { status = WidgetStatus.WIDGET_STATUS_INACTIVE }, result)
@@ -314,7 +316,7 @@ internal class UpdateMaskSupportTest {
 
     @Test
     fun `full replacement still drops IDENTIFIER and OUTPUT_ONLY fields, preserving current's values`() {
-        val originalTimestamp = Timestamp.newBuilder().setSeconds(1_000).build()
+        val originalTimestamp = timestamp { seconds = 1_000 }
         val result =
             UpdateMaskSupport.applyUpdateMask(
                 widget {
@@ -323,9 +325,9 @@ internal class UpdateMaskSupportTest {
                 },
                 widget {
                     id = 999
-                    updatedAt = Timestamp.newBuilder().setSeconds(2_000).build()
+                    updatedAt = timestamp { seconds = 2_000 }
                 },
-                FieldMask.newBuilder().addPaths(UpdateMaskSupport.FULL_REPLACEMENT).build(),
+                fieldMask { paths += UpdateMaskSupport.FULL_REPLACEMENT },
             )
 
         assertEquals(
@@ -353,7 +355,7 @@ internal class UpdateMaskSupportTest {
                     label = "l"
                     detail = detail { value = "new" }
                 },
-                FieldMask.newBuilder().addPaths(UpdateMaskSupport.FULL_REPLACEMENT).build(),
+                fieldMask { paths += UpdateMaskSupport.FULL_REPLACEMENT },
             )
         assertEquals(detail { value = "new" }, result.detail)
     }
@@ -367,7 +369,7 @@ internal class UpdateMaskSupportTest {
                     detail = detail { value = "v" }
                 },
                 part { label = "renamed" },
-                FieldMask.newBuilder().addPaths(UpdateMaskSupport.FULL_REPLACEMENT).build(),
+                fieldMask { paths += UpdateMaskSupport.FULL_REPLACEMENT },
             )
 
         assertFalse(result.hasDetail())
@@ -379,7 +381,7 @@ internal class UpdateMaskSupportTest {
             UpdateMaskSupport.applyUpdateMask(
                 widget { parts += part { id = 1 } },
                 widget { name = "renamed" },
-                FieldMask.newBuilder().addPaths(UpdateMaskSupport.FULL_REPLACEMENT).build(),
+                fieldMask { paths += UpdateMaskSupport.FULL_REPLACEMENT },
             )
 
         assertEquals(widget { name = "renamed" }, result)
@@ -407,11 +409,10 @@ internal class UpdateMaskSupportTest {
                 UpdateMaskSupport.applyUpdateMask(
                     widget { name = "d" },
                     widget { name = "d" },
-                    FieldMask
-                        .newBuilder()
-                        .addPaths(UpdateMaskSupport.FULL_REPLACEMENT)
-                        .addPaths("status")
-                        .build(),
+                    fieldMask {
+                        paths += UpdateMaskSupport.FULL_REPLACEMENT
+                        paths += "status"
+                    },
                 )
             }
         assertTrue(exception.message!!.contains("*"))

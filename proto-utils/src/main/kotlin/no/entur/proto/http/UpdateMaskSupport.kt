@@ -6,6 +6,7 @@ import com.google.protobuf.Descriptors.FieldDescriptor
 import com.google.protobuf.FieldMask
 import com.google.protobuf.InvalidProtocolBufferException
 import com.google.protobuf.Message
+import com.google.protobuf.fieldMask
 import com.google.protobuf.util.FieldMaskUtil
 import com.google.protobuf.util.FieldMaskUtil.MergeOptions
 import com.google.protobuf.util.JsonFormat
@@ -78,8 +79,8 @@ object UpdateMaskSupport {
         mask: FieldMask?,
     ): FieldMask =
         when {
-            mask == null -> FieldMask.newBuilder().addPaths(FULL_REPLACEMENT).build()
-            mask.pathsCount == 0 -> FieldMask.newBuilder().addAllPaths(patch.allFields.keys.map { it.name }).build()
+            mask == null -> fieldMask { paths += FULL_REPLACEMENT }
+            mask.pathsCount == 0 -> fieldMask { paths += patch.allFields.keys.map { it.name } }
             else -> mask
         }
 
@@ -100,9 +101,9 @@ object UpdateMaskSupport {
     ): T {
         val descriptor = current.descriptorForType
         val fullReplacement = mask.pathsList == listOf(FULL_REPLACEMENT)
-        val paths = if (fullReplacement) descriptor.fields.map { it.name } else mask.pathsList
-        val allowedPaths = paths.filter { isPathAllowed(descriptor, it) }
-        val filteredMask = FieldMask.newBuilder().addAllPaths(allowedPaths).build()
+        val candidatePaths = if (fullReplacement) descriptor.fields.map { it.name } else mask.pathsList
+        val allowedPaths = candidatePaths.filter { isPathAllowed(descriptor, it) }
+        val filteredMask = fieldMask { paths += allowedPaths }
 
         val mergeOptions = MergeOptions().setReplaceRepeatedFields(true).setReplaceMessageFields(fullReplacement)
         val builder = current.toBuilder()
