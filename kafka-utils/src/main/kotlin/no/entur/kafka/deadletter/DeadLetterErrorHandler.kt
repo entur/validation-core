@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory
 import org.springframework.kafka.listener.DefaultErrorHandler
 import org.springframework.kafka.listener.RetryListener
 import org.springframework.util.backoff.BackOff
+import org.springframework.util.backoff.BackOffExecution
 import org.springframework.util.backoff.ExponentialBackOff
 import org.springframework.util.backoff.FixedBackOff
 import java.time.Duration
@@ -51,6 +52,8 @@ fun deadLetteringErrorHandler(
     logger: Logger = LoggerFactory.getLogger("no.entur.kafka.deadletter.DeadLetterErrorHandler"),
 ): DefaultErrorHandler {
     val failedDeadLetters = FailedDeadLetters(retry)
+    val permanentIsGivenUp = recoverer != null || withoutDeadLetterTopic == WithoutDeadLetterTopic.LOG_AND_COMMIT
+    val latestFailures = LatestFailures()
     val handler =
         DefaultErrorHandler(
             { record, exception ->
@@ -85,8 +88,10 @@ fun deadLetteringErrorHandler(
     // that surfaces as a DeserializationException and retrying a failed publish with no backoff.
     handler.setClassifications(emptyMap(), true)
     handler.setBackOffFunction { record, exception ->
+        val permanent = classifier.isPermanent(exception)
         when {
-            !classifier.isPermanent(exception) -> retry.backOff()
+            !permanent && permanentIsGivenUp -> latestFailures.untilPermanent(record, retry.backOff())
+            !permanent -> retry.backOff()
             recoverer != null -> failedDeadLetters.backOffFor(record)
             withoutDeadLetterTopic == WithoutDeadLetterTopic.LOG_AND_COMMIT -> FixedBackOff(0, 0)
             else -> retry.backOff()
@@ -98,7 +103,8 @@ fun deadLetteringErrorHandler(
         // Spring logs a retried failure only at DEBUG, so a stalled partition would show nothing but lag.
         RetryListener { record, exception, deliveryAttempt ->
             val permanent = exception != null && classifier.isPermanent(exception)
-            if (permanent && (recoverer != null || withoutDeadLetterTopic == WithoutDeadLetterTopic.LOG_AND_COMMIT)) {
+            latestFailures.record(record, permanent)
+            if (permanent && permanentIsGivenUp) {
                 return@RetryListener
             }
             logger.warn(
@@ -115,6 +121,33 @@ fun deadLetteringErrorHandler(
         failedDeadLetters,
     )
     return handler
+}
+
+/**
+ * Spring keeps a record's first BackOff until the exception's class changes, and a registry outage and
+ * an unknown schema id are both a DeserializationException: without this, a record that turns
+ * permanent while being retried would be retried forever instead of given up on.
+ */
+private class LatestFailures {
+    private val permanentOffsets = ConcurrentHashMap<TopicPartition, Long>()
+
+    /** Called on every failed delivery, before Spring asks the BackOff for its next interval. */
+    fun record(
+        record: ConsumerRecord<*, *>,
+        permanent: Boolean,
+    ) {
+        if (permanent) permanentOffsets[record.topicPartition()] = record.offset() else permanentOffsets.remove(record.topicPartition())
+    }
+
+    fun untilPermanent(
+        record: ConsumerRecord<*, *>,
+        backOff: BackOff,
+    ) = BackOff {
+        val execution = backOff.start()
+        BackOffExecution {
+            if (permanentOffsets[record.topicPartition()] == record.offset()) BackOffExecution.STOP else execution.nextBackOff()
+        }
+    }
 }
 
 /**
@@ -157,9 +190,9 @@ private class FailedDeadLetters(
             record.offset() to attempts + 1
         }
     }
-
-    private fun ConsumerRecord<*, *>.topicPartition() = TopicPartition(topic(), partition())
 }
+
+private fun ConsumerRecord<*, *>.topicPartition() = TopicPartition(topic(), partition())
 
 /** The key is whatever the producer set, so newlines and control characters could forge log lines. */
 internal fun sanitizeForLog(value: Any?): String =

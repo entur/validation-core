@@ -24,6 +24,7 @@ import org.springframework.kafka.listener.ContainerProperties
 import org.springframework.kafka.listener.ContainerProperties.AckMode
 import org.springframework.kafka.listener.ListenerExecutionFailedException
 import org.springframework.kafka.listener.MessageListenerContainer
+import org.springframework.kafka.support.serializer.DeserializationException
 import org.springframework.messaging.converter.MessageConversionException
 import java.io.IOException
 import java.time.Duration
@@ -84,6 +85,22 @@ class DeadLetterErrorHandlerTest {
         assertEquals(ATTEMPTS, warnings.size)
         assertTrue(warnings[1].formattedMessage.contains("$TOPIC-0@$OFFSET, key=RUT failed on attempt 2"), warnings[1].formattedMessage)
         assertEquals(IOException::class.java.name, warnings[0].throwableProxy.cause.className)
+    }
+
+    @Test
+    fun `dead-letters a record whose failure turns permanent while it is being retried`() {
+        val handler = handler()
+        val decoding = { cause: Exception -> DeserializationException("decoding failed", RAW_VALUE, false, cause) }
+
+        assertThrows<NestedRuntimeException> {
+            handler.handleRemaining(listenerFailure(decoding(IOException("registry down"))), listOf(rawRecord()), consumer, container())
+        }
+        assertEquals(emptyList(), template.sent)
+
+        handler.handleRemaining(listenerFailure(decoding(UnprocessableException())), listOf(rawRecord()), consumer, container())
+
+        assertEquals(1, template.sent.size)
+        verifyCommitted()
     }
 
     @Test
