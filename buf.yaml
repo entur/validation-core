@@ -22,6 +22,12 @@ modules:
         - STANDARD
     breaking:
       use: []
+  - path: api-utils/src/test/proto
+    lint:
+      use:
+        - STANDARD
+    breaking:
+      use: []
   - path: exposed-utils/src/test/proto
     lint:
       use:

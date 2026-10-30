@@ -1,11 +1,13 @@
 description = "Spring WebFlux/Security support (OpenAPI spec serving, content negotiation, " +
-    "audience-validation and method-security configuration) shared by validation-platform services."
+    "audience-validation, method-security configuration, protobuf-JSON codecs and ProblemDetail " +
+    "error mapping) shared by validation-platform services."
 
 plugins {
-    // Opens @Configuration/@RestController classes (Kotlin classes are final by default, which
-    // breaks Spring's proxying of them) - see OpenApiController/AudienceValidationGuard/MethodSecurityConfig.
+    // Opens @Configuration/@RestController/@RestControllerAdvice classes (Kotlin classes are final
+    // by default, which breaks Spring's proxying of them).
     alias(libs.plugins.kotlin.spring)
     alias(libs.plugins.ktlint)
+    id("entur.test-proto-module")
 }
 
 dependencies {
@@ -24,6 +26,8 @@ dependencies {
     // DefaultAuthProviders resolves each tenant's trusted issuers - both appear in its public
     // signature, so `api` rather than `implementation`.
     api(libs.entur.oidc.rs.webflux.config)
+    api(project(":http-model"))
+    api(project(":proto-utils"))
 
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
     testImplementation("org.springframework.boot:spring-boot-starter-webflux-test")
@@ -32,12 +36,16 @@ dependencies {
 
 kotlin {
     compilerOptions {
-        // Only this module talks to Spring's JSR-305-annotated APIs from Kotlin - see proto-utils's
-        // own build.gradle.kts for why this is scoped here rather than repo-wide.
+        // Only this module talks to Spring's JSR-305-annotated APIs from Kotlin, so this is scoped
+        // here rather than set repo-wide.
         freeCompilerArgs.add("-Xjsr305=strict")
     }
 }
 
 ktlint {
     version.set(libs.versions.ktlint)
+    filter {
+        // protoc-generated Kotlin (build/generated/sources/proto/...) isn't our code to lint.
+        exclude { it.file.path.contains("${File.separator}generated${File.separator}") }
+    }
 }

@@ -24,6 +24,7 @@ dependencies {
     api(project(":validation-model"))
     api("org.springframework.kafka:spring-kafka")
     api("org.slf4j:slf4j-api")
+    implementation(project(":proto-utils"))
 
     // Only for FailureClassifier's RestClientException check; every consumer already has it at
     // runtime through its Confluent serdes, so it is not forced on them in a version of ours.

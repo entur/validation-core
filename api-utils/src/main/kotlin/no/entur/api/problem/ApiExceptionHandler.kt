@@ -1,8 +1,11 @@
-package no.entur.proto.problem
+package no.entur.api.problem
 
 import no.entur.http.proto.v1.ProblemDetail
 import no.entur.http.proto.v1.fieldViolation
 import no.entur.http.proto.v1.problemDetail
+import no.entur.proto.problem.ConflictException
+import no.entur.proto.problem.ElementNotFoundException
+import no.entur.proto.problem.PreconditionRequiredException
 import org.springframework.core.Ordered
 import org.springframework.core.annotation.Order
 import org.springframework.http.HttpHeaders

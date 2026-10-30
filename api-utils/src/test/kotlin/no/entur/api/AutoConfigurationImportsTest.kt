@@ -1,6 +1,8 @@
 package no.entur.api
 
+import no.entur.api.json.ProtoJsonCodecConfig
 import no.entur.api.openapi.OpenApiController
+import no.entur.api.problem.ApiExceptionHandler
 import no.entur.api.security.AudienceValidationGuard
 import no.entur.api.security.MethodSecurityConfig
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -27,6 +29,8 @@ internal class AutoConfigurationImportsTest {
                 OpenApiController::class.qualifiedName,
                 AudienceValidationGuard::class.qualifiedName,
                 MethodSecurityConfig::class.qualifiedName,
+                ProtoJsonCodecConfig::class.qualifiedName,
+                ApiExceptionHandler::class.qualifiedName,
             ),
             getConfigs(),
         )

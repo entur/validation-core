@@ -51,7 +51,6 @@ object ContentNegotiationSupport {
                     it.subtype == "*" -> 1
                     else -> 0
                 }
-            }
-            ?.qualityValue
+            }?.qualityValue
             ?: 0.0
 }

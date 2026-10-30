@@ -1,11 +1,11 @@
-package no.entur.proto.json
+package no.entur.api.json
 
 import com.google.protobuf.Message
-import no.entur.proto.testfixtures.v1.Part
-import no.entur.proto.testfixtures.v1.Widget
-import no.entur.proto.testfixtures.v1.WidgetStatus
-import no.entur.proto.testfixtures.v1.part
-import no.entur.proto.testfixtures.v1.widget
+import no.entur.api.testfixtures.v1.Part
+import no.entur.api.testfixtures.v1.Widget
+import no.entur.api.testfixtures.v1.WidgetStatus
+import no.entur.api.testfixtures.v1.part
+import no.entur.api.testfixtures.v1.widget
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertThrows

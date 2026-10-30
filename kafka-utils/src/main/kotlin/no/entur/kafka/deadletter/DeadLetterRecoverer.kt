@@ -1,11 +1,17 @@
 package no.entur.kafka.deadletter
 
 import com.google.protobuf.ByteString
+import com.google.protobuf.ByteString.copyFrom
 import com.google.protobuf.Message
-import com.google.protobuf.Timestamp
 import no.entur.kafka.CORRELATION_ID_HEADER
 import no.entur.kafka.correlationId
+import no.entur.proto.time.toProtoTimestamp
 import no.entur.validation.proto.v1.DeadLetter
+import no.entur.validation.proto.v1.DeadLetterKt.consumer
+import no.entur.validation.proto.v1.DeadLetterKt.failure
+import no.entur.validation.proto.v1.DeadLetterKt.header
+import no.entur.validation.proto.v1.DeadLetterKt.record
+import no.entur.validation.proto.v1.deadLetter
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.apache.kafka.clients.producer.ProducerRecord
 import org.apache.kafka.common.record.RecordBatch
@@ -60,20 +66,17 @@ class DeadLetterRecoverer(
         record: ConsumerRecord<*, *>,
         exception: Throwable?,
     ): DeadLetter =
-        DeadLetter
-            .newBuilder()
-            .apply {
-                this.record = recordOf(record, exception)
-                consumer =
-                    DeadLetter.Consumer
-                        .newBuilder()
-                        .setService(failingService)
-                        .setGroup(KafkaUtils.getConsumerGroupId().orEmpty())
-                        .build()
-                exception?.let { failure = failureOf(it) }
-                correlationId = record.headers().correlationId().orEmpty()
-                deadLetteredAt = Instant.now().toTimestamp()
-            }.build()
+        deadLetter {
+            this.record = recordOf(record, exception)
+            consumer =
+                consumer {
+                    service = failingService
+                    group = KafkaUtils.getConsumerGroupId().orEmpty()
+                }
+            exception?.let { failure = failureOf(it) }
+            correlationId = record.headers().correlationId().orEmpty()
+            deadLetteredAt = Instant.now().toProtoTimestamp()
+        }
 
     private fun failedMessage(record: ConsumerRecord<*, *>) =
         "Dead-letter publication to $topic failed for ${record.topic()}-${record.partition()}@${record.offset()}"
@@ -82,31 +85,39 @@ class DeadLetterRecoverer(
         const val MAX_STACKTRACE_CHARS = 16 * 1024
 
         val INTERNAL_HEADERS =
-            setOf(RAW_VALUE_HEADER, KafkaUtils.KEY_DESERIALIZER_EXCEPTION_HEADER, KafkaUtils.VALUE_DESERIALIZER_EXCEPTION_HEADER)
+            setOf(
+                RAW_VALUE_HEADER,
+                KafkaUtils.KEY_DESERIALIZER_EXCEPTION_HEADER,
+                KafkaUtils.VALUE_DESERIALIZER_EXCEPTION_HEADER,
+            )
 
         fun recordOf(
             record: ConsumerRecord<*, *>,
             exception: Throwable?,
         ): DeadLetter.Record =
-            DeadLetter.Record
-                .newBuilder()
-                .apply {
-                    topic = record.topic()
-                    partition = record.partition()
-                    offset = record.offset()
-                    if (record.timestamp() != RecordBatch.NO_TIMESTAMP) {
-                        timestamp = Instant.ofEpochMilli(record.timestamp()).toTimestamp()
+            record {
+                topic = record.topic()
+                partition = record.partition()
+                offset = record.offset()
+                if (record.timestamp() != RecordBatch.NO_TIMESTAMP) {
+                    timestamp = Instant.ofEpochMilli(record.timestamp()).toProtoTimestamp()
+                }
+                record.key()?.let { key = it.toString() }
+                record
+                    .headers()
+                    .filterNot { it.key() in INTERNAL_HEADERS }
+                    .forEach {
+                        headers +=
+                            header {
+                                key = it.key()
+                                it.value()?.let { value = copyFrom(it) }
+                            }
                     }
-                    record.key()?.let { key = it.toString() }
-                    record
-                        .headers()
-                        .filterNot { it.key() in INTERNAL_HEADERS }
-                        .forEach { addHeaders(header(it.key(), it.value())) }
-                    when (val value = record.value()) {
-                        is Message -> message = ProtoAny.pack(value)
-                        else -> consumedBytes(record, exception)?.let { rawValue = ByteString.copyFrom(it) }
-                    }
-                }.build()
+                when (val value = record.value()) {
+                    is Message -> message = ProtoAny.pack(value)
+                    else -> consumedBytes(record, exception)?.let { rawValue = copyFrom(it) }
+                }
+            }
 
         fun consumedBytes(
             record: ConsumerRecord<*, *>,
@@ -135,35 +146,16 @@ class DeadLetterRecoverer(
         fun failureOf(exception: Throwable): DeadLetter.Failure {
             var failed = exception
             while (failed is ListenerExecutionFailedException && failed.cause != null) failed = failed.cause!!
-            return DeadLetter.Failure
-                .newBuilder()
-                .apply {
-                    exceptionClass = failed.javaClass.name
-                    message = failed.message.orEmpty()
-                    failed.cause?.let { cause ->
-                        causeClass = cause.javaClass.name
-                        cause.message?.let { causeMessage = it }
-                    }
-                    stacktrace = failed.stackTraceToString().take(MAX_STACKTRACE_CHARS)
-                }.build()
+            return failure {
+                exceptionClass = failed.javaClass.name
+                message = failed.message.orEmpty()
+                failed.cause?.let { cause ->
+                    causeClass = cause.javaClass.name
+                    cause.message?.let { causeMessage = it }
+                }
+                stacktrace = failed.stackTraceToString().take(MAX_STACKTRACE_CHARS)
+            }
         }
-
-        fun header(
-            key: String,
-            value: ByteArray?,
-        ): DeadLetter.Header =
-            DeadLetter.Header
-                .newBuilder()
-                .setKey(key)
-                .apply { value?.let { setValue(ByteString.copyFrom(it)) } }
-                .build()
-
-        fun Instant.toTimestamp(): Timestamp =
-            Timestamp
-                .newBuilder()
-                .setSeconds(epochSecond)
-                .setNanos(nano)
-                .build()
 
         fun DeadLetter.keyOrNull(): String? = if (record.hasKey()) record.key else null
     }

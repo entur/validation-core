@@ -1,4 +1,4 @@
-package no.entur.proto.json
+package no.entur.api.json
 
 import com.google.protobuf.InvalidProtocolBufferException
 import com.google.protobuf.Message
