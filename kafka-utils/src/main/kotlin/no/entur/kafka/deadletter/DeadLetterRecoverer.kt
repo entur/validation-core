@@ -1,6 +1,5 @@
 package no.entur.kafka.deadletter
 
-import com.google.protobuf.ByteString
 import com.google.protobuf.ByteString.copyFrom
 import com.google.protobuf.Message
 import no.entur.kafka.CORRELATION_ID_HEADER

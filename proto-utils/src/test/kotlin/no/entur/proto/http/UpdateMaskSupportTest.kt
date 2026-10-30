@@ -2,7 +2,6 @@ package no.entur.proto.http
 
 import com.google.protobuf.FieldMask
 import com.google.protobuf.Message
-import com.google.protobuf.Timestamp
 import com.google.protobuf.fieldMask
 import com.google.protobuf.timestamp
 import no.entur.proto.testfixtures.v1.WidgetStatus
@@ -167,7 +166,7 @@ internal class UpdateMaskSupportTest {
         val result =
             UpdateMaskSupport.applyUpdateMask(
                 widget { updatedAt = originalTimestamp },
-                widget { updatedAt = timestamp { seconds = 1_000 } },
+                widget { updatedAt = timestamp { seconds = 2_000 } },
                 fieldMask { paths += "updated_at" },
             )
 
