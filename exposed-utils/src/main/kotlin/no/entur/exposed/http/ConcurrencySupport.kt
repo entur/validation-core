@@ -40,10 +40,9 @@ fun requireIfMatch(ifMatch: String?): String = ifMatch ?: throw PreconditionRequ
  * SQL form has to be the same check the JVM would make, so the precondition test and the write
  * itself can be one atomic statement (no read-then-write race).
  *
- * The hash itself is MD5 (built into vanilla Postgres as `md5()`) of `"<id>:<epoch-micros>"`,
- * hex-encoded and quoted as a strong ETag. Microsecond precision matches Postgres `timestamptz`'s
- * own resolution. This relies on `updated_at` being stored as `TIMESTAMPTZ` (with a time zone) so that
- * both `updated_at`'s epoch value and Postgres's `date_part('epoch', ...)` read back the same
+ * The hash itself is MD5 of `"<id>:<epoch-micros>"`, hex-encoded and quoted as a strong ETag.
+ * Microsecond precision matches Postgres `timestamptz`'s own resolution. This relies on `updated_at` being stored as
+ * `TIMESTAMPTZ` so that both `updated_at`'s epoch value and Postgres's `date_part('epoch', ...)` read back the same
  * absolute instant, independent of the JVM's or the database session's default time zone.
  */
 object ConcurrencySupport {

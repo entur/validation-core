@@ -9,9 +9,9 @@ import org.jetbrains.exposed.v1.core.Table
  * typically a proto enum's constant names, with its zero value and `UNRECOGNIZED` catch-all stripped
  * out by the caller before being passed in here - see [enumLabelsFor].
  *
- * Deliberately a [StringColumnType] - a `Column<String>` of the enum constant's name - rather than an
- * Exposed `customEnumeration`: [no.entur.exposed.paging.SortableProperty] only accepts a
- * [StringColumnType] for a proto `enum` field, and keyset-compares it against the raw cursor string.
+ * Deliberately a [StringColumnType] rather than an Exposed `customEnumeration`:
+ * [no.entur.exposed.paging.SortableProperty] only accepts a [StringColumnType] for a proto `enum` field, and
+ * keyset-compares it against the raw cursor string.
  *
  * r2dbc-postgresql binds a `String` parameter as `VARCHAR`, which Postgres won't implicitly coerce to
  * an enum type (`column "stage" is of type validation_stage but expression is of type character
