@@ -1,6 +1,9 @@
 package no.entur.http
 
 import com.google.protobuf.DescriptorProtos
+import no.entur.http.augmenters.OpenApiExampleAugmenter
+import no.entur.http.augmenters.OpenApiFailureAugmenter
+import no.entur.http.augmenters.OpenApiMetaPathAugmenter
 
 /**
  * Runs OpenAPI post-processing augmenters over one shared parse of a gnostic-generated openapi.yaml, in order. Each
@@ -12,7 +15,7 @@ class OpenApiAugmentationPipeline {
         fileDescriptorSet: DescriptorProtos.FileDescriptorSet,
         openApiYaml: String,
     ): String {
-        val files = buildFileDescriptors(fileDescriptorSet).values
+        val files = buildFileDescriptors(fileDescriptorSet)
         val registry = buildExtensionRegistry(files)
 
         val yaml = newOpenApiYaml()

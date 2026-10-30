@@ -1,9 +1,6 @@
 import org.gradle.api.tasks.Exec
 import java.io.File
 
-/**
- * Tries to look up a path to a given executable using the local user's mise shims.
- */
 fun Exec.miseExecutable(name: String): String {
     // Gradle's Exec resolves commandLine's executable against the Gradle JVM's
     // own PATH, not the PATH it hands the child process - so a bare tool name

@@ -1,10 +1,13 @@
-package no.entur.http
+package no.entur.http.augmenters
 
 import com.google.protobuf.DescriptorProtos
 import java.io.File
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import no.entur.http.buildExtensionRegistry
+import no.entur.http.buildFileDescriptors
+import no.entur.http.newOpenApiYaml
 
 /**
  * Exercises OpenApiExampleAugmenter against a small fixture message tree
@@ -105,7 +108,7 @@ class OpenApiExampleAugmenterTest {
     }
 
     private fun result(): Map<String, Any?> {
-        val files = buildFileDescriptors(compileFixture()).values
+        val files = buildFileDescriptors(compileFixture())
         val registry = buildExtensionRegistry(files)
         val spec: MutableMap<String, Any?> = newOpenApiYaml().load(openApiYaml)
         OpenApiExampleAugmenter().augment(files, registry, spec)

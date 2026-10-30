@@ -1,9 +1,14 @@
-package no.entur.http
+package no.entur.http.augmenters
 
 import com.google.protobuf.DescriptorProtos
 import com.google.protobuf.Descriptors
 import com.google.protobuf.ExtensionRegistry
 import com.google.protobuf.Message
+import no.entur.http.jsonSchemaType
+import no.entur.http.repeatedField
+import no.entur.http.requireExtension
+import no.entur.http.yamlMap
+import no.entur.http.yamlMapOrNull
 
 /**
  * Adds the responses an rpc's `(entur.http.v1.failure)` method options declare and the OpenAPI
@@ -38,12 +43,12 @@ class OpenApiFailureAugmenter {
                         linkedMapOf(
                             "description" to failure.description,
                             "content" to
-                                    linkedMapOf(
-                                        "application/problem+json" to
-                                                linkedMapOf(
-                                                    "schema" to linkedMapOf("\$ref" to "#/components/schemas/ProblemDetail"),
-                                                ),
-                                    ),
+                                linkedMapOf(
+                                    "application/problem+json" to
+                                        linkedMapOf(
+                                            "schema" to linkedMapOf("\$ref" to "#/components/schemas/ProblemDetail"),
+                                        ),
+                                ),
                         )
                 }
             }
@@ -56,17 +61,11 @@ class OpenApiFailureAugmenter {
     // (entur.http.v1.failure) only ever documents one specific, literal status code.
     private val HTTP_STATUS_CODE = Regex("^[1-5]\\d{2}$")
 
-    // descriptor.proto's own field numbers, used to build SourceCodeInfo.Location.path entries -
-    // documented there as alternating (field number, index) pairs locating a declaration in the
-    // file: FileDescriptorProto.message_type = 4, DescriptorProto.field = 2.
-    private val MESSAGE_TYPE_FIELD_NUMBER = 4
-    private val FIELD_FIELD_NUMBER = 2
-
     private fun collectFailures(
         files: Collection<Descriptors.FileDescriptor>,
         registry: ExtensionRegistry,
     ): Map<String, List<Failure>> {
-        val failureExt = registry.findImmutableExtensionByName("entur.http.v1.failure").descriptor
+        val failureExt = registry.requireExtension("entur.http.v1.failure")
         val result = LinkedHashMap<String, List<Failure>>()
         val duplicateErrors = mutableListOf<String>()
         files.flatMap { it.services }
@@ -111,12 +110,13 @@ class OpenApiFailureAugmenter {
         files: Collection<Descriptors.FileDescriptor>,
         registry: ExtensionRegistry,
     ): Map<String, Map<String, Any>> {
+        val fieldBehaviorExt = registry.requireExtension("google.api.field_behavior")
         val result = LinkedHashMap<String, Map<String, Any>>()
         val queue = ArrayDeque(listOf("entur.http.v1.ProblemDetail"))
         val queued = mutableSetOf("entur.http.v1.ProblemDetail")
         while (queue.isNotEmpty()) {
             val fullName = queue.removeFirst()
-            val (schema, referencedMessages) = buildSchema(files, fullName, registry)
+            val (schema, referencedMessages) = buildSchema(files, fullName, fieldBehaviorExt, registry)
             result[fullName.substringAfterLast('.')] = schema
             for (referenced in referencedMessages) {
                 if (queued.add(referenced)) queue.addLast(referenced)
@@ -131,9 +131,9 @@ class OpenApiFailureAugmenter {
     private fun buildSchema(
         files: Collection<Descriptors.FileDescriptor>,
         messageFullName: String,
+        fieldBehaviorExt: Descriptors.FieldDescriptor,
         registry: ExtensionRegistry,
     ): Pair<Map<String, Any>, List<String>> {
-        val fieldBehaviorExt = registry.findImmutableExtensionByName("google.api.field_behavior").descriptor
         val file = files.first { it.messageTypes.any { m -> m.fullName == messageFullName } }
         val messageProto = file.toProto()
         val messageIndex =
@@ -148,7 +148,16 @@ class OpenApiFailureAugmenter {
         val required = mutableListOf<String>()
         val referencedMessages = mutableListOf<String>()
         for (field in message.fields) {
-            val path = listOf(MESSAGE_TYPE_FIELD_NUMBER, messageIndex, FIELD_FIELD_NUMBER, field.index)
+            // descriptor.proto's own field numbers, used to build the SourceCodeInfo.Location.path
+            // entries `comments` is keyed by - documented there as alternating (field number, index)
+            // pairs locating a declaration in the file.
+            val path =
+                listOf(
+                    DescriptorProtos.FileDescriptorProto.MESSAGE_TYPE_FIELD_NUMBER,
+                    messageIndex,
+                    DescriptorProtos.DescriptorProto.FIELD_FIELD_NUMBER,
+                    field.index,
+                )
             val property = fieldSchema(field, referencedMessages)
             comments[path]?.let { property["description"] = it }
             properties[field.name] = property
@@ -160,7 +169,9 @@ class OpenApiFailureAugmenter {
         }
 
         val schema = LinkedHashMap<String, Any>()
-        comments[listOf(MESSAGE_TYPE_FIELD_NUMBER, messageIndex)]?.let { schema["description"] = it }
+        comments[listOf(DescriptorProtos.FileDescriptorProto.MESSAGE_TYPE_FIELD_NUMBER, messageIndex)]?.let {
+            schema["description"] = it
+        }
         if (required.isNotEmpty()) schema["required"] = required
         schema["type"] = "object"
         schema["properties"] = properties

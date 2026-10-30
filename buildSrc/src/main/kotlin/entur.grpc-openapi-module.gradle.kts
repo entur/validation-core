@@ -33,8 +33,6 @@ dependencies {
 val moduleProtoPath = "${project.name}/src/main/proto"
 val bufGenYaml = "${project.name}/buf.gen.yaml"
 
-// Generates Java/Kotlin message and service classes plus the OpenAPI YAML specification
-// from `.proto` files under src/main/proto.
 val bufGenerate =
     tasks.register<Exec>("bufGenerate") {
         description = "Generates Java/Kotlin message and service classes plus the OpenAPI YAML from src/main/proto via buf."
@@ -91,8 +89,7 @@ val bufBuildDescriptorSet =
         )
     }
 
-// Runs the custom AugmentOpenApi task to add additional information from proto annotations into the generated
-// OpenAPI YAML specification.
+// gnostic can't produce this on its own - see OpenApiFailureAugmenter/OpenApiExampleAugmenter.
 val augmentOpenApi =
     tasks.register<AugmentOpenApi>("augmentOpenApi") {
         group = "build"

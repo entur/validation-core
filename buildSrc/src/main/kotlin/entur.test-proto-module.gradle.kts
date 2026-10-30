@@ -18,7 +18,6 @@ plugins {
 val moduleTestProtoPath = "${project.name}/src/test/proto"
 val bufGenYaml = "${project.name}/buf.gen.yaml"
 
-// Generates Java/Kotlin message classes from `.proto` files under src/test/proto.
 val bufGenerate =
     tasks.register<Exec>("bufGenerate") {
         description = "Generates Java/Kotlin message classes for the test-fixtures proto from src/test/proto via buf."

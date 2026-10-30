@@ -1,4 +1,4 @@
-package no.entur.http
+package no.entur.http.augmenters
 
 /** Navigates a nested `Map<String, Any?>` (as loaded from YAML) by a chain of keys. */
 @Suppress("UNCHECKED_CAST")

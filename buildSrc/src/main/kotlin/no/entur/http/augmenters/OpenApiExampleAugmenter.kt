@@ -1,10 +1,13 @@
-package no.entur.http
+package no.entur.http.augmenters
 
 import com.google.protobuf.DescriptorProtos
 import com.google.protobuf.Descriptors
 import com.google.protobuf.ExtensionRegistry
 import com.google.protobuf.Message
-import org.gradle.internal.impldep.com.google.common.collect.Maps
+import no.entur.http.deepCopy
+import no.entur.http.requireExtension
+import no.entur.http.yamlMap
+import no.entur.http.yamlMapOrNull
 import org.yaml.snakeyaml.Yaml
 
 /**
@@ -128,7 +131,7 @@ class OpenApiExampleAugmenter {
         files: Collection<Descriptors.FileDescriptor>,
         registry: ExtensionRegistry,
     ): Map<String, Map<String, Any>> {
-        val propertyExt = registry.findImmutableExtensionByName("gnostic.openapi.v3.property").descriptor
+        val propertyExt = registry.requireExtension("gnostic.openapi.v3.property")
         val result = LinkedHashMap<String, Map<String, Any>>()
         files.flatMap { it.messageTypes }
             .forEach {
@@ -198,6 +201,6 @@ class OpenApiExampleAugmenter {
                         .map { oneof -> oneof.fields.map { it.jsonName }.toSet() }
                 },
             )
-        return Maps.filterValues(result) { it.isNotEmpty() }
+        return result.filterValues { it.isNotEmpty() }
     }
 }

@@ -12,14 +12,13 @@ import org.junit.jupiter.api.Test
  * `META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports` to be registered at all.
  */
 internal class AutoConfigurationImportsTest {
-    private fun getConfigs(): List<String> {
-        return javaClass.classLoader
+    private fun getConfigs(): List<String> =
+        javaClass.classLoader
             .getResourceAsStream("META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports")!!
             .bufferedReader()
             .readLines()
             .map { it.substringBefore('#').trim() }
             .filter { it.isNotEmpty() }
-    }
 
     @Test
     fun `the autoconfiguration imports file lists all bundled configs`() {

@@ -5,7 +5,7 @@ import org.junit.jupiter.api.Test
 import org.springframework.http.MediaType
 
 class ContentNegotiationSupportTest {
-    private val yaml = MediaType.parseMediaType("application/yaml")
+    private val yaml = MediaType.APPLICATION_YAML
     private val json = MediaType.APPLICATION_JSON
 
     @Test

@@ -1,5 +1,7 @@
-package no.entur.http
+package no.entur.http.augmenters
 
+import no.entur.http.yamlMap
+import no.entur.http.yamlMapOrNull
 import org.yaml.snakeyaml.Yaml
 
 /**

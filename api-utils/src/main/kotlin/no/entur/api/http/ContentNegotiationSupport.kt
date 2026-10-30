@@ -43,6 +43,8 @@ object ContentNegotiationSupport {
     ): Double =
         acceptedRanges
             .filter { candidate.isCompatibleWith(it) }
+            // Lower ranks first: a concrete "type/subtype" is more specific than "type/*", which is more
+            // specific than the "*/*" wildcard.
             .minByOrNull {
                 when {
                     it.type == "*" -> 2

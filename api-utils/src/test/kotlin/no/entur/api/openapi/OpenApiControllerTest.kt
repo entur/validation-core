@@ -16,30 +16,45 @@ class OpenApiControllerTest {
 
     @Test
     fun `getOpenApiSpec returns yaml by default`() {
-        client.get().uri("/v3/api-docs")
+        client
+            .get()
+            .uri("/v3/api-docs")
             .exchange()
-            .expectStatus().isOk
-            .expectHeader().contentTypeCompatibleWith(MediaType.APPLICATION_YAML)
-            .expectBody(String::class.java).consumeWith { assertTrue(it.responseBody!!.contains("openapi:")) }
+            .expectStatus()
+            .isOk
+            .expectHeader()
+            .contentTypeCompatibleWith(MediaType.APPLICATION_YAML)
+            .expectBody(String::class.java)
+            .consumeWith { assertTrue(it.responseBody!!.contains("openapi:")) }
     }
 
     @Test
     fun `getOpenApiSpec returns json when json is accepted`() {
-        client.get().uri("/v3/api-docs")
+        client
+            .get()
+            .uri("/v3/api-docs")
             .accept(MediaType.APPLICATION_JSON)
             .exchange()
-            .expectStatus().isOk
-            .expectHeader().contentTypeCompatibleWith(MediaType.APPLICATION_JSON)
-            .expectBody(String::class.java).consumeWith { assertTrue(it.responseBody!!.trimStart().startsWith("{")) }
+            .expectStatus()
+            .isOk
+            .expectHeader()
+            .contentTypeCompatibleWith(MediaType.APPLICATION_JSON)
+            .expectBody(String::class.java)
+            .consumeWith { assertTrue(it.responseBody!!.trimStart().startsWith("{")) }
     }
 
     @Test
     fun `getOpenApiSpec returns yaml when json is explicitly marked unacceptable`() {
-        client.get().uri("/v3/api-docs")
-            .header("Accept", "application/json;q=0")
+        client
+            .get()
+            .uri("/v3/api-docs")
+            .header("Accept", "application/json;q=0, */*;q=0.1")
             .exchange()
-            .expectStatus().isOk
-            .expectHeader().contentTypeCompatibleWith(MediaType.APPLICATION_YAML)
-            .expectBody(String::class.java).consumeWith { assertTrue(it.responseBody!!.contains("openapi:")) }
+            .expectStatus()
+            .isOk
+            .expectHeader()
+            .contentTypeCompatibleWith(MediaType.APPLICATION_YAML)
+            .expectBody(String::class.java)
+            .consumeWith { assertTrue(it.responseBody!!.contains("openapi:")) }
     }
 }

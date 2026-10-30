@@ -7,10 +7,10 @@ import com.google.protobuf.ExtensionRegistry
 import com.google.protobuf.Message
 
 /**
- * Finds all file descriptors in the given file descriptor set, recursively walking all imports. It always includes
- * "google/protobuf/descriptor.proto". Returns a map from file names to their file descriptor.
+ * Finds all file descriptors in the given file descriptor set, recursively walking all imports. Always includes
+ * "google/protobuf/descriptor.proto".
  */
-fun buildFileDescriptors(fileDescriptorSet: DescriptorProtos.FileDescriptorSet): Map<String, Descriptors.FileDescriptor> {
+fun buildFileDescriptors(fileDescriptorSet: DescriptorProtos.FileDescriptorSet): Collection<Descriptors.FileDescriptor> {
     val protosByName = fileDescriptorSet.fileList.associateBy { it.name }
     val built = LinkedHashMap<String, Descriptors.FileDescriptor>()
     // Must be the actual compiled-in FileDescriptor protobuf-java's own DescriptorProtos.MethodOptions/
@@ -27,12 +27,11 @@ fun buildFileDescriptors(fileDescriptorSet: DescriptorProtos.FileDescriptorSet):
     for (fileProto in fileDescriptorSet.fileList) {
         build(fileProto.name)
     }
-    return built
+    return built.values
 }
 
-/**
- * Builds an extension registry which spans all extensions defined in [fileDescriptors].
- */
+// Registers every extension across [fileDescriptors] - message-typed ones with a DynamicMessage
+// default instance, so DescriptorProtos.*.parseFrom(..., registry) can read them back by reflection.
 fun buildExtensionRegistry(fileDescriptors: Collection<Descriptors.FileDescriptor>): ExtensionRegistry {
     val registry = ExtensionRegistry.newInstance()
     fileDescriptors.flatMap { it.extensions + it.messageTypes.flatMap { it.extensions } }
@@ -47,11 +46,15 @@ fun buildExtensionRegistry(fileDescriptors: Collection<Descriptors.FileDescripto
 }
 
 /**
- * Gets all instances of a specific repeated field as a properly typed list.
+ * [fullName]'s extension, looked up from extensions this registry was built with - see [buildExtensionRegistry].
  */
+fun ExtensionRegistry.requireExtension(fullName: String): Descriptors.FieldDescriptor =
+    findImmutableExtensionByName(fullName)?.descriptor
+        ?: error("Extension '$fullName' not found in the descriptor set")
+
+// getField()'s declared return type is plain Object; reified T lets filterIsInstance verify every
+// element at runtime instead of trusting an unchecked cast to List<T>.
 inline fun <reified T> Message.repeatedField(field: Descriptors.FieldDescriptor): List<T> =
-    // getField()'s declared return type is plain Object; reified T lets filterIsInstance verify every
-    // element at runtime instead of trusting an unchecked cast to List<T>.
     (getField(field) as List<*>).filterIsInstance<T>()
 
 /**
