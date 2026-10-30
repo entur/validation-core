@@ -12,7 +12,7 @@ class OpenApiAugmentationPipeline {
         fileDescriptorSet: DescriptorProtos.FileDescriptorSet,
         openApiYaml: String,
     ): String {
-        val files = buildFileDescriptors(fileDescriptorSet)
+        val files = buildFileDescriptors(fileDescriptorSet).values
         val registry = buildExtensionRegistry(files)
 
         val yaml = newOpenApiYaml()

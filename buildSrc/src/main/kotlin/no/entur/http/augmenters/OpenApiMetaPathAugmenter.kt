@@ -34,7 +34,7 @@ class OpenApiMetaPathAugmenter {
                                     example: |
                                         openapi: 3.0.3
                                         info:
-                                            title: kittum
+                                            title: api-name
                                             version: 0.0.1
                                         paths: {}
                                         components:
@@ -45,7 +45,7 @@ class OpenApiMetaPathAugmenter {
                                     example:
                                         openapi: 3.0.3
                                         info:
-                                            title: kittum
+                                            title: api-name
                                             version: 0.0.1
                                         paths: {}
                                         components:

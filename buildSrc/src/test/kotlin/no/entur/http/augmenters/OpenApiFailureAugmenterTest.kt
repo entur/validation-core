@@ -69,7 +69,7 @@ class OpenApiFailureAugmenterTest {
         mockProtoFile: String = "mock/service.proto",
         openApiYaml: String = minimalOpenApiYaml,
     ): Map<String, Any?> {
-        val files = buildFileDescriptors(compileFixture(mockProtoFile))
+        val files = buildFileDescriptors(compileFixture(mockProtoFile)).values
         val registry = buildExtensionRegistry(files)
         val spec: MutableMap<String, Any?> = newOpenApiYaml().load(openApiYaml)
         OpenApiFailureAugmenter().augment(files, registry, spec)

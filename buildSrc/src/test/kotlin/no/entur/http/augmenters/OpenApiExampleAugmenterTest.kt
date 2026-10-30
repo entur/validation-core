@@ -105,7 +105,7 @@ class OpenApiExampleAugmenterTest {
     }
 
     private fun result(): Map<String, Any?> {
-        val files = buildFileDescriptors(compileFixture())
+        val files = buildFileDescriptors(compileFixture()).values
         val registry = buildExtensionRegistry(files)
         val spec: MutableMap<String, Any?> = newOpenApiYaml().load(openApiYaml)
         OpenApiExampleAugmenter().augment(files, registry, spec)
