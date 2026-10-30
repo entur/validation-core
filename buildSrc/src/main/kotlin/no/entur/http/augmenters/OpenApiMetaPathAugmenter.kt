@@ -1,5 +1,7 @@
-package no.entur.http
+package no.entur.http.augmenters
 
+import no.entur.http.yamlMap
+import no.entur.http.yamlMapOrNull
 import org.yaml.snakeyaml.Yaml
 
 /**
@@ -34,7 +36,7 @@ class OpenApiMetaPathAugmenter {
                                     example: |
                                         openapi: 3.0.3
                                         info:
-                                            title: kittum
+                                            title: api-name
                                             version: 0.0.1
                                         paths: {}
                                         components:
@@ -45,7 +47,7 @@ class OpenApiMetaPathAugmenter {
                                     example:
                                         openapi: 3.0.3
                                         info:
-                                            title: kittum
+                                            title: api-name
                                             version: 0.0.1
                                         paths: {}
                                         components:

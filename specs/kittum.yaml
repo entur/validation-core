@@ -41,7 +41,7 @@ paths:
                                 example: |
                                     openapi: 3.0.3
                                     info:
-                                        title: kittum
+                                        title: api-name
                                         version: 0.0.1
                                     paths: {}
                                     components:
@@ -52,7 +52,7 @@ paths:
                                 example:
                                     openapi: 3.0.3
                                     info:
-                                        title: kittum
+                                        title: api-name
                                         version: 0.0.1
                                     paths: {}
                                     components:

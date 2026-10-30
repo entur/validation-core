@@ -1,10 +1,13 @@
-package no.entur.http
+package no.entur.http.augmenters
 
 import com.google.protobuf.DescriptorProtos
 import java.io.File
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import no.entur.http.buildExtensionRegistry
+import no.entur.http.buildFileDescriptors
+import no.entur.http.newOpenApiYaml
 
 /**
  * Exercises OpenApiFailureAugmenter against the real entur.http.v1.Failure/ProblemDetail (from

@@ -3,19 +3,18 @@ package no.entur.api.http
 import org.springframework.http.MediaType
 
 /**
- * Picks which of several representations to serve for a raw `Accept` header value - domain-agnostic,
- * so any endpoint offering more than one representation of the same resource can reuse it.
+ * Picks which of several representations to serve for a raw `Accept` header value.
  */
 object ContentNegotiationSupport {
     /**
-     * Returns the candidate with the highest effective quality (its preference order is the
-     * default, and the tie-break, when [accept] is missing, blank, unparseable, or gives every
-     * candidate the same quality) - `0` for a candidate no range in [accept] matches at all. A
-     * candidate's effective quality is read off the *most specific* range in [accept] that matches
-     * it, per RFC 7231 section 5.3.2, rather than its highest-quality match: a specific `;q=0` exclusion
-     * (e.g. `application/yaml;q=0`) must win over a broader "any type" wildcard that would otherwise
-     * also match and carry a higher quality (e.g. `q=1`) - collapsing to "any q=0 entry, anywhere in
-     * the header, is simply removed" would let that wildcard resurrect the excluded candidate.
+     * Returns the first of [candidates] with the highest effective quality from parsing [accept] as an "Accept" header.
+     * A candidate's effective quality is read off the *most specific* range in [accept] that matches it (per RFC 7231
+     * section 5.3.2). A specific `;q=0` exclusion (e.g. `application/yaml;q=0`) wins over a broader
+     * "any type" wildcard (e.g. `application/\*;q=1`).
+     *
+     * If [candidates] is empty, throws [IllegalArgumentException].
+     *
+     * If [accept] is null, blank or unparseable, returns the first of the candidates.
      */
     fun bestMatch(
         accept: String?,
@@ -44,16 +43,14 @@ object ContentNegotiationSupport {
     ): Double =
         acceptedRanges
             .filter { candidate.isCompatibleWith(it) }
-            .minByOrNull { specificityRank(it) }
-            ?.qualityValue
+            // Lower ranks first: a concrete "type/subtype" is more specific than "type/*", which is more
+            // specific than the "*/*" wildcard.
+            .minByOrNull {
+                when {
+                    it.type == "*" -> 2
+                    it.subtype == "*" -> 1
+                    else -> 0
+                }
+            }?.qualityValue
             ?: 0.0
-
-    // Lower ranks first: a concrete "type/subtype" is more specific than "type/*", which is more
-    // specific than the "*/*" wildcard.
-    private fun specificityRank(mediaType: MediaType): Int =
-        when {
-            mediaType.type == "*" -> 2
-            mediaType.subtype == "*" -> 1
-            else -> 0
-        }
 }

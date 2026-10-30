@@ -1,4 +1,4 @@
-package no.entur.proto.json
+package no.entur.api.json
 
 import org.springframework.boot.autoconfigure.AutoConfiguration
 import org.springframework.http.codec.ServerCodecConfigurer

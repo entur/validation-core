@@ -23,7 +23,7 @@ class OpenApiControllerTest {
             .expectStatus()
             .isOk
             .expectHeader()
-            .contentTypeCompatibleWith(MediaType.parseMediaType("application/yaml"))
+            .contentTypeCompatibleWith(MediaType.APPLICATION_YAML)
             .expectBody(String::class.java)
             .consumeWith { assertTrue(it.responseBody!!.contains("openapi:")) }
     }
@@ -53,7 +53,7 @@ class OpenApiControllerTest {
             .expectStatus()
             .isOk
             .expectHeader()
-            .contentTypeCompatibleWith(MediaType.parseMediaType("application/yaml"))
+            .contentTypeCompatibleWith(MediaType.APPLICATION_YAML)
             .expectBody(String::class.java)
             .consumeWith { assertTrue(it.responseBody!!.contains("openapi:")) }
     }

@@ -62,7 +62,7 @@ class OneofSerializationTest {
         val variant = OneofVariant("some_future_value", "{}")
 
         val exception = assertThrows<IllegalStateException> { OneofSerialization.deserialize(builder, "variant", variant) }
-        assertTrue(exception.message!!.contains("Unknown rule kind 'some_future_value'"))
+        assertTrue(exception.message!!.contains("Unknown field 'some_future_value'"))
     }
 
     @Test

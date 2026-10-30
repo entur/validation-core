@@ -1,0 +1,25 @@
+syntax = "proto3";
+package no.entur.api.testfixtures.v1;
+
+option java_multiple_files = true;
+option java_package = "no.entur.api.testfixtures.v1";
+
+// Exercises ProtoJsonEncoder/ProtoJsonDecoder against a real generated Message - a nested,
+// repeated and enum-valued field each, same shapes proto-utils' own test fixture uses for the
+// same purpose elsewhere, deliberately duplicated rather than shared across the module boundary.
+message Widget {
+  int64 id = 1;
+  string name = 2;
+  WidgetStatus status = 3;
+  repeated Part parts = 4;
+}
+
+enum WidgetStatus {
+  WIDGET_STATUS_UNSPECIFIED = 0;
+  WIDGET_STATUS_ACTIVE = 1;
+  WIDGET_STATUS_INACTIVE = 2;
+}
+
+message Part {
+  string label = 1;
+}

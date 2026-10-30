@@ -1,8 +1,11 @@
-package no.entur.proto.problem
+package no.entur.api.problem
 
 import no.entur.http.proto.v1.ProblemDetail
 import no.entur.http.proto.v1.fieldViolation
 import no.entur.http.proto.v1.problemDetail
+import no.entur.proto.problem.ConflictException
+import no.entur.proto.problem.ElementNotFoundException
+import no.entur.proto.problem.PreconditionRequiredException
 import org.springframework.core.Ordered
 import org.springframework.core.annotation.Order
 import org.springframework.http.HttpHeaders
@@ -15,19 +18,19 @@ import org.springframework.web.bind.support.WebExchangeBindException
 import org.springframework.web.server.MissingRequestValueException
 
 /**
- * Maps exceptions raised anywhere in the API to a protobuf [ProblemDetail] response (RFC 7807),
- * so callers always get a structured, uniform error body instead of a container-specific
- * fallback: [ElementNotFoundException] to 404, [IllegalArgumentException] to 400,
- * [ConflictException] to 409, [PreconditionRequiredException] to 428,
- * [MissingRequestValueException] (WebFlux's own `required = true` enforcement, for any
- * `@RequestHeader`/`@RequestParam`/etc.) to 428 when it's specifically a missing `If-Match`
- * header and 400 otherwise, and [WebExchangeBindException] (Bean Validation failures) to 400
- * with per-field detail in [ProblemDetail.errors].
+ * Maps exceptions raised anywhere in the API to a protobuf [ProblemDetail] response (RFC 7807) with per-field detail
+ * in [ProblemDetail.errors], so callers always get a structured, uniform error body instead of a container-specific
+ * fallback:
+ * - [ElementNotFoundException] to 404
+ * - [IllegalArgumentException] to 400
+ * - [ConflictException] to 409
+ * - [PreconditionRequiredException] to 428
+ * - [MissingRequestValueException] to 428 when it's specifically a missing `If-Match` header and 400 otherwise,
+ * - [WebExchangeBindException] (Bean Validation failures) to 400.
  *
  * Boot's `spring.webflux.problemdetails.enabled` fallback advice also knows how to handle
- * [WebExchangeBindException] (with a generic, field-less body). Without an explicit [Order],
- * advice bean precedence is unspecified, so this must outrank it to keep [handleValidation]'s
- * field-level detail winning for exceptions this class explicitly handles.
+ * [WebExchangeBindException]. Without an explicit [Order], advice bean precedence is unspecified, so this must outrank
+ * it to keep [handleValidation]'s field-level detail winning for exceptions this class explicitly handles.
  *
  * Registered in every consuming Boot application via
  * `META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports`.
@@ -49,7 +52,7 @@ class ApiExceptionHandler {
         apiProblem(HttpStatus.PRECONDITION_REQUIRED, ex.message)
 
     /**
-     * WebFlux throws this generically for any missing required named value. Only the `If-Match`
+     * WebFlux throws [MissingRequestValueException] generically for any missing required named value. Only the `If-Match`
      * case gets [PreconditionRequiredException]'s 428; everything else falls back to a plain 400.
      */
     @ExceptionHandler(MissingRequestValueException::class)

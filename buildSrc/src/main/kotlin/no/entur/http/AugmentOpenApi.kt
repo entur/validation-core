@@ -9,10 +9,9 @@ import org.gradle.api.tasks.TaskAction
 import java.io.FileInputStream
 
 /**
- * Gradle wrapper around [OpenApiAugmentationPipeline] - see its doc comment, and
- * [OpenApiFailureAugmenter]/[OpenApiExampleAugmenter]'s own, for what this actually does and why.
- * Kept as thin file-in/file-out plumbing so the real logic stays testable without any Gradle API
- * involved.
+ * Gradle wrapper around [OpenApiAugmentationPipeline].
+ *
+ * Kept as thin file-in/file-out plumbing so the real logic stays testable without any Gradle API involved.
  */
 abstract class AugmentOpenApi : DefaultTask() {
     @get:InputFile

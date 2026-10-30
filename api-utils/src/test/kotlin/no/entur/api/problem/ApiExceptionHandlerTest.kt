@@ -1,4 +1,4 @@
-package no.entur.proto.problem
+package no.entur.api.problem
 
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test

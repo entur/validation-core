@@ -1,36 +1,30 @@
-package no.entur.http
+package no.entur.http.augmenters
 
 import com.google.protobuf.DescriptorProtos
 import com.google.protobuf.Descriptors
 import com.google.protobuf.ExtensionRegistry
 import com.google.protobuf.Message
+import no.entur.http.jsonSchemaType
+import no.entur.http.repeatedField
+import no.entur.http.requireExtension
+import no.entur.http.yamlMap
+import no.entur.http.yamlMapOrNull
 
 /**
- * Adds the responses an rpc's `(entur.http.v1.failure)` method options declare, and the OpenAPI
- * schema for the message those responses `$ref` (`entur.http.v1.ProblemDetail`), to a
- * gnostic-generated openapi.yaml. gnostic has no mechanism of its own for this: a message is only
- * turned into a `components.schemas` entry when it's reachable from some rpc's actual
- * request/response type, which an HTTP-transcoding-layer error type like ProblemDetail never is,
- * and gnostic's own extension surface (`gnostic.openapi.v3.operation`) can't be extended with a
- * terser, repo-specific option since it's a plain proto3 message with no extension range.
+ * Adds the responses an rpc's `(entur.http.v1.failure)` method options declare and the OpenAPI
+ * schema for the message those responses `$ref` (`entur.http.v1.ProblemDetail`) to a
+ * gnostic-generated openapi.yaml.
  */
 class OpenApiFailureAugmenter {
     fun augment(
-        files: Map<String, Descriptors.FileDescriptor>,
+        files: Collection<Descriptors.FileDescriptor>,
         registry: ExtensionRegistry,
         spec: MutableMap<String, Any?>,
     ) {
-        val failuresByOperationId = collectFailures(files, findExtension(files, "entur.http.v1.failure"), registry)
+        val failuresByOperationId = collectFailures(files, registry)
         val components = yamlMap(spec["components"])
         val schemas = yamlMap(components["schemas"])
-        schemas.putAll(
-            buildSchemas(
-                files,
-                "entur.http.v1.ProblemDetail",
-                findExtension(files, "google.api.field_behavior"),
-                registry,
-            ),
-        )
+        schemas.putAll(buildSchemas(files, registry))
         components["schemas"] = schemas.toSortedMap()
 
         for (pathItem in yamlMap(spec["paths"]).values) {
@@ -68,14 +62,14 @@ class OpenApiFailureAugmenter {
     private val HTTP_STATUS_CODE = Regex("^[1-5]\\d{2}$")
 
     private fun collectFailures(
-        files: Map<String, Descriptors.FileDescriptor>,
-        failureExt: Descriptors.FieldDescriptor,
+        files: Collection<Descriptors.FileDescriptor>,
         registry: ExtensionRegistry,
     ): Map<String, List<Failure>> {
+        val failureExt = registry.requireExtension("entur.http.v1.failure")
         val result = LinkedHashMap<String, List<Failure>>()
         val duplicateErrors = mutableListOf<String>()
-        for (file in files.values) {
-            for (service in file.services) {
+        files.flatMap { it.services }
+            .forEach { service ->
                 for (method in service.methods) {
                     val reparsed = DescriptorProtos.MethodOptions.parseFrom(method.options.toByteString(), registry)
                     val failureMessages = reparsed.repeatedField<Message>(failureExt)
@@ -89,9 +83,9 @@ class OpenApiFailureAugmenter {
                                 description = msg.getField(descriptor.findFieldByName("description")) as String,
                             )
                         }
-                    for (failure in failures) {
-                        require(HTTP_STATUS_CODE.matches(failure.code)) {
-                            "Operation '$operationId' declares (entur.http.v1.failure) with invalid code '${failure.code}' - must be a 3-digit HTTP status code"
+                    for ((code) in failures) {
+                        require(HTTP_STATUS_CODE.matches(code)) {
+                            "Operation '$operationId' declares (entur.http.v1.failure) with invalid code '$code' - must be a 3-digit HTTP status code"
                         }
                     }
                     val duplicateCodes = failures.groupingBy { it.code }.eachCount().filterValues { it > 1 }.keys
@@ -102,31 +96,24 @@ class OpenApiFailureAugmenter {
                     result[operationId] = failures
                 }
             }
-        }
-        // Collected across every operation before failing, rather than stopping at the first one
-        // found, so a single build failure surfaces every rpc that needs fixing instead of just
-        // the first one hit during iteration.
+        // Collected all failures, so a single build failure surfaces every rpc that needs
+        // fixing instead of just the first one hit during iteration.
         check(duplicateErrors.isEmpty()) { duplicateErrors.joinToString("\n") }
         return result
     }
 
     /**
-     * [buildSchema] for [rootMessageFullName], plus - transitively - every message type any of its
-     * fields (or its fields' fields, ...) refs, keyed by short name. A message-typed field like
-     * `ProblemDetail.errors` (`repeated FieldViolation`) only renders as a valid `$ref` if the
-     * referenced message has its own `components.schemas` entry too; gnostic never contributes one
-     * for a type unreachable from any rpc's request/response, which is exactly what every message
-     * reachable from here is.
+     * [buildSchema] for "entur.http.v1.ProblemDetail", plus - transitively - every message type any of its
+     * fields and sub-fields refs, keyed by short name.
      */
     private fun buildSchemas(
-        files: Map<String, Descriptors.FileDescriptor>,
-        rootMessageFullName: String,
-        fieldBehaviorExt: Descriptors.FieldDescriptor,
+        files: Collection<Descriptors.FileDescriptor>,
         registry: ExtensionRegistry,
-    ): Map<String, Map<String, Any?>> {
-        val result = LinkedHashMap<String, Map<String, Any?>>()
-        val queue = ArrayDeque(listOf(rootMessageFullName))
-        val queued = mutableSetOf(rootMessageFullName)
+    ): Map<String, Map<String, Any>> {
+        val fieldBehaviorExt = registry.requireExtension("google.api.field_behavior")
+        val result = LinkedHashMap<String, Map<String, Any>>()
+        val queue = ArrayDeque(listOf("entur.http.v1.ProblemDetail"))
+        val queued = mutableSetOf("entur.http.v1.ProblemDetail")
         while (queue.isNotEmpty()) {
             val fullName = queue.removeFirst()
             val (schema, referencedMessages) = buildSchema(files, fullName, fieldBehaviorExt, registry)
@@ -138,30 +125,39 @@ class OpenApiFailureAugmenter {
         return result
     }
 
-    /** [messageFullName]'s own schema, plus the full name of every message-typed field it declares (for [buildSchemas] to recurse into). */
+    /**
+     * [messageFullName]'s own schema, plus the full name of every message-typed field it declares.
+     * */
     private fun buildSchema(
-        files: Map<String, Descriptors.FileDescriptor>,
+        files: Collection<Descriptors.FileDescriptor>,
         messageFullName: String,
         fieldBehaviorExt: Descriptors.FieldDescriptor,
         registry: ExtensionRegistry,
-    ): Pair<Map<String, Any?>, List<String>> {
-        val file = files.values.first { it.messageTypes.any { m -> m.fullName == messageFullName } }
+    ): Pair<Map<String, Any>, List<String>> {
+        val file = files.first { it.messageTypes.any { m -> m.fullName == messageFullName } }
         val messageProto = file.toProto()
-        val messageIndex = messageProto.messageTypeList.indexOfFirst { it.name == messageFullName.substringAfterLast('.') }
+        val messageIndex =
+            messageProto.messageTypeList.indexOfFirst { it.name == messageFullName.substringAfterLast('.') }
         val message = file.findMessageTypeByName(messageProto.messageTypeList[messageIndex].name)
 
-        val comments = HashMap<List<Int>, String>()
-        for (location in messageProto.sourceCodeInfo.locationList) {
-            if (location.hasLeadingComments()) {
-                comments[location.pathList] = location.leadingComments.trim()
-            }
-        }
+        val comments = messageProto.sourceCodeInfo.locationList
+            .filter { it.hasLeadingComments() }
+            .associateBy ({ it.pathList }, { it.leadingComments.trim() })
 
-        val properties = LinkedHashMap<String, Any?>()
+        val properties = LinkedHashMap<String, Any>()
         val required = mutableListOf<String>()
         val referencedMessages = mutableListOf<String>()
         for (field in message.fields) {
-            val path = listOf(4, messageIndex, 2, field.index)
+            // descriptor.proto's own field numbers, used to build the SourceCodeInfo.Location.path
+            // entries `comments` is keyed by - documented there as alternating (field number, index)
+            // pairs locating a declaration in the file.
+            val path =
+                listOf(
+                    DescriptorProtos.FileDescriptorProto.MESSAGE_TYPE_FIELD_NUMBER,
+                    messageIndex,
+                    DescriptorProtos.DescriptorProto.FIELD_FIELD_NUMBER,
+                    field.index,
+                )
             val property = fieldSchema(field, referencedMessages)
             comments[path]?.let { property["description"] = it }
             properties[field.name] = property
@@ -172,8 +168,10 @@ class OpenApiFailureAugmenter {
             if (behaviors.any { it.name == "REQUIRED" }) required += field.name
         }
 
-        val schema = LinkedHashMap<String, Any?>()
-        comments[listOf(4, messageIndex)]?.let { schema["description"] = it }
+        val schema = LinkedHashMap<String, Any>()
+        comments[listOf(DescriptorProtos.FileDescriptorProto.MESSAGE_TYPE_FIELD_NUMBER, messageIndex)]?.let {
+            schema["description"] = it
+        }
         if (required.isNotEmpty()) schema["required"] = required
         schema["type"] = "object"
         schema["properties"] = properties
@@ -191,8 +189,8 @@ class OpenApiFailureAugmenter {
     private fun fieldSchema(
         field: Descriptors.FieldDescriptor,
         referencedMessages: MutableList<String>,
-    ): LinkedHashMap<String, Any?> {
-        val single: LinkedHashMap<String, Any?>
+    ): LinkedHashMap<String, Any> {
+        val single: LinkedHashMap<String, Any>
         if (field.javaType == Descriptors.FieldDescriptor.JavaType.MESSAGE) {
             referencedMessages += field.messageType.fullName
             single = linkedMapOf("\$ref" to "#/components/schemas/${field.messageType.name}")
@@ -208,23 +206,4 @@ class OpenApiFailureAugmenter {
             else -> single
         }
     }
-
-    private fun jsonSchemaType(field: Descriptors.FieldDescriptor): Pair<String, String?> =
-        when (field.type) {
-            Descriptors.FieldDescriptor.Type.STRING -> "string" to null
-            Descriptors.FieldDescriptor.Type.BOOL -> "boolean" to null
-            Descriptors.FieldDescriptor.Type.INT32,
-            Descriptors.FieldDescriptor.Type.SINT32,
-            Descriptors.FieldDescriptor.Type.SFIXED32, -> "integer" to "int32"
-            Descriptors.FieldDescriptor.Type.UINT32,
-            Descriptors.FieldDescriptor.Type.FIXED32, -> "integer" to "uint32"
-            Descriptors.FieldDescriptor.Type.INT64,
-            Descriptors.FieldDescriptor.Type.SINT64,
-            Descriptors.FieldDescriptor.Type.SFIXED64, -> "integer" to "int64"
-            Descriptors.FieldDescriptor.Type.UINT64,
-            Descriptors.FieldDescriptor.Type.FIXED64, -> "integer" to "uint64"
-            Descriptors.FieldDescriptor.Type.FLOAT -> "number" to "float"
-            Descriptors.FieldDescriptor.Type.DOUBLE -> "number" to "double"
-            else -> "string" to null
-        }
 }
