@@ -1,0 +1,78 @@
+syntax = "proto3";
+
+package entur.validation.v1;
+
+import "google/protobuf/any.proto";
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/entur/validation-core/gen/entur/validation/v1;validationv1";
+option java_multiple_files = true;
+option java_package = "no.entur.validation.proto.v1";
+
+// A record a service consumed but could never process.
+message DeadLetter {
+  // The record the service gave up on.
+  Record record = 1;
+  // Who gave up on the record.
+  Consumer consumer = 2;
+  // Why the service gave up on the record.
+  Failure failure = 3;
+  // The record's X-Correlation-Id, empty when it had none.
+  string correlation_id = 4;
+  // When the record was dead-lettered.
+  google.protobuf.Timestamp dead_lettered_at = 5;
+
+  // A consumed Kafka record.
+  message Record {
+    // The topic the record was consumed from.
+    string topic = 1;
+    // The partition the record was consumed from.
+    int32 partition = 2;
+    // The record's offset in its partition.
+    int64 offset = 3;
+    // The record's own timestamp, unset when it has none.
+    google.protobuf.Timestamp timestamp = 4;
+    // The record's key, unset when it has none.
+    optional string key = 5;
+    // The record's headers in their original order, duplicates kept, so it can be replayed exactly.
+    repeated Header headers = 6;
+    // The record's value. Neither is set for a tombstone.
+    oneof value {
+      // The bytes the record was consumed as, schema-id framing included, when it did not decode to a
+      // protobuf message: undecodable, or another format such as Avro.
+      bytes raw_value = 7;
+      // The protobuf message the record decoded to.
+      google.protobuf.Any message = 8;
+    }
+  }
+
+  // The consumer that gave up on a record.
+  message Consumer {
+    // The service, the same name it sends as ET-Client-Name.
+    string service = 1;
+    // The consumer group the service consumed the record in.
+    string group = 2;
+  }
+
+  // A Kafka record header.
+  message Header {
+    // The header's name.
+    string key = 1;
+    // The header's value, as raw bytes. Unset for a null value, which is distinct from an empty one.
+    optional bytes value = 2;
+  }
+
+  // The exception the service gave up on the record with.
+  message Failure {
+    // The exception's fully qualified class name.
+    string exception_class = 1;
+    // The exception's message, empty when it has none.
+    string message = 2;
+    // The fully qualified class name of the exception's direct cause, if any.
+    optional string cause_class = 3;
+    // The message of the exception's direct cause, if it has one.
+    optional string cause_message = 4;
+    // The exception's stack trace, causes included, truncated if very long.
+    string stacktrace = 5;
+  }
+}

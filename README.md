@@ -19,7 +19,7 @@ Eight Gradle modules, each published as its own Maven artifact, sharing one vers
 | [`proto-utils`](proto-utils) | — (hand-written, not proto-generated) | `no.entur.validation:proto-utils` | Domain-agnostic proto/HTTP plumbing (update masks, protobuf-JSON codecs, oneof serialization, `ProblemDetail` error mapping) for WebFlux services built on this schema. See "Non-schema modules" below. |
 | [`exposed-utils`](exposed-utils) | — (hand-written, not proto-generated) | `no.entur.validation:exposed-utils` | JetBrains Exposed-specific persistence support (ETag concurrency, cursor paging) built on `proto-utils`. See "Non-schema modules" below. |
 | [`api-utils`](api-utils) | — (hand-written, not proto-generated) | `no.entur.validation:api-utils` | Spring WebFlux/Security support (OpenAPI spec serving, content negotiation, audience-validation and method-security configuration) for services built on this schema. See "Non-schema modules" below. |
-| [`kafka-utils`](kafka-utils) | — (hand-written, not proto-generated) | `no.entur.validation:kafka-utils` | Kafka tracing: the `X-Correlation-Id`/`ET-Client-Name` headers every validation service stamps on what it produces, and the `correlationId`/`clientName` MDC entries it logs with while processing a consumed record. See "Non-schema modules" below. |
+| [`kafka-utils`](kafka-utils) | — (hand-written, not proto-generated) | `no.entur.validation:kafka-utils` | Kafka tracing (the `X-Correlation-Id`/`ET-Client-Name` headers every validation service stamps on what it produces, and the `correlationId`/`clientName` MDC entries it logs with while processing a consumed record) and dead-lettering (which listener failures are permanent, the `entur.validation.v1.DeadLetter` envelope they are published in, and the error handler that does it). See "Non-schema modules" below. |
 
 More packages (and modules) are expected as new APIs are added on top of the shared model.
 
@@ -144,13 +144,43 @@ module's packages are reachable by that app's own component scan - each one's ow
 modules are still published the same way as the other modules (root `subprojects {}` applies
 `maven-publish` to all of them uniformly), so releasing any of them needs no special handling.
 
-`kafka-utils` has no proto and no Spring beans: services wire its two interceptors in by hand.
-`TracingProducerInterceptor` goes on each `KafkaTemplate` (`setProducerInterceptor`). It sets
-`ET-Client-Name` to the producing service and, when the record has no `X-Correlation-Id` of its own,
-fills one in from the MDC, or `"not set"`. `TracingRecordInterceptor` goes on each listener container
-factory (`setRecordInterceptor`) and puts the consumed record's correlation id and sender's client
-name in the MDC while the listener runs, so whatever the listener produces carries the same id.
-Like the other non-schema modules it is published with the rest.
+`kafka-utils` has no proto of its own (the `DeadLetter` envelope is in `validation-model`, which it
+depends on) and no Spring beans: services wire its pieces in by hand.
+
+Tracing (`no.entur.kafka`):
+
+- `TracingProducerInterceptor` goes on each `KafkaTemplate` (`setProducerInterceptor`). It sets
+  `ET-Client-Name` to the producing service and, when the record has no `X-Correlation-Id` of its
+  own, fills one in from the MDC, or `"not set"`.
+- `TracingRecordInterceptor` goes on each listener container factory (`setRecordInterceptor`) and
+  puts the consumed record's correlation id and sender's client name in the MDC while the listener
+  runs, so whatever the listener produces carries the same id.
+
+Dead-lettering (`no.entur.kafka.deadletter`), one error handler per listener container, since it
+keeps retry state per partition:
+
+- `RawValueRetainingDeserializer` wraps the value deserializer, inside `ErrorHandlingDeserializer`,
+  and keeps the consumed bytes on a header, so a record that does not decode to a protobuf message,
+  even an undecodable one, is dead-lettered with the exact bytes it was consumed as.
+- `FailureClassifier` decides permanent vs. transient. It knows the failures every service shares
+  (undecodable bytes, a schema id the registry lacks, Spring's former fatal list are permanent;
+  registry, broker and I/O trouble transient); a service adds its own `Verdict`s through `overrides`
+  (verdicts that hold whatever they wrap) and `causes` (the innermost classified cause wins).
+- `DeadLetterRecoverer` publishes a `DeadLetter` - the record (coordinates, headers, and its value:
+  the decoded protobuf message as an `Any`, else the consumed bytes), the consumer, the correlation
+  id and the failure - through a `KafkaOperations<String, DeadLetter>`, which should carry a
+  Confluent protobuf serializer and the `TracingProducerInterceptor`. It throws when the publish
+  fails, so the offset stays uncommitted.
+- `deadLetteringErrorHandler(...)` dead-letters and commits permanent failures and retries transient
+  ones forever with capped backoff. It commits recovered records itself, so the container needs
+  AckMode `MANUAL_IMMEDIATE` (or `RECORD`). With no recoverer, permanent failures are retried too
+  (`WithoutDeadLetterTopic.RETRY`) or logged and committed (`LOG_AND_COMMIT`).
+
+`FailureClassifier` checks for the schema registry client's `RestClientException`, which this module
+only compiles against (from Confluent's Maven repository, scoped to the `io.confluent` group): a
+consumer using the dead-lettering classes must have `io.confluent:kafka-schema-registry-client` on
+its runtime classpath, as every service using Confluent's serdes already does. Like the other
+non-schema modules it is published with the rest.
 
 ## Versioning and publishing
 
