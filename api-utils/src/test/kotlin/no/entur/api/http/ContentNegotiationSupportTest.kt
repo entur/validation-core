@@ -26,7 +26,7 @@ class ContentNegotiationSupportTest {
     @Test
     fun `a q=0 entry is excluded rather than matched`() {
         // A client that explicitly marks JSON unacceptable must not get JSON back, even though
-        // "application/json" is present in the header - this is the bug the quality-value check fixes.
+        // "application/json" is present in the header.
         assertEquals(yaml, ContentNegotiationSupport.bestMatch("application/json;q=0, */*;q=0.1", yaml, json))
     }
 
