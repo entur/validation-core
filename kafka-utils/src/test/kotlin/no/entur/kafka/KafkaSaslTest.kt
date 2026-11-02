@@ -4,31 +4,29 @@ import io.confluent.kafka.schemaregistry.client.SchemaRegistryClientConfig
 import org.apache.kafka.common.config.SaslConfigs
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Test
 
 class KafkaSaslTest {
     private val auth = Authentication("alice", "s3cret")
 
     @Test
-    fun `broker properties carry the SCRAM mechanism and a JAAS config with the given credentials`() {
+    fun `broker properties carry the SCRAM mechanism and a credential-free JAAS config`() {
         val props = KafkaSasl.brokerProperties(auth)
 
         assertEquals("SCRAM-SHA-512", props[SaslConfigs.SASL_MECHANISM])
         assertEquals(
-            "org.apache.kafka.common.security.scram.ScramLoginModule required username=\"alice\" password=\"s3cret\";",
+            "org.apache.kafka.common.security.scram.ScramLoginModule required;",
             props[SaslConfigs.SASL_JAAS_CONFIG],
         )
     }
 
     @Test
-    fun `escapes a backslash and a double quote in the JAAS config, backslash first`() {
-        val props = KafkaSasl.brokerProperties(Authentication("ali\\ce", "s3\"cret"))
+    fun `broker properties point the SASL handshake at AuthenticationCallbackHandler, carrying auth`() {
+        val props = KafkaSasl.brokerProperties(auth)
 
-        assertEquals(
-            "org.apache.kafka.common.security.scram.ScramLoginModule required " +
-                "username=\"ali\\\\ce\" password=\"s3\\\"cret\";",
-            props[SaslConfigs.SASL_JAAS_CONFIG],
-        )
+        assertEquals(AuthenticationCallbackHandler::class.java, props[SaslConfigs.SASL_CLIENT_CALLBACK_HANDLER_CLASS])
+        assertSame(auth, props[AuthenticationCallbackHandler.AUTHENTICATION_CONFIG])
     }
 
     @Test

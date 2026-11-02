@@ -181,7 +181,9 @@ Kafka client configuration (`no.entur.kafka`):
 - `Authentication(user, password)` is one SCRAM user/password pair; `null` means an
   unauthenticated, local run.
 - `KafkaSasl` builds the SCRAM broker properties and the schema registry's basic-auth properties
-  from an `Authentication`.
+  from an `Authentication`. The broker properties carry no credentials in `sasl.jaas.config`
+  itself -- `AuthenticationCallbackHandler`, set as `sasl.client.callback.handler.class`, supplies
+  the username and password directly to the SASL handshake instead.
 - `KafkaClientProperties.common(...)` builds the bootstrap servers, security protocol and schema
   registry URL a client needs, plus both of `KafkaSasl`'s property sets when `auth` is non-null. A
   service still adds its own consumer- or producer-specific properties (offset reset, compression,
