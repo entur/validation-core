@@ -26,7 +26,7 @@ class KafkaSaslTest {
         val props = KafkaSasl.brokerProperties(auth)
 
         assertEquals(AuthenticationCallbackHandler::class.java, props[SaslConfigs.SASL_CLIENT_CALLBACK_HANDLER_CLASS])
-        assertSame(auth, props[AuthenticationCallbackHandler.AUTHENTICATION_CONFIG])
+        assertSame(auth, props[AUTHENTICATION_CONFIG])
     }
 
     @Test
