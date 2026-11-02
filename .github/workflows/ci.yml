@@ -24,9 +24,7 @@ jobs:
           version: "1.73.0"
 
       - uses: arduino/setup-protoc@v3
-        # buf.gen.yaml uses protoc_builtin for java/kotlin (see comments
-        # there) - buf shells out to protoc on PATH for those instead of a
-        # standalone plugin binary.
+        # protoc_builtin plugins make buf shell out to protoc on PATH.
         with:
           version: "36.1"
           repo-token: ${{ secrets.GITHUB_TOKEN }}
@@ -35,15 +33,12 @@ jobs:
         run: buf lint
 
       - name: buf format
-        # Fails if any .proto file isn't formatted per `buf format -w`.
         run: buf format --diff --exit-code
 
       - name: Check for updated buf-breaking-change label
         id: buf-breaking-label
         if: github.event_name == 'pull_request'
-        # github.event.pull_request.labels is frozen at the moment this run was triggered, so a
-        # label added afterward wouldn't show up there. Querying the PR's current labels
-        # live here picks up a just-added label immediately.
+        # Queried live: github.event.pull_request.labels misses labels added after the trigger.
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -54,9 +49,7 @@ jobs:
           fi
 
       - name: buf breaking
-        # Catches field renumbering/removal in either module immediately.
-        # No-ops on a push to main (comparing a ref against itself).
-        # Skip by adding the 'buf-breaking-change' label to the PR when the
+        # No-ops on a push to main. Skip with the 'buf-breaking-change' label when the
         # break is intentional and consumers are coordinated.
         if: steps.buf-breaking-label.outputs.skip != 'true'
         uses: bufbuild/buf-breaking-action@v1
@@ -65,15 +58,11 @@ jobs:
           against: "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git#branch=main"
 
       - name: Build and test
-        # Each API module's processResources depends on its copyOpenApiSpec, so
-        # this regenerates every committed spec under specs/ from the
-        # current .proto files.
+        # Also regenerates specs/, checked below.
         run: ./gradlew build
 
       - name: Test build logic
-        # buildSrc is a separate Gradle build (for the main build's own script classpath) -
-        # its own tests, e.g. of the entur.grpc-openapi-module convention plugin, never run
-        # as a side effect of `./gradlew build` above and need this separate invocation.
+        # buildSrc is a separate build; `./gradlew build` doesn't run its tests.
         run: ./gradlew :buildSrc:test
 
       - name: Verify generated OpenAPI specs are committed

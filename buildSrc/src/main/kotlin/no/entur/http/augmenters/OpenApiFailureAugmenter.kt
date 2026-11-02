@@ -10,11 +10,7 @@ import no.entur.http.requireExtension
 import no.entur.http.yamlMap
 import no.entur.http.yamlMapOrNull
 
-/**
- * Adds the responses an rpc's `(entur.http.v1.failure)` method options declare and the OpenAPI
- * schema for the message those responses `$ref` (`entur.http.v1.ProblemDetail`) to a
- * gnostic-generated openapi.yaml.
- */
+/** Adds the responses from each rpc's `(entur.http.v1.failure)` options, and the `ProblemDetail` schema they `$ref`. */
 class OpenApiFailureAugmenter {
     fun augment(
         files: Collection<Descriptors.FileDescriptor>,
@@ -96,16 +92,12 @@ class OpenApiFailureAugmenter {
                     result[operationId] = failures
                 }
             }
-        // Collected all failures, so a single build failure surfaces every rpc that needs
-        // fixing instead of just the first one hit during iteration.
+        // Report every bad rpc at once, not just the first.
         check(duplicateErrors.isEmpty()) { duplicateErrors.joinToString("\n") }
         return result
     }
 
-    /**
-     * [buildSchema] for "entur.http.v1.ProblemDetail", plus - transitively - every message type any of its
-     * fields and sub-fields refs, keyed by short name.
-     */
+    /** ProblemDetail's schema plus every message it references transitively, keyed by short name. */
     private fun buildSchemas(
         files: Collection<Descriptors.FileDescriptor>,
         registry: ExtensionRegistry,
@@ -125,9 +117,6 @@ class OpenApiFailureAugmenter {
         return result
     }
 
-    /**
-     * [messageFullName]'s own schema, plus the full name of every message-typed field it declares.
-     * */
     private fun buildSchema(
         files: Collection<Descriptors.FileDescriptor>,
         messageFullName: String,
@@ -148,9 +137,7 @@ class OpenApiFailureAugmenter {
         val required = mutableListOf<String>()
         val referencedMessages = mutableListOf<String>()
         for (field in message.fields) {
-            // descriptor.proto's own field numbers, used to build the SourceCodeInfo.Location.path
-            // entries `comments` is keyed by - documented there as alternating (field number, index)
-            // pairs locating a declaration in the file.
+            // SourceCodeInfo.Location.path: alternating (field number, index) pairs, per descriptor.proto.
             val path =
                 listOf(
                     DescriptorProtos.FileDescriptorProto.MESSAGE_TYPE_FIELD_NUMBER,
@@ -179,12 +166,8 @@ class OpenApiFailureAugmenter {
     }
 
     /**
-     * One field's own schema fragment. A message-typed field `$ref`s its type's own
-     * `components.schemas` entry (appending its full name to [referencedMessages] for the caller to
-     * recurse into) - wrapped in `allOf` for a singular field, since a bare `$ref` can't carry a
-     * sibling `description` in OpenAPI 3.0; a `repeated` field of either kind wraps in a `type:
-     * array` envelope instead, same as gnostic's own output for a `repeated` message field
-     * elsewhere in the spec.
+     * A singular message field's `$ref` is wrapped in `allOf`: OpenAPI 3.0 ignores a `description` next to
+     * a bare `$ref`. Message types are appended to [referencedMessages] for the caller to recurse into.
      */
     private fun fieldSchema(
         field: Descriptors.FieldDescriptor,

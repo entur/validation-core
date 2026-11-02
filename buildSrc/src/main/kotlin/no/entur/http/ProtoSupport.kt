@@ -6,16 +6,12 @@ import com.google.protobuf.DynamicMessage
 import com.google.protobuf.ExtensionRegistry
 import com.google.protobuf.Message
 
-/**
- * Finds all file descriptors in the given file descriptor set, recursively walking all imports. Always includes
- * "google/protobuf/descriptor.proto".
- */
+/** Builds every file in [fileDescriptorSet], resolving imports recursively. */
 fun buildFileDescriptors(fileDescriptorSet: DescriptorProtos.FileDescriptorSet): Collection<Descriptors.FileDescriptor> {
     val protosByName = fileDescriptorSet.fileList.associateBy { it.name }
     val built = LinkedHashMap<String, Descriptors.FileDescriptor>()
-    // Must be the actual compiled-in FileDescriptor protobuf-java's own DescriptorProtos.MethodOptions/
-    // FieldOptions classes use, or extension FieldDescriptors built on top of a freshly-parsed copy
-    // won't verify as belonging to those classes' message type when read back via reflection.
+    // Must be the compiled-in descriptor, or extensions built on a parsed copy won't match
+    // DescriptorProtos' option classes when read back by reflection.
     built["google/protobuf/descriptor.proto"] = DescriptorProtos.getDescriptor()
     fun build(name: String): Descriptors.FileDescriptor =
         built.getOrPut(name) {
@@ -30,8 +26,7 @@ fun buildFileDescriptors(fileDescriptorSet: DescriptorProtos.FileDescriptorSet):
     return built.values
 }
 
-// Registers every extension across [fileDescriptors] - message-typed ones with a DynamicMessage
-// default instance, so DescriptorProtos.*.parseFrom(..., registry) can read them back by reflection.
+// Message-typed extensions need a DynamicMessage default instance to be parsed back by reflection.
 fun buildExtensionRegistry(fileDescriptors: Collection<Descriptors.FileDescriptor>): ExtensionRegistry {
     val registry = ExtensionRegistry.newInstance()
     fileDescriptors.flatMap { it.extensions + it.messageTypes.flatMap { it.extensions } }
@@ -45,21 +40,14 @@ fun buildExtensionRegistry(fileDescriptors: Collection<Descriptors.FileDescripto
     return registry
 }
 
-/**
- * [fullName]'s extension, looked up from extensions this registry was built with - see [buildExtensionRegistry].
- */
 fun ExtensionRegistry.requireExtension(fullName: String): Descriptors.FieldDescriptor =
     findImmutableExtensionByName(fullName)?.descriptor
         ?: error("Extension '$fullName' not found in the descriptor set")
 
-// getField()'s declared return type is plain Object; reified T lets filterIsInstance verify every
-// element at runtime instead of trusting an unchecked cast to List<T>.
+// filterIsInstance checks each element instead of an unchecked cast to List<T>.
 inline fun <reified T> Message.repeatedField(field: Descriptors.FieldDescriptor): List<T> =
     (getField(field) as List<*>).filterIsInstance<T>()
 
-/**
- * The JSON Schema `type`/`format` pair a protobuf field's own [Descriptors.FieldDescriptor.Type] maps to.
- */
 fun jsonSchemaType(field: Descriptors.FieldDescriptor): Pair<String, String?> =
     when (field.type) {
         Descriptors.FieldDescriptor.Type.STRING -> "string" to null

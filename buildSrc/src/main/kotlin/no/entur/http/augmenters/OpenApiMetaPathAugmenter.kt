@@ -4,12 +4,8 @@ import no.entur.http.yamlMap
 import no.entur.http.yamlMapOrNull
 import org.yaml.snakeyaml.Yaml
 
-/**
- * Adds the `/v3/api-docs` path - the module's own generated OpenAPI spec, served back as YAML by
- * default or JSON when requested via the `Accept` header - to a gnostic-generated openapi.yaml.
- */
+/** Adds the `/v3/api-docs` path that serves the spec itself (YAML, or JSON via `Accept`). */
 class OpenApiMetaPathAugmenter {
-    // A literal fragment of the target spec.
     private val apiDocsPathYaml =
         """
         /v3/api-docs:
@@ -54,8 +50,7 @@ class OpenApiMetaPathAugmenter {
                                             schemas: {}
         """.trimIndent()
 
-    // gnostic itself populates the top-level `tags:` list from each real `service`'s own doc
-    // comment - there's no service behind this operation's "OpenApi" tag, so it's added here too.
+    // gnostic builds `tags:` from services; no service backs the "OpenApi" tag.
     private val apiDocsTagYaml =
         """
         name: OpenApi

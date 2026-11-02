@@ -2,12 +2,8 @@ import org.gradle.api.tasks.Exec
 import java.io.File
 
 fun Exec.miseExecutable(name: String): String {
-    // Gradle's Exec resolves commandLine's executable against the Gradle JVM's
-    // own PATH, not the PATH it hands the child process - so a bare tool name
-    // works in CI but not in a mise-based local setup.
-    // Resolving to the mise shim's absolute path (.mise.toml pins the
-    // versions) works in both, and prepending the shims dir to the child's PATH
-    // lets that process shell out to other mise-managed tools.
+    // Exec resolves the executable against the Gradle JVM's PATH, not the child's, so a bare name
+    // fails under mise locally. The shims dir also goes on the child's PATH for tools it shells out to.
     val miseShims = File(System.getProperty("user.home"), ".local/share/mise/shims")
     environment("PATH", "$miseShims${File.pathSeparator}${System.getenv("PATH")}")
     return File(miseShims, name).let { if (it.canExecute()) it.absolutePath else name }

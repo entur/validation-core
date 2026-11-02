@@ -18,7 +18,6 @@ dependencies {
 tasks.test {
     useJUnitPlatform()
     systemProperty("fixtureDir", layout.projectDirectory.dir("src/test/resources/fixture").asFile.absolutePath)
-    // buildSrc is its own separate Gradle build - this reaches into the main build's http-model
-    // module by relative path rather than any Gradle project reference.
+    // buildSrc is a separate build, so http-model is reached by path, not project reference.
     systemProperty("httpModelProtoDir", layout.projectDirectory.dir("../http-model/src/main/proto").asFile.canonicalPath)
 }

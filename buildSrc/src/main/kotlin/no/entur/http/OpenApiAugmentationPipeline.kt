@@ -5,11 +5,7 @@ import no.entur.http.augmenters.OpenApiExampleAugmenter
 import no.entur.http.augmenters.OpenApiFailureAugmenter
 import no.entur.http.augmenters.OpenApiMetaPathAugmenter
 
-/**
- * Runs OpenAPI post-processing augmenters over one shared parse of a gnostic-generated openapi.yaml, in order. Each
- * augmenter only mutates the parsed spec in place; parsing the YAML text and dumping it back out happens exactly once
- * here, rather than once per augmenter.
- */
+/** Runs the augmenters in order over one parse of gnostic's openapi.yaml; each mutates it in place. */
 class OpenApiAugmentationPipeline {
     fun augment(
         fileDescriptorSet: DescriptorProtos.FileDescriptorSet,

@@ -5,8 +5,6 @@ dependencies {
     api(project(":http-model"))
 }
 
-// `.proto` files under src/main/proto are the source of truth; `buf generate`
-// turns them into generated Java/Kotlin message classes.
 val bufGenerate = tasks.register<Exec>("bufGenerate") {
     description = "Generates Java/Kotlin message classes from src/main/proto via buf."
     group = "build"
@@ -22,11 +20,7 @@ sourceSets {
     main {
         java.srcDir("build/generated/source/proto/main/java")
         kotlin.srcDir("build/generated/source/proto/main/kotlin")
-        // Ship the .proto sources themselves in the jar (at the same
-        // entur/validation/v1/*.proto path they live at here), so consumers
-        // that need the raw schema - e.g. another repo's buf workspace
-        // importing this module's protos - can get it from this one
-        // published artifact instead of a separate one.
+        // Ship the .proto sources in the jar so other buf workspaces can import them.
         resources.srcDir("src/main/proto")
     }
 }

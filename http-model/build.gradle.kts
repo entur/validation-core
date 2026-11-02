@@ -4,8 +4,6 @@ dependencies {
     api(libs.bundles.protobuf)
 }
 
-// `.proto` files under src/main/proto are the source of truth; `buf generate`
-// turns them into generated Java/Kotlin message classes.
 val bufGenerate = tasks.register<Exec>("bufGenerate") {
     description = "Generates Java/Kotlin message classes from src/main/proto via buf."
     group = "build"
@@ -17,9 +15,8 @@ val bufGenerate = tasks.register<Exec>("bufGenerate") {
     commandLine(miseExecutable("buf"), "generate", "http-model/src/main/proto", "--template", "http-model/buf.gen.yaml", "--clean")
 }
 
-// Download gnostic proto files to generate Java/Kotlin classes for these, as protoc always embeds a reference to the
-// descriptor of any file whose custom options a .proto uses - entur.http.v1.ProblemDetail's own fields carry
-// (gnostic.openapi.v3.property) for OpenApiExampleAugmenter to read (see buildSrc/src/main/kotlin/OpenApiExampleAugmenter.kt).
+// ProblemDetail's fields use (gnostic.openapi.v3.property), and the generated code references the
+// descriptor of every file whose options it uses, so gnostic's annotations need Java/Kotlin classes too.
 val gnosticCommit =
     rootProject.file("buf.lock").readText()
         .substringAfter("name: buf.build/gnostic/gnostic")
@@ -47,8 +44,7 @@ sourceSets {
         kotlin.srcDir("build/generated/source/proto/main/kotlin")
         java.srcDir("build/generated/source/gnostic/main/java")
         kotlin.srcDir("build/generated/source/gnostic/main/kotlin")
-        // Ship the .proto sources themselves in the jar, same as validation-model, so any other
-        // buf workspace depending on this module's published artifact can import them directly.
+        // Ship the .proto sources in the jar so other buf workspaces can import them.
         resources.srcDir("src/main/proto")
     }
 }

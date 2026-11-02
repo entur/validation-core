@@ -14,13 +14,11 @@ repositories {
 }
 
 dependencies {
-    // Scope application BOMs to application/test classpaths, not tool configurations like ktlint -
-    // same reasoning as proto-utils.
+    // BOMs as `implementation`, so they don't leak into tool configurations like ktlint.
     implementation(platform(libs.spring.boot.bom))
     implementation(platform(libs.kotlin.bom))
 
-    // DeadLetter, RecordInterceptor, KafkaOperations/ConsumerRecordRecoverer/DefaultErrorHandler,
-    // Kafka's Headers/ProducerInterceptor and Logger appear in this module's public signatures.
+    // All three appear in this module's public API.
     api(project(":validation-model"))
     api("org.springframework.kafka:spring-kafka")
     api("org.slf4j:slf4j-api")
