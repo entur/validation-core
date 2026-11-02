@@ -16,7 +16,7 @@ class AuthenticationCallbackHandlerTest {
     private val handler =
         AuthenticationCallbackHandler().apply {
             configure(
-                mapOf(AuthenticationCallbackHandler.AUTHENTICATION_CONFIG to auth),
+                mapOf(AUTHENTICATION_CONFIG to auth),
                 "SCRAM-SHA-512",
                 emptyList(),
             )

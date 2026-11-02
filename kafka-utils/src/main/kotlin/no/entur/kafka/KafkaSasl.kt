@@ -17,7 +17,7 @@ data class Authentication(
     override fun toString(): String = "Authentication(user=$user, password=***)"
 }
 
-private const val AUTHENTICATION_CONFIG = "no.entur.kafka.authentication"
+const val AUTHENTICATION_CONFIG = "no.entur.kafka.authentication"
 
 /** SCRAM auth for the broker and the schema registry, both from the same authentication object. */
 object KafkaSasl {
