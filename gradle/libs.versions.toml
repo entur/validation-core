@@ -3,15 +3,16 @@ kotlin = "2.4.21"
 protobuf = "4.36.2"
 proto-google-common-protos = "2.78.0"
 assertj = "3.27.7"
-# Only proto-utils needs this stack (Spring/Exposed/coroutines) - the other modules are plain
-# protobuf message/schema libraries. Kept aligned with kittum's own catalog, its main consumer.
+# Only the hand-written modules need this stack: the Spring Boot BOM (api-utils, exposed-utils,
+# kafka-utils), Exposed and coroutines (exposed-utils) and ktlint (all four) - the schema modules are
+# plain protobuf message/schema libraries. Kept aligned with the team-validering services' own catalogs.
 springBoot = "4.1.1"
 exposed = "1.6.0"
 kotlinxCoroutines = "1.11.0"
 ktlintPlugin = "14.2.0"
 ktlint = "1.8.0"
 # Only api-utils needs this - AudienceValidationGuard's constructor takes its EnturAuthProperties
-# directly. Kept aligned with zagar/kittum's own catalogs, its two consumers.
+# directly. Kept aligned with the catalogs of the team-validering services that use it.
 oidcAuthResourceServer = "3.0.5"
 # Only kafka-utils needs this (compileOnly) - RestClientException. Kept aligned with the
 # Confluent serdes its consumers use.
