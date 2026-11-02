@@ -16,7 +16,7 @@ dependencies {
     // split out - and SortableProperty/PagingSupport's Column/Op, appear directly in this module's
     // public signatures, so `api` rather than `implementation`.
     api(libs.exposed.core)
-    // ConcurrencySupport (PreconditionRequiredException/ResourceFields/toProtoTimestamp), and the
+    // ConcurrencySupport (ResourceFields/toProtoTimestamp), and the
     // protobuf Message/Descriptors/FieldMask types this module's own signatures use, all come from
     // proto-utils.
     api(project(":proto-utils"))

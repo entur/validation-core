@@ -2,7 +2,6 @@ package no.entur.exposed.http
 
 import com.google.protobuf.Message
 import com.google.protobuf.Timestamp
-import no.entur.proto.problem.PreconditionRequiredException
 import no.entur.proto.reflect.ResourceFields
 import org.jetbrains.exposed.v1.core.Expression
 import org.jetbrains.exposed.v1.core.ExpressionWithColumnType
@@ -25,13 +24,6 @@ fun <T : Message> T.withETag(status: HttpStatus = HttpStatus.OK): ResponseEntity
         .status(status)
         .eTag(requireNotNull(ConcurrencySupport.etag(this)) { "${javaClass.simpleName} has no ETag-eligible id/updated_at fields" })
         .body(this)
-
-/**
- * Throws a [PreconditionRequiredException] if the argument is null. Otherwise, returns it. Controllers can use this
- * to verify that the required header `If-Match` on `Update`/`Delete` (RFC 7232 §3) is present.
- * See [PreconditionRequiredException]'s KDoc for why `@RequestHeader("If-Match", required = true)` is insufficient.
- */
-fun requireIfMatch(ifMatch: String?): String = ifMatch ?: throw PreconditionRequiredException("The If-Match header is required")
 
 /**
  * Computes the one canonical `ETag` hash for any resource shaped like `{ IDENTIFIER id, ..., OUTPUT_ONLY

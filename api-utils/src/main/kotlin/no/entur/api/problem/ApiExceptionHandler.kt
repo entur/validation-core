@@ -5,7 +5,6 @@ import no.entur.http.proto.v1.fieldViolation
 import no.entur.http.proto.v1.problemDetail
 import no.entur.proto.problem.ConflictException
 import no.entur.proto.problem.ElementNotFoundException
-import no.entur.proto.problem.PreconditionRequiredException
 import org.springframework.core.Ordered
 import org.springframework.core.annotation.Order
 import org.springframework.http.HttpHeaders
@@ -24,7 +23,6 @@ import org.springframework.web.server.MissingRequestValueException
  * - [ElementNotFoundException] to 404
  * - [IllegalArgumentException] to 400
  * - [ConflictException] to 409
- * - [PreconditionRequiredException] to 428
  * - [MissingRequestValueException] to 428 when it's specifically a missing `If-Match` header and 400 otherwise,
  * - [WebExchangeBindException] (Bean Validation failures) to 400.
  *
@@ -47,13 +45,9 @@ class ApiExceptionHandler {
     @ExceptionHandler(ConflictException::class)
     fun handleConflict(ex: ConflictException): ResponseEntity<ProblemDetail> = apiProblem(HttpStatus.CONFLICT, ex.message)
 
-    @ExceptionHandler(PreconditionRequiredException::class)
-    fun handlePreconditionRequired(ex: PreconditionRequiredException): ResponseEntity<ProblemDetail> =
-        apiProblem(HttpStatus.PRECONDITION_REQUIRED, ex.message)
-
     /**
      * WebFlux throws [MissingRequestValueException] generically for any missing required named value. Only the `If-Match`
-     * case gets [PreconditionRequiredException]'s 428; everything else falls back to a plain 400.
+     * case gets a 428 (RFC 6585); everything else falls back to a plain 400.
      */
     @ExceptionHandler(MissingRequestValueException::class)
     fun handleMissingRequestValue(ex: MissingRequestValueException): ResponseEntity<ProblemDetail> =
