@@ -15,8 +15,7 @@ class KafkaClientPropertiesTest {
                 bootstrapServers = "broker:9092",
                 securityProtocol = "PLAINTEXT",
                 schemaRegistry = "http://registry:8081",
-                user = "",
-                password = "",
+                null,
             )
 
         assertEquals("broker:9092", props[CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG])
@@ -25,23 +24,24 @@ class KafkaClientPropertiesTest {
     }
 
     @Test
-    fun `a blank user adds no SASL credentials`() {
-        val props = KafkaClientProperties.common("broker:9092", "PLAINTEXT", "http://registry:8081", user = "", password = "")
+    fun `a null auth adds no SASL credentials`() {
+        val props = KafkaClientProperties.common("broker:9092", "PLAINTEXT", "http://registry:8081", null)
 
         assertFalse(props.containsKey(SaslConfigs.SASL_JAAS_CONFIG))
     }
 
     @Test
-    fun `a non-blank user adds both broker and schema registry SASL credentials`() {
+    fun `an auth adds both broker and schema registry SASL credentials`() {
+        val auth = Authentication("alice", "s3cret")
         val props =
-            KafkaClientProperties.common("broker:9092", "SASL_SSL", "http://registry:8081", user = "alice", password = "s3cret")
+            KafkaClientProperties.common("broker:9092", "SASL_SSL", "http://registry:8081", auth)
 
         val expected =
             mapOf(
                 CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG to "broker:9092",
                 CommonClientConfigs.SECURITY_PROTOCOL_CONFIG to "SASL_SSL",
                 AbstractKafkaSchemaSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG to "http://registry:8081",
-            ) + KafkaSasl.brokerProperties("alice", "s3cret") + KafkaSasl.schemaRegistryProperties("alice", "s3cret")
+            ) + KafkaSasl.brokerProperties(auth) + KafkaSasl.schemaRegistryProperties(auth)
         assertEquals(expected, props)
     }
 }

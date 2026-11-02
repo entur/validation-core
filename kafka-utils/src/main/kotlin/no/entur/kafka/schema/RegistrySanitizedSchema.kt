@@ -7,10 +7,7 @@ import no.entur.proto.schema.withoutFieldOptionExtensionsDeep
 
 /**
  * [descriptor]'s schema with the REST-only `google.api.field_behavior`/gnostic OpenAPI annotations
- * stripped from its own file and, recursively, every file it imports - what registering a message
- * that is also a REST resource needs, since the schema registry has no subject (and this client no
- * permission) for a REST-only import like `gnostic/openapi/v3/annotations.proto`. The wire format
- * is unchanged; see [no.entur.proto.schema.withoutFieldOptionExtensionsDeep] for how.
+ * stripped from its own file and recursively every file it imports.
  */
 class RegistrySanitizedSchema(
     descriptor: Descriptor,
