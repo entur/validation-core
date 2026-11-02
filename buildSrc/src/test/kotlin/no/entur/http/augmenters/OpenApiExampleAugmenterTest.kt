@@ -10,19 +10,13 @@ import no.entur.http.buildFileDescriptors
 import no.entur.http.newOpenApiYaml
 
 /**
- * Exercises OpenApiExampleAugmenter against a small fixture message tree
- * (buildSrc/src/test/resources/fixture/mock/example_messages.proto) and a minimal stand-in for
- * gnostic's own annotations.proto (buildSrc/src/test/resources/fixture/gnostic/openapi/v3/) -
- * the augmenter only ever navigates the `property`/`example`/`yaml` fields by name, so a
- * hand-rolled stand-in exercises the same code path as the real gnostic schema without a
- * network/BSR dependency in this fixture, same as OpenApiFailureAugmenterTest's stand-in for
- * google/api/field_behavior.proto.
+ * Uses a stand-in for gnostic's annotations.proto: the augmenter only reads `property`/`example`/`yaml`
+ * by name, so this avoids a BSR dependency.
  */
 class OpenApiExampleAugmenterTest {
     private val fixtureDir = File(System.getProperty("fixtureDir") ?: error("fixtureDir system property not set"))
 
-    // Mirrors what OpenApiFailureAugmenter itself hands off for a schema it synthesizes from a
-    // descriptor rather than gnostic's own codegen: properties with no "example" of their own yet.
+    // Like the schemas OpenApiFailureAugmenter synthesizes: no "example" yet.
     private val openApiYaml =
         """
         openapi: 3.0.3

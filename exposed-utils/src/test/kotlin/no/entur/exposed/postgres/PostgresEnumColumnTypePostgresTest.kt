@@ -21,13 +21,7 @@ import org.testcontainers.junit.jupiter.Container
 import org.testcontainers.junit.jupiter.Testcontainers
 import org.testcontainers.postgresql.PostgreSQLContainer
 
-/**
- * [PostgresEnumColumnType] against a real Postgres: checks that [PostgresEnumColumnType.parameterMarker]'s
- * explicit `::typeName` cast actually lets r2dbc-postgresql's `VARCHAR`-bound parameter satisfy a
- * genuine Postgres enum column (rather than failing with `column ... is of type ... but expression
- * is of type character varying`), and that the stored value reads back unchanged.
- * [PostgresEnumColumnTypeTest] covers everything else without a DB.
- */
+/** Only a real Postgres can show the `::typeName` cast lets a `VARCHAR`-bound parameter into an enum column. */
 @Testcontainers
 internal class PostgresEnumColumnTypePostgresTest {
     @Test
@@ -65,7 +59,7 @@ internal class PostgresEnumColumnTypePostgresTest {
         assertEquals("'NOT_A_LABEL' is not a valid my_status - must be one of [ALPHA, BRAVO]", exception.message)
     }
 
-    /** A table with one genuine Postgres enum column, created via raw SQL like a Flyway migration would. */
+    /** Created via raw SQL, as a Flyway migration would. */
     private object StatusTable : Table("status_table") {
         val id = integer("id")
         val status = postgresEnum("status", "my_status", setOf("ALPHA", "BRAVO"))

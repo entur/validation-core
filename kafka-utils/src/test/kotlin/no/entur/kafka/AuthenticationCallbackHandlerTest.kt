@@ -47,12 +47,7 @@ class AuthenticationCallbackHandlerTest {
         }
     }
 
-    /**
-     * Not a mock of the contract: a real `javax.security.sasl.SaslClient` for Kafka's own
-     * SCRAM-SHA-512 mechanism, run against this handler exactly as `ScramSaslClient` runs it
-     * during an actual broker handshake -- proof the username reaches Kafka's real SASL client,
-     * not just this handler's own idea of the callback contract.
-     */
+    /** Uses Kafka's real SCRAM `SaslClient`, so it tests the actual callback contract, not our idea of it. */
     @Test
     fun `a real Kafka SCRAM SASL client pulls the username from this handler`() {
         ScramLoginModule() // Registers ScramSaslClientProvider as a side effect of class loading.

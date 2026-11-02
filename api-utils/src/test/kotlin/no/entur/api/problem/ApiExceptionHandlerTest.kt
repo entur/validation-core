@@ -6,12 +6,7 @@ import org.springframework.core.MethodParameter
 import org.springframework.http.HttpStatus
 import org.springframework.web.server.MissingRequestValueException
 
-/**
- * Unit coverage for [ApiExceptionHandler.handleMissingRequestValue] - the one mapping in the class
- * that branches on more than just the exception's type, so it can't be eyeballed correct the way the
- * other handlers can. [MissingRequestValueException] needs a real [MethodParameter] to construct,
- * built by reflecting on [dummyTarget] below rather than any production method.
- */
+/** Only [ApiExceptionHandler.handleMissingRequestValue] branches on more than the exception type. */
 internal class ApiExceptionHandlerTest {
     private val handler = ApiExceptionHandler()
 

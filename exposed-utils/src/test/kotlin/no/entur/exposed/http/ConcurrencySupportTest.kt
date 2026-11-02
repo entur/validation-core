@@ -8,11 +8,6 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import java.time.Instant
 
-/**
- * Unit-level coverage for [ConcurrencySupport.etag]'s reflective `Message` overload - no DB, no Spring
- * context, since none of this depends on persistence. [ConcurrencySupportPostgresTest] covers the
- * SQL/JVM cross-check against a real Postgres.
- */
 internal class ConcurrencySupportTest {
     @Test
     fun `compute(message) hashes a string IDENTIFIER field the same way as compute(id, updatedAt)`() {

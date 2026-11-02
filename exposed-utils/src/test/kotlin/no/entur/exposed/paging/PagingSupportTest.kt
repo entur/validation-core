@@ -10,13 +10,6 @@ import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Test
 import java.time.OffsetDateTime
 
-/**
- * Unit-level coverage for [PagingSupport] - no DB, no Spring context, since none of the logic
- * tested here (`order_by` parsing, cursor encode/decode) depends on persistence. The keyset
- * predicate [PagingSupport.keysetCondition] itself builds is checked against a real Postgres in
- * [PagingSupportPostgresTest], since what matters there is the rows it actually selects, not its
- * in-memory shape.
- */
 internal class PagingSupportTest {
     @Test
     fun `no order_by falls back to just the id, ascending`() {

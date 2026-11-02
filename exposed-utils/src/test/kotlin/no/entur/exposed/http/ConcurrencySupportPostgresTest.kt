@@ -25,9 +25,7 @@ import java.time.Instant
 import java.time.ZoneOffset
 import java.time.temporal.ChronoUnit
 
-/**
- * `ConcurrencySupportTest` using a PostgreSQL database to check ETag consistency with JVM.
- */
+/** The SQL-computed ETag must match the JVM-computed one bit for bit. */
 @Testcontainers
 internal class ConcurrencySupportPostgresTest {
     @Test
@@ -74,14 +72,14 @@ internal class ConcurrencySupportPostgresTest {
             assertEquals(ConcurrencySupport.etag(id, updatedAt), sqlComputed)
         }
 
-    /** A minimal `{ id, updated_at }` table - the SQL-side counterpart to `test.proto`'s `Label` message. */
+    /** `test.proto`'s `Label`. */
     private object LabelTable : Table("label") {
         val id = varchar("id", 64)
         val updatedAt = timestampWithTimeZone("updated_at")
         override val primaryKey = PrimaryKey(id)
     }
 
-    /** Same as [LabelTable], but with a numeric id - the SQL-side counterpart to `test.proto`'s `Widget` message. */
+    /** `test.proto`'s `Widget`: a numeric id. */
     private object WidgetTable : Table("widget") {
         val id = long("id")
         val updatedAt = timestampWithTimeZone("updated_at")

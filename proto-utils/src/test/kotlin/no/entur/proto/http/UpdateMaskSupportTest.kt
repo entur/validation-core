@@ -15,15 +15,8 @@ import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
-/**
- * Unit coverage for [UpdateMaskSupport], exercised against the `widget.proto` test fixture types,
- * which already have the camelCase/multi-segment/`IDENTIFIER`/`OUTPUT_ONLY`/`repeated` shapes needed
- * to cover the class's documented behavior - including, per the class doc, that `update_mask`
- * *absent from the request entirely* and *present but empty* are two different things (full
- * replacement vs. an ordinary partial update), not one "no mask" case.
- */
 internal class UpdateMaskSupportTest {
-    // parseUpdateMask
+    // parse
 
     @Test
     fun `parseUpdateMask returns null when the param is absent entirely`() {
@@ -65,10 +58,7 @@ internal class UpdateMaskSupportTest {
 
     @Test
     fun `parseUpdateMask rejects a value that breaks the underlying JSON parse with an IllegalArgumentException, not a 500`() {
-        // "\q" isn't a valid JSON escape sequence, so naively wrapping raw as "\"$raw\"" produces
-        // invalid JSON - JsonFormat.parser().merge throws InvalidProtocolBufferException for this,
-        // which must not reach the caller unwrapped: ApiExceptionHandler has no mapping for it, so
-        // it'd otherwise surface as a 500 instead of the documented 400.
+        // "\q" is an invalid JSON escape; unwrapped, the parser's exception would surface as a 500.
         val exception =
             assertThrows(IllegalArgumentException::class.java) {
                 UpdateMaskSupport.parse("""foo\qbar""")
@@ -202,8 +192,7 @@ internal class UpdateMaskSupportTest {
                 part {
                     detail =
                         detail {
-                            // Both fields set on the patch, but the mask only names detail.value below -
-                            // generated_note must be ignored even though the patch does carry a value for it.
+                            // Set on the patch but not named by the mask, so it must be ignored.
                             generatedNote = "patched note"
                             value = "new"
                         }

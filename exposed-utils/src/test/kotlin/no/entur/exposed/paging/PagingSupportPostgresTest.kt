@@ -33,20 +33,10 @@ import org.testcontainers.junit.jupiter.Testcontainers
 import org.testcontainers.postgresql.PostgreSQLContainer
 import java.time.OffsetDateTime
 
-/**
- * [PagingSupport.keysetCondition] against a real Postgres: [PagingSupportTest] covers everything
- * else in [PagingSupport] without a DB, but the keyset predicate's own correctness - does it
- * actually select the right "next window" of rows, with ties on an earlier sort key broken by the
- * next one - can only be checked by actually running it. [WidgetTable] covers a single-column id;
- * [LineItemTable] covers a genuine composite one.
- */
+/** The keyset predicate's correctness can only be checked by running it; [PagingSupportTest] covers the rest. */
 @Testcontainers
 internal class PagingSupportPostgresTest {
-    /**
-     * Seeds rows with deliberate duplicates on `status` (and, within a `status`, on `name`), so a
-     * two/three-field sort has real ties to break - a single-column sort could never expose a bug
-     * in [PagingSupport.keysetCondition]'s multi-key disjunction.
-     */
+    /** Duplicates on `status` and `name`, so a multi-field sort has real ties to break. */
     private val seeded =
         listOf(
             "bravo" to WidgetStatus.WIDGET_STATUS_ACTIVE,
@@ -57,19 +47,12 @@ internal class PagingSupportPostgresTest {
             "echo" to WidgetStatus.WIDGET_STATUS_UNSPECIFIED,
         )
 
-    /** A fixed base instant [seed] builds every widget's `updated_at`/`stats.last_updated_at` from. */
     private val baseTimestamp = OffsetDateTime.parse("2026-01-01T00:00:00Z")
 
-    /** [seed]'s own `active` value per [seeded] row, by index - two of each: `true`, `false`, absent. */
+    /** Two each of `true`, `false` and absent, by [seeded] index. */
     private val activeValues = listOf(true, false, null, null, true, false)
 
-    /**
-     * A second [SortableProperties] over [WidgetTable], differing from [WIDGET_SORTABLE_PROPERTIES]
-     * only in `active`'s own [NullsOrder] (`FIRST` here, `LAST` there) - [NullsOrder] is a property
-     * of how *this* resource declares the field sortable at all, fixed once, not something a caller
-     * picks per request (see [SortableNullableProperty.create]), so covering both needs two distinct
-     * [SortableProperties] instances, not two calls against one.
-     */
+    /** [NullsOrder] is fixed per [SortableProperties], so testing `FIRST` needs a second instance. */
     private val widgetNullsFirstProperties: SortableProperties<Widget> =
         SortableProperties
             .builder<Widget>(Widget.getDescriptor())
@@ -77,14 +60,7 @@ internal class PagingSupportPostgresTest {
             .fieldNullsFirst("active", WidgetTable.active)
             .build()
 
-    /**
-     * No `.id(...)` call at all - stands in for a resource whose id genuinely can't be a
-     * [SortableProperty] (e.g. `RuleResult`, which has no id field of its own in its proto at all).
-     * `status`/`name` cover the same multi-field keyset shape [WIDGET_SORTABLE_PROPERTIES] does -
-     * only without an id property of its own to auto-append as the tie-break - covering
-     * [PagingSupport.keysetCondition]'s/[PagingSupport.nextCursor]'s/[PagingSupport.decodeCursor]'s
-     * own hand-supplied-id-tie-break overloads against a real DB.
-     */
+    /** No `.id(...)`, for a resource without an id field: exercises the hand-supplied id tie-break overloads. */
     private val widgetNoIdProperties: SortableProperties<Widget> =
         SortableProperties
             .builder<Widget>(Widget.getDescriptor())
@@ -92,11 +68,7 @@ internal class PagingSupportPostgresTest {
             .field("name", WidgetTable.name)
             .build()
 
-    /**
-     * Composite-id rows sharing an `orderId` with different `lineNumber`s - a real tie that only
-     * the composite id's *second* component can break, unlike [seeded]'s deliberately duplicated
-     * `status`/`name` above.
-     */
+    /** Rows sharing an `orderId`, so only the composite id's second component breaks the tie. */
     private val seededLineItems =
         listOf(
             100L to 2,
@@ -105,7 +77,6 @@ internal class PagingSupportPostgresTest {
             100L to 3,
         )
 
-    /** Each test starts from empty tables - [WidgetTable]'s ids are auto-incrementing, so a leftover row from a previous test would also shift the ids this test asserts on. */
     @BeforeEach
     fun clearTables() =
         runTest {
@@ -135,14 +106,7 @@ internal class PagingSupportPostgresTest {
             assertEquals(seeded.size, visited.toSet().size)
         }
 
-    /**
-     * `id` is *always* included in `order` (see [PagingSupport.parseOrderBy]'s tie-break), so
-     * reversing every field the client actually named - but not `id` too - only reverses each
-     * group of ties as a whole, not the id-broken order *within* a tied group (`alpha`/`WIDGET_STATUS_ACTIVE`
-     * appears as id 2 then 3 either way, since only the explicitly-named fields flipped
-     * direction). Naming `id desc` explicitly makes the client's own sort a true, unambiguous
-     * total order, so reversing it really does reverse the whole walk.
-     */
+    /** The appended `id asc` tie-break doesn't flip with the named fields, so `id desc` must be named too. */
     @Test
     fun `reversing every field's direction, id included, reverses the whole walk`() =
         runTest {
@@ -156,12 +120,7 @@ internal class PagingSupportPostgresTest {
             assertEquals(forward, backward.reversed())
         }
 
-    /**
-     * [seed]'s `statsLastUpdatedAt` deliberately ties every pair of rows - the real-world shape
-     * zagar hand-rolled this exact predicate for, against a *nested* `Timestamp` field
-     * (`ValidationJob.statistics.last_progress_received_at`) rather than [WidgetTable]'s top-level
-     * `name`/`status`.
-     */
+    /** Mirrors Zagar's sort on the nested `ValidationJob.statistics.last_progress_received_at`. */
     @Test
     fun `keyset-scrolling a nested Timestamp field with ties visits every row exactly once, in id order within a tie`() =
         runTest {
@@ -182,11 +141,6 @@ internal class PagingSupportPostgresTest {
             assertEquals(seeded.size, visited.toSet().size)
         }
 
-    /**
-     * Proves a `bytes` field is genuinely orderable at the SQL level, not just accepted by
-     * [SortableProperty]'s own type-checking - [seed]'s `rawId` deliberately ties one pair of rows
-     * (see its own KDoc), same shape as the nested-Timestamp test above.
-     */
     @Test
     fun `keyset-scrolling a bytes field with a tie visits every row exactly once, in id order within the tie`() =
         runTest {
@@ -207,22 +161,10 @@ internal class PagingSupportPostgresTest {
             assertEquals(seeded.size, visited.toSet().size)
         }
 
-    /**
-     * [WidgetTable.id] is auto-incrementing and never reset between tests in this suite (only the
-     * rows are deleted - see [clearTables]), so no test can hardcode an absolute expected id. This
-     * reads every seeded row back out in insertion order (ascending id, the default with no
-     * `order_by` at all - [WIDGET_SORTABLE_PROPERTIES]'s only id) so a test can instead key its own
-     * expectations off [activeValues]'s own indices, e.g. `insertionOrder[2]`/`[3]` for its absent rows.
-     */
+    /** Ids keep incrementing across tests, so tests index into this instead of hardcoding them. */
     private suspend fun insertionOrder(): List<Long> =
         findAll(PagingSupport.parseOrderBy(null, WIDGET_SORTABLE_PROPERTIES), pageSize = seeded.size, after = null).content.map { it.id }
 
-    /**
-     * `active` sorts `NullsOrder.LAST` in [WIDGET_SORTABLE_PROPERTIES] - absent values ([activeValues]'s
-     * own `null` entries) come after every present one *regardless* of direction (`false` sorts
-     * before `true` either way, but which present group comes first still reverses between
-     * ascending and descending, same as any other field would).
-     */
     @Test
     fun `keyset-scrolling a nullable field with NullsOrder LAST places absent values after present ones, in either direction`() =
         runTest {
@@ -238,9 +180,7 @@ internal class PagingSupportPostgresTest {
             var ascendingCursor: String? = null
             do {
                 val after = PagingSupport.decodeCursor(WIDGET_SORTABLE_PROPERTIES, ascendingCursor, ascending, OBJECT_MAPPER)
-                // pageSize 1, not the seeded absent group's own size (2): a page boundary splitting
-                // a tied group is what actually forces equalCondition(null) - a same-size page
-                // would always fetch both absent rows together, never needing it to resume from one.
+                // pageSize 1 splits the absent group across pages, which is what exercises equalCondition(null).
                 val page = findAll(ascending, pageSize = 1, after = after)
                 ascendingVisited += page.content.map { it.id }
                 ascendingCursor = PagingSupport.nextCursor(WIDGET_SORTABLE_PROPERTIES, page, OBJECT_MAPPER)
@@ -259,7 +199,6 @@ internal class PagingSupportPostgresTest {
             assertEquals(trueIds + falseIds + absentIds, descendingVisited)
         }
 
-    /** The [widgetNullsFirstProperties] counterpart to the `NullsOrder.LAST` test above - same seed, absent values first instead. */
     @Test
     fun `keyset-scrolling a nullable field with NullsOrder FIRST places absent values before present ones, in either direction`() =
         runTest {
@@ -329,21 +268,14 @@ internal class PagingSupportPostgresTest {
                     }
             } while (cursor != null)
 
-            // The same order_by against the full, id-including WIDGET_SORTABLE_PROPERTIES - its own
-            // id tie-break is the very same column/direction findAllNoId's hand-supplied one is, so
-            // this is the oracle for what the no-id, hand-supplied-tie-break walk above should visit.
+            // WIDGET_SORTABLE_PROPERTIES' automatic id tie-break matches findAllNoId's hand-supplied one.
             val expectedOrder = PagingSupport.parseOrderBy("status desc, name", WIDGET_SORTABLE_PROPERTIES)
             val expected = findAll(expectedOrder, pageSize = seeded.size, after = null).content.map { it.id }
             assertEquals(expected, visited)
             assertEquals(seeded.size, visited.toSet().size)
         }
 
-    /**
-     * Same shape as [findAll], but via [PagingSupport.keysetCondition]'s/[PagingSupport.nextCursor]'s
-     * hand-supplied-id-tie-break overloads against [widgetNoIdProperties] (two sortable fields, no
-     * id) instead of the ordinary ones against the full, id-including [WIDGET_SORTABLE_PROPERTIES] -
-     * the caller (not a [SortableProperties]) owns the id tie-break here.
-     */
+    /** [findAll], with the caller rather than [SortableProperties] owning the id tie-break. */
     private suspend fun findAllNoId(
         sort: List<SortField>,
         pageSize: Int,
@@ -394,13 +326,7 @@ internal class PagingSupportPostgresTest {
             this@toWidget[WidgetTable.active]?.let { active = it }
         }
 
-    /**
-     * `updatedAt` gets a distinct value per row; `statsLastUpdatedAt` gets one shared by every
-     * *pair* of rows - deliberate ties for the nested-Timestamp keyset test below. `rawId` gets a
-     * distinct single byte per row, ties on every *odd* row instead (`0, 1, 1, 3, 4, 5` for 6 rows)
-     * - deliberate ties for the bytes keyset test below. `active` gets [activeValues] by index -
-     * two rows tied on an absent value, for the nullable-field keyset tests below.
-     */
+    /** `statsLastUpdatedAt` ties each pair of rows and `rawId` ties rows 1 and 2, so those sorts have ties to break. */
     private suspend fun seed() {
         suspendTransaction(db = database) {
             seeded.forEachIndexed { index, (name, status) ->

@@ -9,14 +9,7 @@ import no.entur.http.buildExtensionRegistry
 import no.entur.http.buildFileDescriptors
 import no.entur.http.newOpenApiYaml
 
-/**
- * Exercises OpenApiFailureAugmenter against the real entur.http.v1.Failure/ProblemDetail (from
- * http-model, this repo's actual published module for them) plus a minimal mock service
- * (buildSrc/src/test/resources/fixture/mock/service.proto) that only exists to carry a couple of
- * rpcs to attach `(entur.http.v1.failure)` options to - so this test doesn't depend on any real
- * API module's (e.g. kittum-api's) specific business content, without re-declaring entur.http.v1's
- * own types a second time just for the test.
- */
+/** Uses the real http-model types with a mock service, so it doesn't depend on any API module's content. */
 class OpenApiFailureAugmenterTest {
     private val fixtureDir = File(System.getProperty("fixtureDir") ?: error("fixtureDir system property not set"))
     private val httpModelProtoDir =

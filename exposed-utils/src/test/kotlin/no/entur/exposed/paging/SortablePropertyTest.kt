@@ -13,10 +13,6 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import java.time.OffsetDateTime
 
-/**
- * Unit-level coverage for [SortableProperty]/[SortableProperties] themselves - as opposed to
- * [PagingSupportTest], which exercises the [PagingSupport] engine built on top of them.
- */
 internal class SortablePropertyTest {
     @Test
     fun `a repeated field is rejected, not silently accepted as if it were singular`() {
@@ -108,10 +104,7 @@ internal class SortablePropertyTest {
                 stats = widgetStats { lastUpdatedAt = instant.toProtoTimestamp() }
             }
 
-        // Not instant itself - valueOf's contract is only that its toString() round-trips through
-        // decode(), not that it returns the typed column value: a Timestamp field's codec already
-        // renders it as that stable string directly, same as a bytes field's (see BytesProperty's
-        // own coverage below) - [PagingSupport.nextCursor] calls toString() on it regardless.
+        // valueOf only promises a toString() that round-trips through decode(), not the typed column value.
         assertEquals(instant.toString(), property.valueOf(value))
     }
 
@@ -173,8 +166,7 @@ internal class SortablePropertyTest {
 
     @Test
     fun `a column type mismatch is rejected, unless the caller supplies its own decode`() {
-        // "name" (STRING) against WidgetTable.id (a Long id column) - a real mismatch, standing in
-        // for the motivating case (a `string` proto field backed by a native UUID column).
+        // Stands in for a `string` proto field backed by a native UUID column.
         val exception =
             assertThrows(IllegalArgumentException::class.java) {
                 SortableProperties.builder<Widget>(Widget.getDescriptor()).field("name", WidgetTable.id)
@@ -202,8 +194,7 @@ internal class SortablePropertyTest {
 
         val exception =
             assertThrows(IllegalArgumentException::class.java) {
-                // status isn't optional - WidgetTable.active (a nullable column of some comparable
-                // type) only needs to satisfy the compiler here, the mismatch itself is never reached.
+                // The column only has to compile; the non-optional field fails first.
                 SortableNullableProperty.create<Widget, Boolean>(listOf(statusField), WidgetTable.active, NullsOrder.LAST)
             }
 

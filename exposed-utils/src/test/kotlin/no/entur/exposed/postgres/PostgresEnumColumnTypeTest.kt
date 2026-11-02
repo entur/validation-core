@@ -5,11 +5,6 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Test
 
-/**
- * Unit-level coverage for [PostgresEnumColumnType]'s SQL-fragment generation and label validation -
- * no DB, no Spring context. [PostgresEnumColumnTypePostgresTest] covers the cast actually working
- * against a real Postgres enum type.
- */
 internal class PostgresEnumColumnTypeTest {
     private val columnType = PostgresEnumColumnType("my_enum", setOf("ALPHA", "BRAVO"))
 

@@ -8,11 +8,7 @@ import no.entur.api.security.MethodSecurityConfig
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 
-/**
- * A consuming Spring Boot application's own component scan never reaches `no.entur.api` (this
- * module's package), so these classes rely entirely on
- * `META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports` to be registered at all.
- */
+/** A consumer's component scan never reaches `no.entur.api`, so the `AutoConfiguration.imports` file is the only registration. */
 internal class AutoConfigurationImportsTest {
     private fun getConfigs(): List<String> =
         javaClass.classLoader

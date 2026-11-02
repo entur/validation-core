@@ -9,10 +9,8 @@ import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Test
 
 /**
- * `ValidationProgress` (via `RuleResult.validation_rule`) is a real message that needs sanitizing:
- * `validation_rule.proto` carries the REST-only annotations this class strips. The stripping itself
- * is covered by proto-utils' own SchemaRegistrySanitizerTest; this only checks the defaults and the
- * wrapping into a [io.confluent.kafka.schemaregistry.protobuf.ProtobufSchema].
+ * `ValidationProgress` imports `validation_rule.proto`'s REST-only annotations. The stripping itself is
+ * covered by SchemaRegistrySanitizerTest; this checks the wrapping into a `ProtobufSchema`.
  */
 class RegistrySanitizedSchemaTest {
     private val schema = RegistrySanitizedSchema(ValidationProgress.getDescriptor())
