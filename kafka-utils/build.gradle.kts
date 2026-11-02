@@ -26,13 +26,13 @@ dependencies {
     api("org.slf4j:slf4j-api")
     implementation(project(":proto-utils"))
 
-    // Only for FailureClassifier's RestClientException check; every consumer already has it at
-    // runtime through its Confluent serdes, so it is not forced on them in a version of ours.
-    // Its Confluent-built kafka-clients (`-ccs`) is not on Maven Central, and the Boot BOM's is the
-    // one to compile and test against anyway.
     compileOnly(libs.kafka.schema.registry.client) { exclude(group = "org.apache.kafka") }
+    compileOnly(libs.kafka.schema.serializer) { exclude(group = "org.apache.kafka") }
+    compileOnly(libs.kafka.protobuf.provider) { exclude(group = "org.apache.kafka") }
 
     testImplementation(libs.kafka.schema.registry.client) { exclude(group = "org.apache.kafka") }
+    testImplementation(libs.kafka.schema.serializer) { exclude(group = "org.apache.kafka") }
+    testImplementation(libs.kafka.protobuf.provider) { exclude(group = "org.apache.kafka") }
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
     testImplementation("org.mockito:mockito-core")
     // A real MDC adapter: without one slf4j falls back to a no-op MDC and the tests see nothing.

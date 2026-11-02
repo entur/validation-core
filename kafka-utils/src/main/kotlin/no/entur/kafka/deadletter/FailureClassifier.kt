@@ -80,7 +80,9 @@ class FailureClassifier(
                 is InvalidProtocolBufferException -> Verdict.PERMANENT
 
                 // The record's schema id is not in the registry: a real one answers 40403, the mock 40401.
-                is RestClientException if exception.errorCode in SCHEMA_NOT_FOUND -> Verdict.PERMANENT
+                // Only while decoding: publishing, it means a subject not registered yet, which the
+                // record cannot fix and registering it will.
+                is RestClientException if decoding && exception.errorCode in SCHEMA_NOT_FOUND -> Verdict.PERMANENT
 
                 is RestClientException -> Verdict.TRANSIENT
 

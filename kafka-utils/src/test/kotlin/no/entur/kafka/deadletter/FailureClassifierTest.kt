@@ -38,6 +38,15 @@ class FailureClassifierTest {
     }
 
     @Test
+    fun `a subject the registry does not have yet is transient when publishing`() {
+        val missingSubject = SerializationException("Error serializing", RestClientException("Subject not found", 404, 40401))
+        val missingSchema = SerializationException("Error serializing", RestClientException("Schema not found", 404, 40403))
+
+        assertFalse(shared.isPermanent(listenerFailure(missingSubject)))
+        assertFalse(shared.isPermanent(listenerFailure(ExecutionException(missingSchema))))
+    }
+
+    @Test
     fun `a registry that cannot be asked is transient, though it surfaces as a deserialization failure`() {
         assertFalse(shared.isPermanent(undecodable(ConnectException("Connection refused"))))
         assertFalse(shared.isPermanent(undecodable(RestClientException("Internal Server Error", 500, 50001))))

@@ -20,7 +20,7 @@ Eight Gradle modules, each published as its own Maven artifact, sharing one vers
 | [`proto-utils`](proto-utils) | — (hand-written, not proto-generated) | `no.entur.validation:proto-utils` | Domain-agnostic proto/HTTP plumbing (update masks, id checks, oneof serialization, timestamps, schema-registry sanitizing). See "Non-schema modules" below. |
 | [`exposed-utils`](exposed-utils) | — (hand-written, not proto-generated) | `no.entur.validation:exposed-utils` | Persistence support for the Exposed SQL library (ETag concurrency, cursor paging) built on `proto-utils`. See "Non-schema modules" below. |
 | [`api-utils`](api-utils) | — (hand-written, not proto-generated) | `no.entur.validation:api-utils` | Spring WebFlux/Security support (protobuf-JSON codecs, `ProblemDetail` error mapping, OpenAPI spec serving, content negotiation, audience-validation and method-security configuration) for services built on this schema. See "Non-schema modules" below. |
-| [`kafka-utils`](kafka-utils) | — (hand-written, not proto-generated) | `no.entur.validation:kafka-utils` | Kafka tracing (the `X-Correlation-Id`/`ET-Client-Name` headers every validation service stamps on what it produces, and the `correlationId`/`clientName` MDC entries it logs with while processing a consumed record) and dead-lettering (which listener failures are permanent, the `entur.validation.v1.DeadLetter` envelope they are published in, and the error handler that does it). See "Non-schema modules" below. |
+| [`kafka-utils`](kafka-utils) | — (hand-written, not proto-generated) | `no.entur.validation:kafka-utils` | Kafka tracing (the `X-Correlation-Id`/`ET-Client-Name` headers every validation service stamps on what it produces, and the `correlationId`/`clientName` MDC entries it logs with while processing a consumed record), dead-lettering (which listener failures are permanent, the `entur.validation.v1.DeadLetter` envelope they are published in, and the error handler that does it), SASL/client-property setup, log sanitizing, and schema-registry sanitizing for a message that is also a REST resource. See "Non-schema modules" below. |
 
 More packages (and modules) are expected as new APIs are added on top of the shared model.
 
@@ -130,7 +130,7 @@ validation services would otherwise each write themselves.
 | `proto-utils` | Working with protobuf messages in a REST API | `UpdateMaskSupport` (PATCH with `update_mask`), `IdentifierSupport` (body id must match path id), `OneofSerialization`, `ProtoTimestamps`, `SchemaRegistrySanitizer`, `ConflictException`/`ElementNotFoundException` |
 | `exposed-utils` | Storing those messages in Postgres with the Exposed SQL library | `ConcurrencySupport` (ETag/`If-Match`), `PagingSupport` + `SortableProperties` (`order_by` and cursor paging), `PostgresEnumColumnType` |
 | `api-utils` | Spring WebFlux REST services | Protobuf JSON codecs, `ApiExceptionHandler` (exceptions to `ProblemDetail`), `OpenApiController` (serves the spec), `AudienceValidationGuard`, `MethodSecurityConfig` |
-| `kafka-utils` | Kafka producers and listeners | Tracing interceptors, dead-lettering (see below) |
+| `kafka-utils` | Kafka producers and listeners | Tracing interceptors, dead-lettering, client config (`KafkaClientProperties`, `KafkaSasl`, `singleRecordContainerFactory`), `sanitizeForLog`, `RegistrySanitizedSchema` (see below) |
 
 All three others build on `proto-utils`. `api-utils` also uses `http-model`, and `kafka-utils` uses `validation-model`.
 
@@ -160,7 +160,8 @@ through.
 **Dead-lettering** (`no.entur.kafka.deadletter`): what happens when a listener fails.
 
 - A failure is either **permanent** (retrying won't help, e.g. bytes that can't be decoded) or
-  **transient** (e.g. the broker or schema registry is down). `FailureClassifier` decides which.
+  **transient** (e.g. the broker or schema registry is down, or a schema subject is missing when
+  publishing). `FailureClassifier` decides which.
   It knows the common cases; add your service's own through its `overrides` and `causes`
   parameters.
 - **Permanent:** `DeadLetterRecoverer` publishes the record to a dead-letter topic, wrapped in a
@@ -179,8 +180,28 @@ through.
   - Give `DeadLetterRecoverer` a `KafkaOperations<String, DeadLetter>` that uses Confluent's
     protobuf serializer and the `TracingProducerInterceptor`.
 - If publishing the dead letter fails, the offset isn't committed, so the record is tried again.
-- Your service needs `io.confluent:kafka-schema-registry-client` at runtime. Any service that
-  uses Confluent's serializers already has it.
+
+**Client configuration** (`no.entur.kafka`): the properties every service sets up the same way.
+
+- `KafkaClientProperties.common(...)` gives you bootstrap servers, security protocol and schema
+  registry URL. Add your own consumer- or producer-specific properties on top.
+- Pass it an `Authentication(user, password)` to also get SCRAM login for the broker and basic auth
+  for the schema registry (built by `KafkaSasl`). Pass `null` for an unauthenticated local run.
+- `singleRecordContainerFactory(...)` builds a listener container factory that handles one record
+  at a time, with `MANUAL_IMMEDIATE` AckMode and the `TracingRecordInterceptor` already set.
+
+**Other helpers:**
+
+- `sanitizeForLog(value)` replaces control characters, so a value read off a Kafka record can't
+  forge a log line.
+- `RegistrySanitizedSchema` (`no.entur.kafka.schema`) is for a message that is both a Kafka record
+  and a REST resource. It builds the schema with the REST-only annotations removed, because the
+  schema registry has no subject for those imports. Your service still needs its own
+  `KafkaProtobufSerializer` subclass that serializes against it.
+
+**Runtime dependencies:** your service needs `io.confluent:kafka-schema-registry-client`,
+`kafka-schema-serializer` and `kafka-protobuf-provider` at runtime. Any service that uses
+Confluent's protobuf serializer (`kafka-protobuf-serializer`) already has them.
 
 ### Building these modules
 
