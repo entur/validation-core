@@ -13,8 +13,10 @@ ktlint = "1.8.0"
 # Only api-utils needs this. Kept aligned with zagar/kittum's own catalogs, its two consumers.
 oidcAuthResourceServer = "3.0.5"
 # Only kafka-utils needs this (compileOnly). Kept aligned with the Confluent serdes its consumers
-# use -- all of them now on the same version, so this is simply the latest.
-confluent = "8.4.0"
+# use. NOT 8.4.0: its classes call org.apache.kafka.common.utils.internals.ByteUtils, which
+# doesn't exist in kafka-clients 4.2.2 (Spring Boot 4.1's managed version) -- ByteUtils has no
+# internals subpackage there at all. NoClassDefFoundError at runtime, not a compile-time signal.
+confluent = "8.3.2"
 
 [libraries]
 protobuf-java = { group = "com.google.protobuf", name = "protobuf-java", version.ref = "protobuf" }
