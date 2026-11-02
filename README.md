@@ -16,10 +16,10 @@ Eight Gradle modules, each published as its own Maven artifact, sharing one vers
 | [`validation-model`](validation-model) | `entur.validation.v1` | `no.entur.validation:validation-model` | The domain messages. |
 | [`kittum-api`](kittum-api) | `entur.kittum.v1` | `no.entur.validation:kittum-api` | Kittum's gRPC/REST service definitions and their Request/Response messages. |
 | [`zagar-api`](zagar-api) | `entur.zagar.v1` | `no.entur.validation:zagar-api` | Zagar's gRPC/REST service definitions and their Request/Response messages. |
-| [`proto-utils`](proto-utils) | — (hand-written, not proto-generated) | `no.entur.validation:proto-utils` | Domain-agnostic proto/HTTP plumbing (update masks, protobuf-JSON codecs, oneof serialization, `ProblemDetail` error mapping) for WebFlux services built on this schema. See "Non-schema modules" below. |
-| [`exposed-utils`](exposed-utils) | — (hand-written, not proto-generated) | `no.entur.validation:exposed-utils` | JetBrains Exposed-specific persistence support (ETag concurrency, cursor paging) built on `proto-utils`. See "Non-schema modules" below. |
-| [`api-utils`](api-utils) | — (hand-written, not proto-generated) | `no.entur.validation:api-utils` | Spring WebFlux/Security support (OpenAPI spec serving, content negotiation, audience-validation and method-security configuration) for services built on this schema. See "Non-schema modules" below. |
-| [`kafka-utils`](kafka-utils) | — (hand-written, not proto-generated) | `no.entur.validation:kafka-utils` | Kafka tracing (the `X-Correlation-Id`/`ET-Client-Name` headers every validation service stamps on what it produces, and the `correlationId`/`clientName` MDC entries it logs with while processing a consumed record) and dead-lettering (which listener failures are permanent, the `entur.validation.v1.DeadLetter` envelope they are published in, and the error handler that does it). See "Non-schema modules" below. |
+| [`proto-utils`](proto-utils) | — | `no.entur.validation:proto-utils` | Domain-agnostic proto/HTTP plumbing (update masks, protobuf-JSON codecs, oneof serialization, `ProblemDetail` error mapping) for WebFlux services built on this schema. See "Non-schema modules" below. |
+| [`exposed-utils`](exposed-utils) | — | `no.entur.validation:exposed-utils` | JetBrains Exposed-specific persistence support (ETag concurrency, cursor paging) built on `proto-utils`. See "Non-schema modules" below. |
+| [`api-utils`](api-utils) | — | `no.entur.validation:api-utils` | Spring WebFlux/Security support (OpenAPI spec serving, content negotiation, audience-validation and method-security configuration) for services built on this schema. See "Non-schema modules" below. |
+| [`kafka-utils`](kafka-utils) | — | `no.entur.validation:kafka-utils` | Kafka tracing (the `X-Correlation-Id`/`ET-Client-Name` headers every validation service stamps on what it produces, and the `correlationId`/`clientName` MDC entries it logs with while processing a consumed record), dead-lettering (which listener failures are permanent, the `entur.validation.v1.DeadLetter` envelope they are published in, and the error handler that does it), SASL/client-property setup, log sanitizing, and schema-registry sanitizing for a message that is also a REST resource. See "Non-schema modules" below. |
 
 More packages (and modules) are expected as new APIs are added on top of the shared model.
 
@@ -176,11 +176,43 @@ keeps retry state per partition:
   AckMode `MANUAL_IMMEDIATE` (or `RECORD`). With no recoverer, permanent failures are retried too
   (`WithoutDeadLetterTopic.RETRY`) or logged and committed (`LOG_AND_COMMIT`).
 
-`FailureClassifier` checks for the schema registry client's `RestClientException`, which this module
-only compiles against (from Confluent's Maven repository, scoped to the `io.confluent` group): a
-consumer using the dead-lettering classes must have `io.confluent:kafka-schema-registry-client` on
-its runtime classpath, as every service using Confluent's serdes already does. Like the other
-non-schema modules it is published with the rest.
+Kafka client configuration (`no.entur.kafka`):
+
+- `KafkaSasl` builds the SCRAM broker properties and the schema registry's basic-auth properties
+  from one user/password pair.
+- `KafkaClientProperties.common(...)` builds the bootstrap servers, security protocol and schema
+  registry URL a client needs, plus both of `KafkaSasl`'s property sets when `user` is non-blank. A
+  service still adds its own consumer- or producer-specific properties (offset reset, compression,
+  auto-register-schemas, ...) on top.
+
+Log sanitizing (`no.entur.kafka`):
+
+- `sanitizeForLog(value)` replaces control characters (and the Unicode line/paragraph separators)
+  with `_`, so a value read off a Kafka record can't forge a log line (CWE-117) when logged.
+
+Schema registry sanitizing (`no.entur.kafka.schema`), for a message that is both a Kafka record and
+a REST resource:
+
+- `RegistrySanitizedSchema(descriptor)` wraps `proto-utils`' descriptor sanitizing into a
+  `ProtobufSchema` with Entur's REST-only annotations (`google.api.field_behavior`, gnostic's
+  OpenAPI `property`) dropped from the message's file and, recursively, everything it imports -
+  what a Confluent protobuf serializer needs to pass instead of the record's own (unsanitized)
+  descriptor, since the registry has no subject for a REST-only import like
+  `gnostic/openapi/v3/annotations.proto`. It only builds the schema; a service still supplies its
+  own `KafkaProtobufSerializer` subclass that serializes against it; which overload of
+  `KafkaProtobufSerializer.serialize(...)` that subclass can delegate to depends on the Confluent
+  client version it's built against (the 4-argument overload taking an explicit schema only exists
+  from Confluent 8.3; a consumer on an older client resolves the schema's dependencies and calls
+  `serializeImpl` itself instead).
+
+`FailureClassifier` checks for the schema registry client's `RestClientException`,
+`KafkaClientProperties` for `AbstractKafkaSchemaSerDeConfig`'s config keys, and
+`RegistrySanitizedSchema` for `ProtobufSchema` - three classes this module only compiles against
+(from Confluent's Maven repository, scoped to the `io.confluent` group): a consumer using any of
+them must have `io.confluent:kafka-schema-registry-client`, `kafka-schema-serializer` and
+`kafka-protobuf-provider` on its runtime classpath, as every service using Confluent's protobuf
+serdes already does (`kafka-protobuf-serializer` depends on all three). Like the other non-schema
+modules it is published with the rest.
 
 ## Versioning and publishing
 
