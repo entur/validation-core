@@ -21,8 +21,9 @@ dependencies {
     // proto-utils.
     api(project(":proto-utils"))
     // ObjectMapper appears directly in PagingSupport's public signatures; ResponseEntity/HttpStatus
-    // in ConcurrencySupport.withETag.
-    api("org.springframework.boot:spring-boot-starter-webflux")
+    // in ConcurrencySupport.withETag. Not the WebFlux starter: consumers pick their own web stack.
+    api("org.springframework:spring-web")
+    api("tools.jackson.core:jackson-databind")
 
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
