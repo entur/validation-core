@@ -17,9 +17,11 @@ class RegistrySanitizedSchema(
     droppedImports: Set<String> = DROPPED_IMPORTS,
     droppedExtensionNumbers: Set<Int> = DROPPED_EXTENSION_NUMBERS,
 ) {
+    val messageName: String = descriptor.name
+
     val file: FileDescriptor = descriptor.file.withoutFieldOptionExtensionsDeep(droppedImports, droppedExtensionNumbers)
 
-    val schema: ProtobufSchema = ProtobufSchema(file.findMessageTypeByName(descriptor.name))
+    val schema: ProtobufSchema = ProtobufSchema(file.findMessageTypeByName(messageName))
 
     companion object {
         /** `google.api.field_behavior` and `gnostic.openapi.v3.property`, as FieldOptions extension numbers. */

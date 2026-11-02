@@ -35,6 +35,11 @@ class RegistrySanitizedSchemaTest {
         assertFalse(schema.schema.canonicalString().contains("gnostic"))
     }
 
+    @Test
+    fun `exposes the descriptor's own, unqualified message name`() {
+        assertEquals("ValidationProgress", schema.messageName)
+    }
+
     private fun allFiles(file: FileDescriptor): List<FileDescriptor> {
         val seen = mutableMapOf<String, FileDescriptor>()
 
