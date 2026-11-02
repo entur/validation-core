@@ -3,6 +3,7 @@ package no.entur.kafka
 import io.confluent.kafka.schemaregistry.client.SchemaRegistryClientConfig
 import org.apache.kafka.common.config.SaslConfigs
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Test
 
 class KafkaSaslTest {
@@ -20,10 +21,26 @@ class KafkaSaslTest {
     }
 
     @Test
+    fun `escapes a backslash and a double quote in the JAAS config, backslash first`() {
+        val props = KafkaSasl.brokerProperties(Authentication("ali\\ce", "s3\"cret"))
+
+        assertEquals(
+            "org.apache.kafka.common.security.scram.ScramLoginModule required " +
+                "username=\"ali\\\\ce\" password=\"s3\\\"cret\";",
+            props[SaslConfigs.SASL_JAAS_CONFIG],
+        )
+    }
+
+    @Test
     fun `schema registry properties carry basic auth with the colon-joined credentials`() {
         val props = KafkaSasl.schemaRegistryProperties(auth)
 
         assertEquals("USER_INFO", props[SchemaRegistryClientConfig.BASIC_AUTH_CREDENTIALS_SOURCE])
         assertEquals("alice:s3cret", props[SchemaRegistryClientConfig.USER_INFO_CONFIG])
+    }
+
+    @Test
+    fun `never includes the password in toString`() {
+        assertFalse(auth.toString().contains("s3cret"))
     }
 }

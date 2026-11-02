@@ -18,7 +18,7 @@ class RegistrySanitizedSchema(
 
     val file: FileDescriptor = descriptor.file.withoutFieldOptionExtensionsDeep(droppedImports, droppedExtensionNumbers)
 
-    val schema: ProtobufSchema = ProtobufSchema(file.findMessageTypeByName(messageName))
+    val schema: ProtobufSchema = ProtobufSchema(file.findMessageType(descriptor))
 
     companion object {
         /** `google.api.field_behavior` and `gnostic.openapi.v3.property`, as FieldOptions extension numbers. */
@@ -30,4 +30,19 @@ class RegistrySanitizedSchema(
                 "gnostic/openapi/v3/annotations.proto",
             )
     }
+}
+
+/**
+ * The message at the same containing-type path as [original], in [this] (sanitized) file --
+ * [FileDescriptor.findMessageTypeByName] only resolves a top-level message, so it would return
+ * null for a nested [original] (or the wrong message, if a top-level type happens to share its
+ * simple name).
+ */
+private fun FileDescriptor.findMessageType(original: Descriptor): Descriptor {
+    val path = generateSequence(original) { it.containingType }.map { it.name }.toList().asReversed()
+    var current = checkNotNull(findMessageTypeByName(path.first())) { "No top-level message named ${path.first()} in $name" }
+    for (name in path.drop(1)) {
+        current = checkNotNull(current.findNestedTypeByName(name)) { "No nested message named $name in ${current.fullName}" }
+    }
+    return current
 }

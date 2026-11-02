@@ -7,7 +7,8 @@ data class Authentication(
     val user: String,
     val password: String,
 ) {
-    override fun toString(): String = "%s:%s".format(user, password)
+    // Redact the password.
+    override fun toString(): String = "Authentication(user=$user, password=***)"
 }
 
 /** SCRAM auth for the broker and the schema registry, both from the same authentication object. */
@@ -21,12 +22,18 @@ object KafkaSasl {
     fun brokerProperties(auth: Authentication): Map<String, Any> =
         mapOf(
             SaslConfigs.SASL_MECHANISM to SASL_MECHANISM,
-            SaslConfigs.SASL_JAAS_CONFIG to JAAS_TEMPLATE.format(auth.user, auth.password),
+            SaslConfigs.SASL_JAAS_CONFIG to JAAS_TEMPLATE.format(auth.user.escapeJaas(), auth.password.escapeJaas()),
         )
 
     fun schemaRegistryProperties(auth: Authentication): Map<String, Any> =
         mapOf(
             SchemaRegistryClientConfig.BASIC_AUTH_CREDENTIALS_SOURCE to USER_INFO,
-            SchemaRegistryClientConfig.USER_INFO_CONFIG to auth.toString(),
+            SchemaRegistryClientConfig.USER_INFO_CONFIG to "${auth.user}:${auth.password}",
         )
+
+    /**
+     * Backslash first: escaping it after quotes would double the backslash the quote escape just
+     * introduced, corrupting the value this JAAS config string carries.
+     */
+    private fun String.escapeJaas(): String = replace("\\", "\\\\").replace("\"", "\\\"")
 }

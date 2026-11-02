@@ -40,6 +40,13 @@ class RegistrySanitizedSchemaTest {
         assertEquals("ValidationProgress", schema.messageName)
     }
 
+    @Test
+    fun `resolves a nested message by its containing-type path, not just its own name`() {
+        val nested = RegistrySanitizedSchema(ValidationProgress.Overview.getDescriptor())
+
+        assertEquals(ValidationProgress.Overview.getDescriptor().fullName, nested.schema.name())
+    }
+
     private fun allFiles(file: FileDescriptor): List<FileDescriptor> {
         val seen = mutableMapOf<String, FileDescriptor>()
 
