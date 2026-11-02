@@ -13,49 +13,26 @@ import com.google.protobuf.util.JsonFormat
 import no.entur.proto.reflect.hasBehavior
 
 /**
- * Generic (message-type-agnostic) `update_mask`/`FieldMask` handling for `Update*` endpoints,
- * shared across every resource. Four distinct cases, per [AIP-134](https://google.aip.dev/134):
+ * `update_mask` handling for `Update*` endpoints, per [AIP-134](https://google.aip.dev/134):
  *
- * - **`update_mask` absent from the request entirely**: full replacement: every top-level, non-protected field of the
- *   resource becomes whatever [patch] carries, *including* fields [patch] left at their own default value.
- *   The REST-`PATCH`-shaped endpoint behaves like a `PUT`. (Same outcome as the literal `*` below).
- * - **The literal mask value `*`** ([FULL_REPLACEMENT]) - full replacement, identically to the
- *   "absent entirely" case above.
- * - **`update_mask` present but empty**: an ordinary partial update: only the fields [patch] actually *populated*
- *   (proto3 ["field presence"](https://protobuf.dev/programming-guides/field_presence/).
- *   [Message.getAllFields] only returns a scalar field if it's set to something other than its own
- *   default) are applied; everything else on the resource is left untouched. Clearing a field to its default
- *   requires *explicitly* naming it in the mask (the next case).
- * - **One or more real field paths named**: only those fields are applied, *regardless* of
- *   whether [patch] left them at a default value.
+ * - **absent, or `*`**: full replacement - every non-protected top-level field takes [patch]'s value,
+ *   defaults included.
+ * - **present but empty**: only the fields [patch] populated are applied; clearing a field to its
+ *   default requires naming it.
+ * - **field paths**: only those fields, default or not.
  *
- * Two more things worth being precise about:
- *
- * - **Nested/dotted paths are supported** (`FieldMaskUtil.merge` already walks them), so
- *   `IDENTIFIER`/`OUTPUT_ONLY` filtering below checks *every segment* of a path, not just the
- *   leaf - otherwise a protected sub-message's own fields could be reached around it.
- * - **A `repeated` field named in the mask replaces the whole list**, not appends to it -
- *   `FieldMaskUtil.merge`'s own default (`MergeOptions.replaceRepeatedFields = false`) is the
- *   opposite (append), which is never what a REST `PATCH` should do to a list, so [applyUpdateMask]
- *   overrides it. A `repeated` field also can't be drilled into (e.g. `items.some_field`) - proto
- *   `FieldMask` has no notion of indexing into a list, so a path attempting to descend past a
- *   `repeated` field is rejected (400) rather than silently doing something undefined.
+ * `IDENTIFIER`/`OUTPUT_ONLY` are checked on every segment of a dotted path, so a protected
+ * sub-message can't be reached around. A named `repeated` field replaces the whole list
+ * (`FieldMaskUtil`'s default appends), and a path can't descend into one.
  */
 object UpdateMaskSupport {
     /** AIP-134's `update_mask=*` full-replacement escape hatch. */
     const val FULL_REPLACEMENT = "*"
 
     /**
-     * Parses the [updateMask] query parameter - a comma-separated list of field paths in the same
-     * camelCase JSON naming as request/response bodies. Reuses `FieldMask`'s well-known-type
-     * JSON mapping to convert each camelCase segment back to its real proto (snake_case) path.
-     *
-     * `null` is deliberately distinct from a *present but blank* value (`updateMask=`, or all-whitespace), which
-     * returns an empty [FieldMask] instead: [resolveEffectiveMask] resolves the two to opposite
-     * outcomes (full replacement vs. an ordinary partial update), so collapsing them here would lose that distinction.
-     * The literal value [FULL_REPLACEMENT] (`*`) has no case to convert and passes through unchanged.
-     *
-     * A malformed or unknown path is a client error (400).
+     * Parses the camelCase `updateMask` query parameter into snake_case proto paths. Absent or `*`
+     * returns `null` (full replacement); blank returns an empty mask (partial update), so keep the two
+     * apart. Unknown field names are only rejected later, by [applyUpdateMask].
      */
     fun parse(updateMask: String?): FieldMask? {
         if (updateMask == null || updateMask.trim() == "*") return null
@@ -69,11 +46,7 @@ object UpdateMaskSupport {
         return builder.build()
     }
 
-    /**
-     * The mask to actually apply: a `null` [mask] becomes [FULL_REPLACEMENT]. A present-but-empty [mask] becomes every
-     * field [patch] actually populated, and anything else (including [FULL_REPLACEMENT] itself, or real field
-     * paths) is returned unchanged.
-     */
+    /** `null` becomes [FULL_REPLACEMENT] and an empty [mask] the fields [patch] populated; anything else is unchanged. */
     fun <T : Message> resolveEffectiveMask(
         patch: T,
         mask: FieldMask?,
@@ -85,14 +58,8 @@ object UpdateMaskSupport {
         }
 
     /**
-     * Merges [patch] onto [current] for exactly the fields named in [mask], after silently
-     * dropping any path that names (at any depth) an `IDENTIFIER` or `OUTPUT_ONLY` field. An
-     * unknown field name anywhere in a path is a client error (400).
-     *
-     * [mask] set to exactly [FULL_REPLACEMENT] (`*`) is handled separately: since that's not a
-     * real field path, it's expanded here to every one of [current]'s own top-level field names -
-     * and merged with `MergeOptions.replaceMessageFields = true` as well as `replaceRepeatedFields`, so a
-     * message-typed field is replaced wholesale instead of recursively merged.
+     * Merges [patch] onto [current] for the fields in [mask], silently dropping protected paths and
+     * rejecting unknown ones. Under [FULL_REPLACEMENT], message fields are replaced, not merged.
      */
     fun <T : Message> applyUpdateMask(
         current: T,
@@ -113,14 +80,13 @@ object UpdateMaskSupport {
         return builder.build() as T
     }
 
-    /** [resolveEffectiveMask] followed by [applyUpdateMask] - the usual way callers use both together. */
+    /** [resolveEffectiveMask] followed by [applyUpdateMask]. */
     fun <T : Message> merge(
         current: T,
         patch: T,
         mask: FieldMask?,
     ): T = applyUpdateMask(current, patch, resolveEffectiveMask(patch, mask))
 
-    /** Walks [path]'s dot-separated segments against [rootDescriptor], rejecting an unknown one and stopping at a protected one. */
     private fun isPathAllowed(
         rootDescriptor: Descriptor,
         path: String,

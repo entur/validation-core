@@ -13,7 +13,6 @@ data class Authentication(
     val user: String,
     val password: String,
 ) {
-    // Redact the password.
     override fun toString(): String = "Authentication(user=$user, password=***)"
 }
 
@@ -40,11 +39,7 @@ object KafkaSasl {
         )
 }
 
-/**
- * Supplies [Authentication]'s credentials to Kafka's SASL handshake directly, via [javax.security.auth.callback.NameCallback]
- * and [javax.security.auth.callback.PasswordCallback] -- [KafkaSasl.brokerProperties]' `sasl.jaas.config` carries no
- * credentials at all. Set via `sasl.client.callback.handler.class` ([SaslConfigs.SASL_CLIENT_CALLBACK_HANDLER_CLASS]).
- */
+/** Hands [Authentication] to the SASL handshake, so `sasl.jaas.config` never contains the credentials. */
 class AuthenticationCallbackHandler : AuthenticateCallbackHandler {
     private lateinit var auth: Authentication
 

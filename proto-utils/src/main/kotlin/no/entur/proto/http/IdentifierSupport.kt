@@ -4,16 +4,10 @@ import com.google.protobuf.Descriptors.FieldDescriptor
 import com.google.protobuf.Message
 import no.entur.proto.reflect.ResourceFields
 
-/**
- * Validates a resource body's own `IDENTIFIER` proto field against the URL path id it was addressed by,
- * for `Update*` endpoints.
- */
 object IdentifierSupport {
     /**
-     * If [resource]'s `IDENTIFIER` field is set to a non-default value that differs from [pathId],
-     * rejects the request with 400. A zero/empty value is fine, and a message with no `IDENTIFIER` field is a no-op.
-     * Which field that is - resolved via [ResourceFields.forDescriptor] - decides whether [pathId] is compared as a
-     * number or a `String`.
+     * Rejects (400) a body `IDENTIFIER` that is set and differs from [pathId]. An unset id passes, and so does
+     * any message that isn't a [ResourceFields] resource.
      */
     fun <T : Message> requireIdentifierMatchesPath(
         resource: T,

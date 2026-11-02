@@ -7,10 +7,7 @@ import com.google.protobuf.Timestamp
 import java.util.Optional
 import java.util.concurrent.ConcurrentHashMap
 
-/**
- * Memoizes a nullable per-message-[Descriptor] resolution. `null` is cached too (as [Optional.empty]), since a
- * message simply not declaring the field(s) in question is a legitimate, stable answer.
- */
+/** Memoizes a per-[Descriptor] lookup, including a `null` result. */
 class DescriptorCache<T : Any>(
     private val resolve: (Descriptor) -> T?,
 ) {
@@ -19,16 +16,12 @@ class DescriptorCache<T : Any>(
     operator fun get(descriptor: Descriptor): T? = cache.computeIfAbsent(descriptor) { Optional.ofNullable(resolve(it)) }.orElse(null)
 }
 
-/**
- * The `IDENTIFIER`/`OUTPUT_ONLY updated_at` field pair a resource message declares. Resolved once per [Descriptor]
- * and cached in [forDescriptor].
- */
+/** The `IDENTIFIER` and `OUTPUT_ONLY updated_at` fields a resource message declares. */
 data class ResourceFields(
     val idField: FieldDescriptor,
     val updatedAtField: FieldDescriptor,
 ) {
     companion object {
-        /** The `IDENTIFIER` field types this can resolve: a `string`, or anything that fits in a [Long]. */
         private val ID_JAVA_TYPES =
             setOf(FieldDescriptor.JavaType.STRING, FieldDescriptor.JavaType.INT, FieldDescriptor.JavaType.LONG)
 
@@ -36,13 +29,7 @@ data class ResourceFields(
 
         fun forDescriptor(descriptor: Descriptor): ResourceFields? = cache[descriptor]
 
-        /**
-         * `null` if [descriptor] doesn't declare exactly one `IDENTIFIER` field and exactly one
-         * `updated_at` field. Once a message *does* declare both, though, they're validated here.
-         *
-         * Throws [IllegalStateException] if the `IDENTIFIER` is neither numeric nor a `string`, or if an `updated_at`
-         * field is not `OUTPUT_ONLY` or isn't `google.protobuf.Timestamp`.
-         */
+        /** `null` unless [descriptor] declares both fields; throws if either is declared with the wrong type or behavior. */
         private fun resolve(descriptor: Descriptor): ResourceFields? {
             val idField = descriptor.fieldsWithBehavior(FieldBehavior.IDENTIFIER).singleOrNull() ?: return null
             val updatedAtField = descriptor.findFieldByName("updated_at") ?: return null

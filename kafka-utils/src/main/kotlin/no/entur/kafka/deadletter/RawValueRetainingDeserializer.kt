@@ -3,14 +3,9 @@ package no.entur.kafka.deadletter
 import org.apache.kafka.common.header.Headers
 import org.apache.kafka.common.serialization.Deserializer
 
-/** The header [RawValueRetainingDeserializer] keeps a record's consumed bytes on. */
 const val RAW_VALUE_HEADER = "entur_dlt_raw_value"
 
-/**
- * Copies the incoming bytes onto [RAW_VALUE_HEADER] before delegating, so [DeadLetterRecoverer] has
- * them, schema-id prefix included, for a value that is not a protobuf message, even one [delegate]
- * cannot decode.
- */
+/** Keeps the consumed bytes, schema-id prefix included, so [DeadLetterRecoverer] can dead-letter a value [delegate] can't decode. */
 class RawValueRetainingDeserializer<T>(
     private val delegate: Deserializer<T>,
 ) : Deserializer<T> {

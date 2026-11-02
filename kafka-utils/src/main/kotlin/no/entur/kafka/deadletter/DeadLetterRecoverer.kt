@@ -28,9 +28,8 @@ import java.util.concurrent.TimeoutException
 import com.google.protobuf.Any as ProtoAny
 
 /**
- * Publishes a record no attempt can process to [topic] as a [DeadLetter] carrying its value: the
- * protobuf message it decoded to, or else the bytes it was consumed as.
- * Throws if the publish fails or takes longer than [sendTimeout], which keeps the offset uncommitted.
+ * Publishes a permanently failed record to [topic] as a [DeadLetter]. Throws if the publish fails or
+ * exceeds [sendTimeout], which keeps the offset uncommitted.
  */
 class DeadLetterRecoverer(
     private val template: KafkaOperations<String, DeadLetter>,

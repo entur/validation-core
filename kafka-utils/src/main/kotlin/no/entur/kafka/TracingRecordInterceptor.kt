@@ -6,11 +6,8 @@ import org.slf4j.MDC
 import org.springframework.kafka.listener.RecordInterceptor
 
 /**
- * Puts the consumed record's correlation id and sender's client name in the MDC while the listener
- * processes it, and removes them afterwards. A record without a correlation id gets
- * [missingCorrelationId]'s: [NOT_SET] by default, a fresh id in a service that mints its own.
- *
- * Meant for [org.springframework.kafka.config.AbstractKafkaListenerContainerFactory.setRecordInterceptor].
+ * Puts the record's correlation id and sender in the MDC while the listener runs. [missingCorrelationId]
+ * lets a service that mints its own ids use a fresh one instead of [NOT_SET].
  */
 class TracingRecordInterceptor<K : Any, V : Any>(
     private val missingCorrelationId: () -> String = { NOT_SET },

@@ -17,21 +17,11 @@ import org.springframework.web.bind.support.WebExchangeBindException
 import org.springframework.web.server.MissingRequestValueException
 
 /**
- * Maps exceptions raised anywhere in the API to a protobuf [ProblemDetail] response (RFC 7807) with per-field detail
- * in [ProblemDetail.errors], so callers always get a structured, uniform error body instead of a container-specific
- * fallback:
- * - [ElementNotFoundException] to 404
- * - [IllegalArgumentException] to 400
- * - [ConflictException] to 409
- * - [MissingRequestValueException] to 428 when it's specifically a missing `If-Match` header and 400 otherwise,
- * - [WebExchangeBindException] (Bean Validation failures) to 400.
+ * Maps exceptions to a protobuf [ProblemDetail] response: not found 404, [IllegalArgumentException] 400,
+ * [ConflictException] 409, missing `If-Match` 428, Bean Validation failures 400 with per-field errors.
  *
- * Boot's `spring.webflux.problemdetails.enabled` fallback advice also knows how to handle
- * [WebExchangeBindException]. Without an explicit [Order], advice bean precedence is unspecified, so this must outrank
- * it to keep [handleValidation]'s field-level detail winning for exceptions this class explicitly handles.
- *
- * Registered in every consuming Boot application via
- * `META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports`.
+ * [Order] is needed because Boot's `spring.webflux.problemdetails.enabled` advice also handles
+ * [WebExchangeBindException], and advice precedence is otherwise unspecified.
  */
 @RestControllerAdvice
 @Order(Ordered.HIGHEST_PRECEDENCE)
@@ -45,10 +35,7 @@ class ApiExceptionHandler {
     @ExceptionHandler(ConflictException::class)
     fun handleConflict(ex: ConflictException): ResponseEntity<ProblemDetail> = apiProblem(HttpStatus.CONFLICT, ex.message)
 
-    /**
-     * WebFlux throws [MissingRequestValueException] generically for any missing required named value. Only the `If-Match`
-     * case gets a 428 (RFC 6585); everything else falls back to a plain 400.
-     */
+    /** Only a missing `If-Match` is a 428 (RFC 6585); any other missing value is a 400. */
     @ExceptionHandler(MissingRequestValueException::class)
     fun handleMissingRequestValue(ex: MissingRequestValueException): ResponseEntity<ProblemDetail> =
         if (ex.label == "header" && ex.name == HttpHeaders.IF_MATCH) {

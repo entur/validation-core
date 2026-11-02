@@ -7,25 +7,14 @@ import com.google.protobuf.Descriptors.FileDescriptor
 import com.google.protobuf.UnknownFieldSet
 
 /**
- * A copy of this file's descriptor with [droppedImports] removed from its `import` statements, and
- * [droppedExtensionNumbers] removed from every field's options - for registering a schema with a
- * system that has no use for annotations meant for a different consumer.
+ * This file's descriptor without [droppedImports] and without [droppedExtensionNumbers] on any field's
+ * options. A message that is both a REST resource and a Kafka record carries REST-only annotations
+ * (e.g. gnostic's), and the schema registry has no subject for third-party imports like
+ * `gnostic/openapi/v3/annotations.proto`.
  *
- * (A message can be both a REST resource (needing e.g. `google.api.field_behavior`/gnostic OpenAPI
- * annotations for spec generation) and a Kafka record (needing none of that) at once; proto3 has no
- * way to attach those annotations from anywhere but the field itself, so the live descriptor always
- * carries both. This produces a reduced projection without touching the canonical `.proto` source,
- * so a registry that has no permission to create subjects for third-party imports like
- * `gnostic/openapi/v3/annotations.proto` never needs to see them.)
- *
- * [droppedExtensionNumbers] are raw field numbers, not typed extension descriptors: an extension
- * declared by a `.proto` file with no corresponding generated Java/Kotlin class on this classpath
- * has no typed accessor to clear by. Every extension known to this JVM or not, is still just a field
- * number on the wire, which [withoutFieldOptionExtensions] strips either way.
- *
- * Only field-level options are touched. A caller dropping an import that's still relied on by some
- * file-, message- or method-level option ends up with a descriptor that fails to build - that failure
- * is the signal the dropped set was wrong, not something this function tries to detect up front.
+ * Extensions are raw field numbers because an extension with no generated class on the classpath has
+ * no typed descriptor. Only field options are touched: dropping an import still used elsewhere makes
+ * the descriptor fail to build.
  */
 fun FileDescriptor.withoutFieldOptionExtensions(
     droppedImports: Set<String>,
@@ -41,10 +30,7 @@ fun FileDescriptor.withoutFieldOptionExtensions(
         .build()
 }
 
-/**
- * [this] and every file it transitively depends on, each sanitized the same way
- * [withoutFieldOptionExtensions] sanitizes a single file.
- */
+/** [withoutFieldOptionExtensions] applied to this file and everything it transitively imports. */
 fun FileDescriptor.withoutFieldOptionExtensionsDeep(
     droppedImports: Set<String>,
     droppedExtensionNumbers: Set<Int>,
@@ -81,10 +67,7 @@ private fun DescriptorProto.withoutFieldOptionExtensions(droppedExtensionNumbers
         .addAllNestedType(nestedTypeList.map { it.withoutFieldOptionExtensions(droppedExtensionNumbers) })
         .build()
 
-/**
- * Round-trips through [UnknownFieldSet] to drop [droppedExtensionNumbers] by raw field number. (On the wire,
- * a "known" option field and an unregistered extension are indistinguishable.)
- */
+/** Via [UnknownFieldSet], since on the wire a known option and an unregistered extension look the same. */
 private fun FieldOptions.withoutExtensions(droppedExtensionNumbers: Set<Int>): FieldOptions {
     val kept = UnknownFieldSet.newBuilder()
     UnknownFieldSet.parseFrom(toByteString()).asMap().forEach { (number, field) ->
