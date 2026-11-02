@@ -1,4 +1,4 @@
-description = "JetBrains Exposed-specific persistence support (keyset-paging predicates and " +
+description = "Persistence support for the Exposed SQL library (keyset-paging predicates and " +
     "SortableProperty column bindings, ETag concurrency) built on proto-utils's domain-agnostic plumbing."
 
 plugins {

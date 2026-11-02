@@ -18,7 +18,7 @@ Eight Gradle modules, each published as its own Maven artifact, sharing one vers
 | [`kittum-api`](kittum-api) | `entur.kittum.v1` | `no.entur.validation:kittum-api` | Kittum's gRPC/REST service definitions and their Request/Response messages. |
 | [`zagar-api`](zagar-api) | `entur.zagar.v1` | `no.entur.validation:zagar-api` | Zagar's gRPC/REST service definitions and their Request/Response messages. |
 | [`proto-utils`](proto-utils) | — (hand-written, not proto-generated) | `no.entur.validation:proto-utils` | Domain-agnostic proto/HTTP plumbing (update masks, id checks, oneof serialization, timestamps, schema-registry sanitizing). See "Non-schema modules" below. |
-| [`exposed-utils`](exposed-utils) | — (hand-written, not proto-generated) | `no.entur.validation:exposed-utils` | JetBrains Exposed-specific persistence support (ETag concurrency, cursor paging) built on `proto-utils`. See "Non-schema modules" below. |
+| [`exposed-utils`](exposed-utils) | — (hand-written, not proto-generated) | `no.entur.validation:exposed-utils` | Persistence support for the Exposed SQL library (ETag concurrency, cursor paging) built on `proto-utils`. See "Non-schema modules" below. |
 | [`api-utils`](api-utils) | — (hand-written, not proto-generated) | `no.entur.validation:api-utils` | Spring WebFlux/Security support (protobuf-JSON codecs, `ProblemDetail` error mapping, OpenAPI spec serving, content negotiation, audience-validation and method-security configuration) for services built on this schema. See "Non-schema modules" below. |
 | [`kafka-utils`](kafka-utils) | — (hand-written, not proto-generated) | `no.entur.validation:kafka-utils` | Kafka tracing (the `X-Correlation-Id`/`ET-Client-Name` headers every validation service stamps on what it produces, and the `correlationId`/`clientName` MDC entries it logs with while processing a consumed record) and dead-lettering (which listener failures are permanent, the `entur.validation.v1.DeadLetter` envelope they are published in, and the error handler that does it). See "Non-schema modules" below. |
 
@@ -116,7 +116,7 @@ validation services would otherwise each write themselves.
 | Module | Use it for | Key classes |
 |--------|-----------|-------------|
 | `proto-utils` | Working with protobuf messages in a REST API | `UpdateMaskSupport` (PATCH with `update_mask`), `IdentifierSupport` (body id must match path id), `OneofSerialization`, `ProtoTimestamps`, `SchemaRegistrySanitizer`, `ConflictException`/`ElementNotFoundException` |
-| `exposed-utils` | Storing those messages in Postgres with JetBrains Exposed | `ConcurrencySupport` (ETag/`If-Match`), `PagingSupport` + `SortableProperties` (`order_by` and cursor paging), `PostgresEnumColumnType` |
+| `exposed-utils` | Storing those messages in Postgres with the Exposed SQL library | `ConcurrencySupport` (ETag/`If-Match`), `PagingSupport` + `SortableProperties` (`order_by` and cursor paging), `PostgresEnumColumnType` |
 | `api-utils` | Spring WebFlux REST services | Protobuf JSON codecs, `ApiExceptionHandler` (exceptions to `ProblemDetail`), `OpenApiController` (serves the spec), `AudienceValidationGuard`, `MethodSecurityConfig` |
 | `kafka-utils` | Kafka producers and listeners | Tracing interceptors, dead-lettering (see below) |
 

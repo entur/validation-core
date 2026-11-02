@@ -5,7 +5,7 @@ Gradle modules - `http-model` (the shared `entur.http.v1` `Failure`/`ProblemDeta
 `validation-model` (the `entur.validation.v1` domain messages), `kittum-api` (Kittum's
 `entur.kittum.v1` service definitions), `zagar-api` (Zagar's `entur.zagar.v1` service
 definitions), `proto-utils` (hand-written, domain-agnostic proto/HTTP plumbing built on the other
-three), `exposed-utils` (JetBrains Exposed-specific persistence support - ETag concurrency,
+three), `exposed-utils` (persistence support for the Exposed SQL library - ETag concurrency,
 cursor paging - built on `proto-utils`), `api-utils` (hand-written Spring WebFlux/Security
 support - OpenAPI spec serving, content negotiation, audience-validation and method-security
 configuration), and `kafka-utils` (hand-written Kafka support - tracing via the `X-Correlation-Id`/
