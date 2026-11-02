@@ -44,7 +44,7 @@ mise install        # installs buf, protoc, Java 25 and Gradle at the pinned ver
 Then build:
 
 ```shell
-./gradlew clean build
+mise exec -- ./gradlew clean build
 ```
 
 This runs `buf generate` on all modules before compiling. Each module's jar also bundles its own `.proto` sources,
