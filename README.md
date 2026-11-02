@@ -136,8 +136,10 @@ All three others build on `proto-utils`. `api-utils` also uses `http-model`, and
 
 ### Wiring them into a service
 
-- **`api-utils` sets itself up.** Adding the dependency is enough: Spring Boot finds its beans
-  through `META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports`.
+- **`api-utils` registers its beans automatically.** Spring Boot discovers them through
+  `META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports`.
+  The service must still bundle an OpenAPI spec and set `entur.api.openapi.spec-location` to its
+  classpath path, and configure accepted audiences in `entur.auth.apis` for every trusted issuer.
   When you add or remove a bean, update that file too; `AutoConfigurationImportsTest` fails if
   you forget.
 - **The other three have no Spring beans.** Call their functions directly, or for `kafka-utils`,
