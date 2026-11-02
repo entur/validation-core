@@ -178,12 +178,19 @@ keeps retry state per partition:
 
 Kafka client configuration (`no.entur.kafka`):
 
+- `Authentication(user, password)` is one SCRAM user/password pair; `null` means an
+  unauthenticated, local run.
 - `KafkaSasl` builds the SCRAM broker properties and the schema registry's basic-auth properties
-  from one user/password pair.
+  from an `Authentication`.
 - `KafkaClientProperties.common(...)` builds the bootstrap servers, security protocol and schema
-  registry URL a client needs, plus both of `KafkaSasl`'s property sets when `user` is non-blank. A
+  registry URL a client needs, plus both of `KafkaSasl`'s property sets when `auth` is non-null. A
   service still adds its own consumer- or producer-specific properties (offset reset, compression,
   auto-register-schemas, ...) on top.
+- `singleRecordContainerFactory(...)` builds a `ConcurrentKafkaListenerContainerFactory` for one
+  record at a time: `concurrency(1)`, `AckMode.MANUAL_IMMEDIATE`, a `TracingRecordInterceptor` by
+  default, and the given consumer factory and error handler. An optional `pollTimeout` overrides
+  `ContainerProperties`' own default; left unset, a service's listener polls at Spring Kafka's
+  usual cadence rather than one tuned for a long-running record.
 
 Log sanitizing (`no.entur.kafka`):
 
