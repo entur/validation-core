@@ -32,6 +32,17 @@ git clone git@github.com:entur/validation-core.git
 
 ## Build
 
+The build needs `buf` and `protoc`. Install them once with [mise](https://mise.jdx.dev), which
+reads the pinned versions from [`.mise.toml`](.mise.toml):
+
+```shell
+brew install mise   # macOS; for other platforms see https://mise.jdx.dev/getting-started.html
+mise trust          # allow this repo's .mise.toml
+mise install        # installs buf, protoc, Java 25 and Gradle at the pinned versions
+```
+
+Then build:
+
 ```shell
 ./gradlew clean build
 ```
@@ -44,8 +55,9 @@ so a consumer that needs the raw schema  can get it from the same published arti
 - Java 25
 - Gradle (wrapper included)
 - `buf` (the Buf CLI, from Buf Technologies) and `protoc` (the Protocol Buffers compiler, from
-  Google) - both pinned in [`.mise.toml`](.mise.toml); install them directly, or run `mise install`
-  to get the pinned versions automatically
+  Google) - both pinned in [`.mise.toml`](.mise.toml). Install them with mise as shown above:
+  the build looks for `buf` in mise's shims directory (`~/.local/share/mise/shims`) first, and
+  only falls back to whatever `buf` is on your `PATH`, which may not be the pinned version
 
 ### Schema changes
 
