@@ -12,12 +12,8 @@ import org.jetbrains.exposed.v1.core.less
 import org.jetbrains.exposed.v1.core.or
 
 /**
- * [SortableProperty] for a nullable, plain (non-`EntityID`), [Comparable]-valued column,
- * backing an `optional` proto field. [lessCondition]/[greaterCondition] fold
- * [nullsOrder] in directly (see [afterCondition]): whichever of the two represents "the next
- * row in this direction" also has to say where that leaves an absent value, since plain SQL
- * `<`/`>` against a `NULL` column is always `UNKNOWN` rather than *not* matching the way "nothing sorts past the end"
- * would want.
+ * [SortableProperty] for a nullable column backing an `optional` field. SQL `<`/`>` against `NULL`
+ * is `UNKNOWN`, so the conditions handle absent values explicitly per [nullsOrder].
  */
 internal class SortableNullableProperty<T : Message, V : Comparable<V>>(
     path: List<Descriptors.FieldDescriptor>,
@@ -34,12 +30,8 @@ internal class SortableNullableProperty<T : Message, V : Comparable<V>>(
     override fun equalCondition(value: Any?): Op<Boolean> = if (value == null) typedColumn.isNull() else typedColumn eq safeCast(value)
 
     /**
-     * The shared shape behind [lessCondition]/[greaterCondition]: [value] null means the cursor
-     * itself was already resting on an absent value, so either every present row still lies ahead ([NullsOrder.FIRST])
-     * or none do ([NullsOrder.LAST] - only a tie on a later `order_by` field could place anything "after" it).
-     * [value] non-null runs [nonNullCondition] as normal, additionally matching every absent
-     * row too when [nullsOrder] is [NullsOrder.LAST]. [NullsOrder.FIRST] needs no such addition, since the
-     * absent block already lies entirely behind a present row by then.
+     * A null [value] means the cursor is inside the absent block: every present row lies ahead with
+     * [NullsOrder.FIRST], none with [NullsOrder.LAST] (later `order_by` fields break the tie).
      */
     private inline fun afterCondition(
         value: Any?,

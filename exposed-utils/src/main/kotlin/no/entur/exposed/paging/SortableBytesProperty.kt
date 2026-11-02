@@ -10,10 +10,8 @@ import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.core.wrap
 
 /**
- * [SortableProperty] for a `bytes` field, backed by a [org.jetbrains.exposed.v1.core.BasicBinaryColumnType] column.
- * Needs its own subclass rather than fitting [SortableComparableProperty] since [ByteArray] isn't
- * [Comparable]. A SQL binary/bytea column is still perfectly orderable byte-by-byte, though, so this instead builds the
- * equivalent [org.jetbrains.exposed.v1.core.LessOp]/[org.jetbrains.exposed.v1.core.GreaterOp] directly.
+ * [SortableProperty] for a `bytes` field. [ByteArray] isn't [Comparable], so this builds [LessOp]/[GreaterOp]
+ * directly; Postgres orders `bytea` byte-by-byte.
  */
 internal class SortableBytesProperty<T : Message>(
     path: List<Descriptors.FieldDescriptor>,

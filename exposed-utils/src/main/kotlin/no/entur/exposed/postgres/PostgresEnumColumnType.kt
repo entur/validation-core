@@ -5,20 +5,14 @@ import org.jetbrains.exposed.v1.core.StringColumnType
 import org.jetbrains.exposed.v1.core.Table
 
 /**
- * A column of the Postgres enum type [typeName] (`CREATE TYPE ... AS ENUM`), holding one of [labels] -
- * typically a proto enum's constant names, with its zero value and `UNRECOGNIZED` catch-all stripped
- * out by the caller before being passed in here - see [enumLabelsFor].
+ * A column of the Postgres enum type [typeName], holding one of [labels] (see [enumLabelsFor]).
  *
- * Deliberately a [StringColumnType] rather than an Exposed `customEnumeration`:
- * [no.entur.exposed.paging.SortableProperty] only accepts a [StringColumnType] for a proto `enum` field, and
- * keyset-compares it against the raw cursor string.
+ * A [StringColumnType], not `customEnumeration`, because [no.entur.exposed.paging.SortableProperty]
+ * only accepts strings for a proto `enum` field.
  *
- * r2dbc-postgresql binds a `String` parameter as `VARCHAR`, which Postgres won't implicitly coerce to
- * an enum type (`column "stage" is of type validation_stage but expression is of type character
- * varying`), so every parameter is cast explicitly via [parameterMarker] instead of registering an
- * r2dbc-postgresql `EnumCodec` - that would need each pooled connection to look the type's oid up
- * on connect, and a connection opened before Flyway created the type would never get the codec.
- * Reading needs nothing: r2dbc-postgresql decodes any column requested as `String` from its text.
+ * r2dbc-postgresql binds a `String` as `VARCHAR`, which Postgres won't coerce to an enum, so
+ * [parameterMarker] casts explicitly. Not an r2dbc `EnumCodec`: it looks the type's oid up on connect,
+ * so a connection opened before Flyway created the type would never get it.
  */
 class PostgresEnumColumnType(
     val typeName: String,
@@ -30,11 +24,7 @@ class PostgresEnumColumnType(
 
     override fun nonNullValueToString(value: String): String = "${super.nonNullValueToString(value)}::$typeName"
 
-    /**
-     * Fails an insert/update with a value outside [labels] (e.g. a proto enum's `*_UNSPECIFIED` or
-     * `UNRECOGNIZED`) as an [IllegalArgumentException] up front, instead of letting Postgres reject
-     * it with an `invalid_text_representation` error once it reaches the database.
-     */
+    /** Rejects e.g. `*_UNSPECIFIED`/`UNRECOGNIZED` as an [IllegalArgumentException] before Postgres sees it. */
     override fun validateValueBeforeUpdate(value: String?) {
         require(value == null || value in labels) {
             "'$value' is not a valid $typeName - must be one of $labels"
@@ -42,7 +32,6 @@ class PostgresEnumColumnType(
     }
 }
 
-/** Registers a [PostgresEnumColumnType] column named [name]. */
 fun Table.postgresEnum(
     name: String,
     typeName: String,

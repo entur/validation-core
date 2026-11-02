@@ -11,22 +11,11 @@ import tools.jackson.core.type.TypeReference
 import tools.jackson.databind.ObjectMapper
 import java.util.Base64
 
-/**
- * Generic (message/table-agnostic) `order_by`/keyset-cursor engine for AIP-132 list endpoints,
- * shared across every paginated resource: an opaque `cursor` query parameter plus `pageSize`, an
- * `items`/`cursor` response envelope, and an `orderBy` query parameter (a comma-separated list of
- * fields, each optionally suffixed with " desc", defaulting to the resource's own id) - see
- * [SortableProperty] for what each paginated resource supplies to use it.
- */
+/** Resource-agnostic `order_by` and keyset-cursor paging for AIP-132 list endpoints. */
 object PagingSupport {
     /**
-     * Turns an AIP-132 `order_by` string (a comma-separated list of fields, each optionally
-     * suffixed with " desc") into a [SortField] list, restricted to [sortableProperties] (each
-     * looked up by its own [SortableProperty.name] - see [SortableProperties.byName]), always
-     * ending in a stable tie-break on every [SortableProperties.ids] property not already named,
-     * appended in the order [sortableProperties] itself declares them - a resource with a
-     * composite id thus gets every one of its id fields appended, not just a single hardcoded
-     * `"id"`. That total ordering is also what keyset scrolling itself requires to resume correctly.
+     * Parses `order_by` (`a, b desc`) and appends every [SortableProperties.ids] property not already
+     * named, since keyset scrolling needs a total order to resume correctly.
      */
     fun <T : Message> parseOrderBy(
         orderBy: String?,
@@ -47,16 +36,7 @@ object PagingSupport {
         return orders.values.toList()
     }
 
-    /**
-     * The standard keyset/seek-method predicate for scrolling past [after]: a row-wise comparison
-     * unrolled into a disjunction of conjunctions, e.g. for two keys
-     * `(k1 cmp v1) OR (k1 = v1 AND k2 cmp v2)`, so that ties on an earlier key still resolve by
-     * comparing the next one. A value in [after] is null only for a nullable property (see
-     * [SortableNullableProperty.create]) resuming from a row whose own value for it was absent -
-     * [SortableProperty.greaterCondition]/[SortableProperty.lessCondition]/[SortableProperty.equalCondition]
-     * already know what that means for *that* property alone; this function itself stays oblivious
-     * to nullability.
-     */
+    /** The keyset predicate for rows after [after]: `(k1 > v1) OR (k1 = v1 AND k2 > v2) ...`. */
     fun <T : Message> keysetCondition(
         sortableProperties: SortableProperties<T>,
         sort: List<SortField>,
@@ -66,12 +46,7 @@ object PagingSupport {
         return requireNotNull(disjunction) { "sort must not be empty" }
     }
 
-    /**
-     * [keysetCondition] for a resource whose id can't itself be a [SortableProperty] at all -
-     * the same disjunction-of-conjunctions shape, with one more key appended at the very end:
-     * a hand-supplied [idColumn] tie-break, always ascending, standing in for the [SortableProperties.ids]
-     * tie-break [sortableProperties] can't carry.
-     */
+    /** [keysetCondition] for a resource whose id can't be a [SortableProperty]: [idColumn] is the ascending tie-break. */
     fun <T : Message, ID : Comparable<ID>> keysetCondition(
         sortableProperties: SortableProperties<T>,
         sort: List<SortField>,
@@ -84,7 +59,6 @@ object PagingSupport {
         return disjunction?.let { it or idClause } ?: idClause
     }
 
-    /** The shared fold behind both [keysetCondition] overloads. */
     private fun <T : Message> foldKeyset(
         sortableProperties: SortableProperties<T>,
         sort: List<SortField>,
@@ -111,11 +85,8 @@ object PagingSupport {
     }
 
     /**
-     * The opaque cursor pointing just past the last item of [page], or null if it has no next
-     * page: one value per [Page.sort] field, in that same order. Consistent paging therefore relies on
-     * the client resending the same `order_by` on every page of one listing. A field's own value is
-     * itself null only when it's a nullable property (see [SortableNullableProperty.create]) and the
-     * last item's own value for it is absent.
+     * The cursor past [page]'s last item, or null on the last page. It holds values only, not the
+     * sort, so the client must resend the same `order_by` on every page.
      */
     fun <T : Message> nextCursor(
         sortableProperties: SortableProperties<T>,
@@ -127,10 +98,7 @@ object PagingSupport {
         return encodeCursor(values, objectMapper)
     }
 
-    /**
-     * [nextCursor] for the [keysetCondition] overload's case: the same per-field values, plus [id] -
-     * the hand-supplied tie-break column's own value for the last row - appended at the end.
-     */
+    /** [nextCursor] with the last row's [id] appended, for the `idColumn` [keysetCondition]. */
     fun <T : Message> nextCursor(
         sortableProperties: SortableProperties<T>,
         page: Page<T>,
@@ -148,16 +116,9 @@ object PagingSupport {
     ): String = Base64.getUrlEncoder().withoutPadding().encodeToString(objectMapper.writeValueAsBytes(values))
 
     /**
-     * Decodes an opaque cursor back into the keyset it was minted from, zipping its positional
-     * values against [sort] (see [nextCursor]) - a cursor minted from a different `order_by` than
-     * [sort] decodes into nonsense rather than failing loudly. A cursor is client-supplied and opaque,
-     * so any failure to decode it - bad Base64, malformed JSON, a value count that
-     * doesn't match [sort], or a value that doesn't parse as its property's type - is equally
-     * "not a valid cursor" and reported the same way. A null value is only ever valid for a nullable
-     * property (see [SortableNullableProperty.create]) - [SortableProperty.decode] itself passes a null
-     * straight through regardless, so a cursor claiming a null value for a non-nullable property
-     * decodes without complaint here, only to fail once [SortableProperty.lessCondition]/
-     * [SortableProperty.greaterCondition]/[SortableProperty.equalCondition] actually try to use it.
+     * Throws [IllegalArgumentException] for a malformed cursor. A cursor minted under a different
+     * `order_by` isn't detected, and a null for a non-nullable property only fails once the
+     * keyset condition uses it.
      */
     fun <T : Message> decodeCursor(
         sortableProperties: SortableProperties<T>,
@@ -170,11 +131,7 @@ object PagingSupport {
         return decodePrimaryValues(sortableProperties, sort, raw)
     }
 
-    /**
-     * [decodeCursor] for the [keysetCondition] overload's case: the same per-field values, plus
-     * [parseId] applied to the one extra value [nextCursor]'s own overload appended for the
-     * hand-supplied tie-break column.
-     */
+    /** [decodeCursor] for the `idColumn` [keysetCondition], parsing the appended id with [parseId]. */
     fun <T : Message, I> decodeCursor(
         sortableProperties: SortableProperties<T>,
         cursor: String?,
@@ -197,14 +154,6 @@ object PagingSupport {
             field.property to sortableProperties.byName(field.property).decode(value)
         }
 
-    /**
-     * Decodes an opaque cursor back into its raw positional string values, or null for a null
-     * [cursor] - shared by both [decodeCursor] overloads, which each then zip these against their
-     * own, differently-shaped keyset (see their own KDoc). A cursor is client-supplied and opaque,
-     * so any failure to decode it - bad Base64, malformed JSON, a value that doesn't parse as its
-     * property's type - is equally "not a valid cursor" and reported the same way; a value-count
-     * mismatch is each caller's own responsibility to check, since only it knows the expected count.
-     */
     private fun decodeRawCursor(
         cursor: String?,
         objectMapper: ObjectMapper,

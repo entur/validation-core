@@ -2,12 +2,7 @@ package no.entur.exposed.postgres
 
 import com.google.protobuf.Descriptors.EnumDescriptor
 
-/**
- * The labels a [PostgresEnumColumnType] for [descriptor] should accept: every value [descriptor]
- * declares except the zero one. (By proto3 convention an enum's zero value is always a `*_UNSPECIFIED` sentinel.)
- * Note that the `UNRECOGNIZED` enum value is also not included, since this is a -1 sentinel never listed in the
- * description values.
- */
+/** The labels a [PostgresEnumColumnType] accepts: every declared value except the zero `*_UNSPECIFIED` one. */
 fun enumLabelsFor(descriptor: EnumDescriptor): Set<String> =
     descriptor.values
         .filterNot { it.number == 0 }

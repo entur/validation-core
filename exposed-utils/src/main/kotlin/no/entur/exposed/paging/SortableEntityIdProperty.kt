@@ -9,7 +9,7 @@ import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.core.greater
 import org.jetbrains.exposed.v1.core.less
 
-/** [SortableProperty] for an id/FK-reference column - [decode] is [create]'s own optional parameter, see [SortableProperty]'s KDoc. */
+/** [SortableProperty] for an `EntityID` column (an id or foreign key). */
 internal class SortableEntityIdProperty<T : Message, V : Comparable<V>>(
     path: List<Descriptors.FieldDescriptor>,
     private val typedColumn: Column<EntityID<V>>,

@@ -8,13 +8,7 @@ import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.core.greater
 import org.jetbrains.exposed.v1.core.less
 
-/**
- * [SortableProperty] for a plain (non-`EntityID`) column of any comparable [V] - a `varchar` column backed by a
- * `string`/`enum` proto field, a plain (non-id/FK) numeric column, or an
- * [org.jetbrains.exposed.v1.core.datetime.OffsetDateTimeColumnType] column backed by a
- * `google.protobuf.Timestamp` field, for example. [decode] is [create]'s own optional parameter,
- * see [SortableProperty]'s KDoc.
- */
+/** [SortableProperty] for a non-null, non-`EntityID` column of any [Comparable] type. */
 internal class SortableComparableProperty<T : Message, V : Comparable<V>>(
     path: List<Descriptors.FieldDescriptor>,
     private val typedColumn: Column<V>,
