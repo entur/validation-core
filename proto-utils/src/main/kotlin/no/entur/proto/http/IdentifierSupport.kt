@@ -4,10 +4,13 @@ import com.google.protobuf.Descriptors.FieldDescriptor
 import com.google.protobuf.Message
 import no.entur.proto.reflect.ResourceFields
 
+/** Checks a resource body's `IDENTIFIER` against the path id it was addressed by, for `Update*` endpoints. */
 object IdentifierSupport {
     /**
-     * Rejects (400) a body `IDENTIFIER` that is set and differs from [pathId]. An unset id passes, and so does
-     * any message that isn't a [ResourceFields] resource.
+     * Checks that a body `IDENTIFIER` matches [pathId]. An unset id passes, and so does any message that
+     * isn't a [ResourceFields] resource.
+     *
+     * @throws IllegalArgumentException (a 400) if the id is set and differs from [pathId].
      */
     fun <T : Message> requireIdentifierMatchesPath(
         resource: T,

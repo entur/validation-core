@@ -40,14 +40,16 @@ fun buildExtensionRegistry(fileDescriptors: Collection<Descriptors.FileDescripto
     return registry
 }
 
+/** [fullName]'s extension in this registry (see [buildExtensionRegistry]). */
 fun ExtensionRegistry.requireExtension(fullName: String): Descriptors.FieldDescriptor =
     findImmutableExtensionByName(fullName)?.descriptor
         ?: error("Extension '$fullName' not found in the descriptor set")
 
-// filterIsInstance checks each element instead of an unchecked cast to List<T>.
+// getField() returns a plain Object; filterIsInstance checks each element instead of an unchecked cast.
 inline fun <reified T> Message.repeatedField(field: Descriptors.FieldDescriptor): List<T> =
     (getField(field) as List<*>).filterIsInstance<T>()
 
+/** The JSON Schema `type`/`format` pair for [field]'s protobuf type. */
 fun jsonSchemaType(field: Descriptors.FieldDescriptor): Pair<String, String?> =
     when (field.type) {
         Descriptors.FieldDescriptor.Type.STRING -> "string" to null

@@ -6,7 +6,11 @@ import org.springframework.kafka.listener.CommonErrorHandler
 import org.springframework.kafka.listener.ContainerProperties.AckMode
 import org.springframework.kafka.listener.RecordInterceptor
 
-/** One record at a time, acknowledged only once the listener has finished with it. */
+/**
+ * A listener container factory that handles one record at a time (`concurrency(1)`, [AckMode.MANUAL_IMMEDIATE]),
+ * acknowledging only once the listener has finished with it. [recordInterceptor] defaults to a
+ * [TracingRecordInterceptor], and an unset [pollTimeout] keeps [ConcurrentKafkaListenerContainerFactory]'s default.
+ */
 fun <K : Any, V : Any> singleRecordContainerFactory(
     consumerFactory: ConsumerFactory<K, V>,
     errorHandler: CommonErrorHandler,

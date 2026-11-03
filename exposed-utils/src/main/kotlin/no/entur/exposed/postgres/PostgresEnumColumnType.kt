@@ -24,7 +24,11 @@ class PostgresEnumColumnType(
 
     override fun nonNullValueToString(value: String): String = "${super.nonNullValueToString(value)}::$typeName"
 
-    /** Rejects e.g. `*_UNSPECIFIED`/`UNRECOGNIZED` as an [IllegalArgumentException] before Postgres sees it. */
+    /**
+     * Rejects a value outside [labels] (e.g. `*_UNSPECIFIED`) before Postgres sees it.
+     *
+     * @throws IllegalArgumentException if [value] isn't one of [labels].
+     */
     override fun validateValueBeforeUpdate(value: String?) {
         require(value == null || value in labels) {
             "'$value' is not a valid $typeName - must be one of $labels"
@@ -32,6 +36,7 @@ class PostgresEnumColumnType(
     }
 }
 
+/** Registers a [PostgresEnumColumnType] column named [name]. */
 fun Table.postgresEnum(
     name: String,
     typeName: String,

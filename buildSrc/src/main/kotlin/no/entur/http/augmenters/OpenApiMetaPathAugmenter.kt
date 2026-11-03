@@ -50,7 +50,7 @@ class OpenApiMetaPathAugmenter {
                                             schemas: {}
         """.trimIndent()
 
-    // gnostic builds `tags:` from services; no service backs the "OpenApi" tag.
+    // gnostic builds `tags:` from services, and no service backs the "OpenApi" tag, so it's added here.
     private val apiDocsTagYaml =
         """
         name: OpenApi

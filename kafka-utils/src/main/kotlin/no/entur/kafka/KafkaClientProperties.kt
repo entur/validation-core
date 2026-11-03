@@ -3,7 +3,10 @@ package no.entur.kafka
 import io.confluent.kafka.serializers.AbstractKafkaSchemaSerDeConfig
 import org.apache.kafka.clients.CommonClientConfigs
 
-/** Properties every Kafka client in a service shares. A null [auth] is a local, unauthenticated run. */
+/**
+ * The bootstrap-server, security-protocol and schema-registry properties every Kafka client in a service shares, plus
+ * [KafkaSasl] credentials when `auth` is set. A null `auth` is a local, unauthenticated run.
+ */
 object KafkaClientProperties {
     fun common(
         bootstrapServers: String,

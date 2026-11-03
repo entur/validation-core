@@ -46,7 +46,10 @@ object UpdateMaskSupport {
         return builder.build()
     }
 
-    /** `null` becomes [FULL_REPLACEMENT] and an empty [mask] the fields [patch] populated; anything else is unchanged. */
+    /**
+     * The mask to apply: `null` becomes [FULL_REPLACEMENT], an empty [mask] becomes the fields [patch] populated, and
+     * anything else is unchanged.
+     */
     fun <T : Message> resolveEffectiveMask(
         patch: T,
         mask: FieldMask?,
@@ -87,6 +90,11 @@ object UpdateMaskSupport {
         mask: FieldMask?,
     ): T = applyUpdateMask(current, patch, resolveEffectiveMask(patch, mask))
 
+    /**
+     * Whether [path] may be applied: `false` at its first protected segment.
+     *
+     * @throws IllegalArgumentException for an unknown segment, or one that descends into a non-singular-message field.
+     */
     private fun isPathAllowed(
         rootDescriptor: Descriptor,
         path: String,

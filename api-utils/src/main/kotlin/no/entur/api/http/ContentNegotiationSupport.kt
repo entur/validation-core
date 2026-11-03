@@ -2,11 +2,14 @@ package no.entur.api.http
 
 import org.springframework.http.MediaType
 
+/** Picks which of several representations to serve for a raw `Accept` header value. */
 object ContentNegotiationSupport {
     /**
      * The first of [candidates] with the highest quality in [accept], each quality taken from the most specific
      * matching range (RFC 7231 5.3.2), so `application/yaml;q=0` beats `application/\*`. A missing or
      * unparseable [accept] gets the first candidate.
+     *
+     * @throws IllegalArgumentException if [candidates] is empty.
      */
     fun bestMatch(
         accept: String?,
@@ -28,6 +31,7 @@ object ContentNegotiationSupport {
             ?: candidates.first()
     }
 
+    /** The quality of the most specific of [acceptedRanges] matching [candidate], or `0` if none matches. */
     private fun effectiveQuality(
         candidate: MediaType,
         acceptedRanges: List<MediaType>,

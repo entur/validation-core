@@ -20,8 +20,9 @@ import java.nio.charset.StandardCharsets
 private fun isProtoMessage(elementType: ResolvableType): Boolean = Message::class.java.isAssignableFrom(elementType.toClass())
 
 /**
- * Writes exactly one [Message] per response; [encode] fails on any other count rather than emit a JSON stream.
- * Also serves `application/problem+json` for [no.entur.http.proto.v1.ProblemDetail]. Empty `repeated` fields are omitted.
+ * WebFlux encoder for generated protobuf [Message]s. Writes exactly one [Message] per response; [encode] fails on any
+ * other count rather than emit a JSON stream. Also serves `application/problem+json` for
+ * [no.entur.http.proto.v1.ProblemDetail]. Empty `repeated` fields are omitted.
  */
 class ProtoJsonEncoder : AbstractEncoder<Message>(MediaType.APPLICATION_JSON, MediaType.APPLICATION_PROBLEM_JSON) {
     private val printer: JsonFormat.Printer = JsonFormat.printer()
@@ -47,7 +48,10 @@ class ProtoJsonEncoder : AbstractEncoder<Message>(MediaType.APPLICATION_JSON, Me
             .flux()
 }
 
-/** Rejects unknown fields as a malformed request (400) rather than silently ignoring them. */
+/**
+ * WebFlux decoder for generated protobuf [Message]s. Rejects unknown fields as a malformed request (400) rather than
+ * silently ignoring them.
+ */
 class ProtoJsonDecoder : AbstractDecoder<Message>(MediaType.APPLICATION_JSON) {
     private val parser: JsonFormat.Parser = JsonFormat.parser()
 

@@ -29,7 +29,11 @@ data class ResourceFields(
 
         fun forDescriptor(descriptor: Descriptor): ResourceFields? = cache[descriptor]
 
-        /** `null` unless [descriptor] declares both fields; throws if either is declared with the wrong type or behavior. */
+        /**
+         * `null` unless [descriptor] declares both fields.
+         *
+         * @throws IllegalStateException if either is declared with the wrong type or behavior.
+         */
         private fun resolve(descriptor: Descriptor): ResourceFields? {
             val idField = descriptor.fieldsWithBehavior(FieldBehavior.IDENTIFIER).singleOrNull() ?: return null
             val updatedAtField = descriptor.findFieldByName("updated_at") ?: return null

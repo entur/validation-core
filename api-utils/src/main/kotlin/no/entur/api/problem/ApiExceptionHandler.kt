@@ -35,7 +35,9 @@ class ApiExceptionHandler {
     @ExceptionHandler(ConflictException::class)
     fun handleConflict(ex: ConflictException): ResponseEntity<ProblemDetail> = apiProblem(HttpStatus.CONFLICT, ex.message)
 
-    /** Only a missing `If-Match` is a 428 (RFC 6585); any other missing value is a 400. */
+    /**
+     * Maps a missing required request value to 428 (RFC 6585) when it is the `If-Match` header, and to 400 otherwise.
+     */
     @ExceptionHandler(MissingRequestValueException::class)
     fun handleMissingRequestValue(ex: MissingRequestValueException): ResponseEntity<ProblemDetail> =
         if (ex.label == "header" && ex.name == HttpHeaders.IF_MATCH) {

@@ -62,11 +62,15 @@ enum class NullsOrder {
 sealed class SortableProperty<T : Message>(
     /** The proto fields from the resource's message down to the sortable leaf field. */
     val path: List<FieldDescriptor>,
+    /** The column to `ORDER BY`. */
     val column: Column<*>,
+    /** Overrides [decode]'s built-in per-[JavaType] parsing when set. */
     private val decoder: ((String) -> Any)? = null,
 ) {
+    /** This property's (leaf) field. */
     val descriptor: FieldDescriptor get() = path.last()
 
+    /** The `order_by` name clients use for this property. */
     val name: String = path.joinToString(".") { it.jsonName }
 
     /** Non-null only for a property built via [SortableNullableProperty.create] - see [NullsOrder]. */
@@ -89,7 +93,12 @@ sealed class SortableProperty<T : Message>(
         }
     }
 
-    /** Inverse of [valueOf]'s `toString()`; throws [IllegalArgumentException] on malformed input. */
+    /**
+     * Parses a cursor value a client sent back: the inverse of [valueOf]'s `toString()`. [decoder] takes over when
+     * set.
+     *
+     * @throws IllegalArgumentException if [raw] is malformed.
+     */
     fun decode(raw: String?): Any? {
         if (raw == null) return null
         decoder?.let { return it(raw) }
@@ -105,7 +114,10 @@ sealed class SortableProperty<T : Message>(
         }
     }
 
-    /** Rewraps [DateTimeParseException], the one [decode] failure that isn't an [IllegalArgumentException]. */
+    /**
+     * [OffsetDateTime.parse], rewrapping its [DateTimeParseException] as an [IllegalArgumentException] like every
+     * other [decode] failure.
+     */
     private fun parseTimestamp(raw: String): OffsetDateTime =
         try {
             OffsetDateTime.parse(raw)
@@ -113,16 +125,18 @@ sealed class SortableProperty<T : Message>(
             throw IllegalArgumentException("Invalid value for '$name': '$raw' is not a valid Timestamp", e)
         }
 
-    /** `value` is null only for a [nullsOrder] property, in all three conditions. */
+    /** `column < value` (see [PagingSupport.keysetCondition]); `value` is null only for a [nullsOrder] property. */
     abstract fun lessCondition(value: Any?): Op<Boolean>
 
+    /** `column > value` (see [PagingSupport.keysetCondition]); `value` is null only for a [nullsOrder] property. */
     abstract fun greaterCondition(value: Any?): Op<Boolean>
 
+    /** `column = value`, the ties so far in [PagingSupport.keysetCondition]; `value` is null only for a [nullsOrder] property. */
     abstract fun equalCondition(value: Any?): Op<Boolean>
 
     /**
-     * Spells out [nullsOrder] explicitly: SQL's default null placement flips with the direction,
-     * but reversing [ascending] must not move the absent values.
+     * The `ORDER BY` direction for [ascending], with [nullsOrder] spelled out: SQL's default null placement flips with
+     * the direction, but reversing [ascending] must not move the absent values.
      */
     fun sortOrder(ascending: Boolean): SortOrder =
         when (nullsOrder) {
@@ -134,7 +148,10 @@ sealed class SortableProperty<T : Message>(
     companion object {
         private val TIMESTAMP_FULL_NAME = Timestamp.getDescriptor().fullName
 
-        /** Does not see through `.transform()` columns, so those fail [requireColumnMatches] for now. */
+        /**
+         * Strips Exposed's [EntityIDColumnType]/[AutoIncColumnType] wrappers so [requireColumnMatches] sees the stored
+         * type. Does not see through `.transform()` columns, so those fail [requireColumnMatches] for now.
+         */
         private tailrec fun unwrapColumnType(columnType: IColumnType<*>): IColumnType<*> =
             when (columnType) {
                 is EntityIDColumnType<*> -> unwrapColumnType(columnType.idColumn.columnType)
@@ -142,6 +159,10 @@ sealed class SortableProperty<T : Message>(
                 else -> columnType
             }
 
+        /**
+         * Checks that [path] can back one sortable column: every entry but the last must be a singular,
+         * non-`Timestamp` message field.
+         */
         private fun requirePathValid(path: List<FieldDescriptor>) {
             require(path.isNotEmpty()) { "A sortable property needs at least one field" }
             path.dropLast(1).forEach { step ->
@@ -154,6 +175,10 @@ sealed class SortableProperty<T : Message>(
             }
         }
 
+        /**
+         * Checks that the leaf [descriptor] is singular and matches [columnType]'s SQL type. A
+         * `google.protobuf.Timestamp` field needs an [OffsetDateTimeColumnType] column.
+         */
         private fun requireColumnMatches(
             descriptor: FieldDescriptor,
             columnType: IColumnType<*>,

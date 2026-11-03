@@ -3,7 +3,7 @@ description = "Spring WebFlux/Security support (OpenAPI spec serving, content ne
     "error mapping) shared by validation-platform services."
 
 plugins {
-    // Opens Spring-annotated classes so Spring can proxy them.
+    // Kotlin classes are final by default, which breaks Spring's proxying of @Configuration classes.
     alias(libs.plugins.kotlin.spring)
     alias(libs.plugins.ktlint)
     id("entur.test-proto-module")

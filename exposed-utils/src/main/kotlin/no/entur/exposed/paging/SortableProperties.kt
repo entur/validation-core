@@ -22,14 +22,19 @@ class SortableProperties<T : Message> internal constructor(
     val ids: List<SortableProperty<T>>,
     private val fields: List<SortableProperty<T>>,
 ) {
+    /** Whether [name] is a known `order_by` property name. */
     operator fun contains(name: String): Boolean = (ids.asSequence() + fields).any { it.name == name }
 
+    /** The property with the `order_by` name [name]. */
     fun byName(name: String): SortableProperty<T> =
         requireNotNull((ids.asSequence() + fields).find { it.name == name }) { "Unsupported order_by field: $name" }
 
     /**
-     * `name` is the proto's snake_case field name, not the JSON name, optionally a dotted path into
-     * singular sub-messages (`"statistics.last_progress_received_at"`).
+     * Fluent builder for [SortableProperties]. [id] and [field] take the same column shapes and differ only in which
+     * list they add to.
+     *
+     * `name` is the proto's snake_case field name, not the JSON name, optionally a dotted path into singular
+     * sub-messages (`"statistics.last_progress_received_at"`).
      */
     class Builder<T : Message> internal constructor(
         private val descriptor: Descriptor,
@@ -55,12 +60,14 @@ class SortableProperties<T : Message> internal constructor(
             decode: ((String) -> V)? = null,
         ): Builder<T> = apply { fields += SortableEntityIdProperty.create(pathNamed(name), column, decode) }
 
+        /** A plain (non-`EntityID`) column that isn't part of this resource's id. [decode] works as in [id]. */
         fun <V : Comparable<V>> field(
             name: String,
             column: Column<V>,
             decode: ((String) -> V)? = null,
         ): Builder<T> = apply { fields += SortableComparableProperty.create(pathNamed(name), column, decode) }
 
+        /** A `bytes` field's column. */
         @JvmName("fieldBytes")
         fun field(
             name: String,
@@ -79,14 +86,17 @@ class SortableProperties<T : Message> internal constructor(
             column: Column<V?>,
         ): Builder<T> = apply { fields += SortableNullableProperty.create(pathNamed(name), column, NullsOrder.LAST) }
 
+        /** The finished, immutable [SortableProperties]. */
         fun build(): SortableProperties<T> =
             SortableProperties(
                 Collections.unmodifiableList(ids.toList()),
                 Collections.unmodifiableList(fields.toList()),
             )
 
+        /** The proto fields along [name]'s dotted path, from the resource's message down to the leaf. */
         private fun pathNamed(name: String): List<FieldDescriptor> = pathNamed(descriptor, name.split("."), name)
 
+        /** The recursive step behind [pathNamed]'s other overload. */
         private fun pathNamed(
             owner: Descriptor,
             remaining: List<String>,
@@ -104,6 +114,7 @@ class SortableProperties<T : Message> internal constructor(
     }
 
     companion object {
+        /** Starts building the [SortableProperties] for messages described by [descriptor]. */
         fun <T : Message> builder(descriptor: Descriptor): Builder<T> = Builder(descriptor)
     }
 }

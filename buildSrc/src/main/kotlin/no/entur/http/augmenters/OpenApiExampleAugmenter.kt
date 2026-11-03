@@ -61,6 +61,7 @@ class OpenApiExampleAugmenter {
     }
 
     /**
+     * Builds one example object from [schema]'s properties, following `$ref`s, arrays and maps through [resolve].
      * Fields without an example, or on a cycle, are left out. Only the first field of each `oneof` in
      * [oneofFieldGroups] is used, since a real instance sets just one.
      */
@@ -112,6 +113,10 @@ class OpenApiExampleAugmenter {
         return allOf.asSequence().mapNotNull { yamlMapOrNull(it)?.let(::refName) }.firstOrNull()
     }
 
+    /**
+     * Each message's fields mapped to their `(gnostic.openapi.v3.property).example` values, for the fields that
+     * declare one.
+     */
     private fun collectFieldExamples(
         files: Collection<Descriptors.FileDescriptor>,
         registry: ExtensionRegistry,
@@ -165,7 +170,10 @@ class OpenApiExampleAugmenter {
             }
     }
 
-    /** Real oneofs only: a proto3 `optional` field's synthetic oneof is skipped. */
+    /**
+     * Each message's `oneof` groups, as sets of field JSON names. Real oneofs only: a proto3 `optional` field's
+     * synthetic oneof is skipped.
+     */
     private fun collectOneofFieldGroups(files: Collection<Descriptors.FileDescriptor>): Map<String, List<Set<String>>> {
         val result = files.flatMap { it.messageTypes }
             .associateBy(

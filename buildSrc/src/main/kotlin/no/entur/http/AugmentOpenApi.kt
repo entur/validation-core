@@ -8,7 +8,10 @@ import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.TaskAction
 import java.io.FileInputStream
 
-/** Thin Gradle wrapper, so [OpenApiAugmentationPipeline] stays testable without Gradle. */
+/**
+ * Gradle task that runs [OpenApiAugmentationPipeline] on a spec file. Kept thin so the pipeline stays testable without
+ * Gradle.
+ */
 abstract class AugmentOpenApi : DefaultTask() {
     @get:InputFile
     abstract val descriptorSet: RegularFileProperty

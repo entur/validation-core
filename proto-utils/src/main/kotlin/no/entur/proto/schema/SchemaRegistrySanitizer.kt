@@ -67,7 +67,10 @@ private fun DescriptorProto.withoutFieldOptionExtensions(droppedExtensionNumbers
         .addAllNestedType(nestedTypeList.map { it.withoutFieldOptionExtensions(droppedExtensionNumbers) })
         .build()
 
-/** Via [UnknownFieldSet], since on the wire a known option and an unregistered extension look the same. */
+/**
+ * These options without [droppedExtensionNumbers], removed via [UnknownFieldSet] since on the wire a known option and
+ * an unregistered extension look the same.
+ */
 private fun FieldOptions.withoutExtensions(droppedExtensionNumbers: Set<Int>): FieldOptions {
     val kept = UnknownFieldSet.newBuilder()
     UnknownFieldSet.parseFrom(toByteString()).asMap().forEach { (number, field) ->

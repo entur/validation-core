@@ -92,7 +92,8 @@ class OpenApiFailureAugmenter {
                     result[operationId] = failures
                 }
             }
-        // Report every bad rpc at once, not just the first.
+        // Collected rather than thrown on the first hit, so one failed build lists every rpc to fix
+        // instead of one per rebuild.
         check(duplicateErrors.isEmpty()) { duplicateErrors.joinToString("\n") }
         return result
     }
@@ -117,6 +118,7 @@ class OpenApiFailureAugmenter {
         return result
     }
 
+    /** [messageFullName]'s schema, plus the full name of every message type its fields reference. */
     private fun buildSchema(
         files: Collection<Descriptors.FileDescriptor>,
         messageFullName: String,
@@ -166,8 +168,9 @@ class OpenApiFailureAugmenter {
     }
 
     /**
-     * A singular message field's `$ref` is wrapped in `allOf`: OpenAPI 3.0 ignores a `description` next to
-     * a bare `$ref`. Message types are appended to [referencedMessages] for the caller to recurse into.
+     * One field's schema fragment. A singular message field's `$ref` is wrapped in `allOf`, since OpenAPI 3.0 ignores
+     * a `description` next to a bare `$ref`. Message types are appended to [referencedMessages] for the caller to
+     * recurse into.
      */
     private fun fieldSchema(
         field: Descriptors.FieldDescriptor,

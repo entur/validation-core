@@ -30,8 +30,9 @@ internal class SortableNullableProperty<T : Message, V : Comparable<V>>(
     override fun equalCondition(value: Any?): Op<Boolean> = if (value == null) typedColumn.isNull() else typedColumn eq safeCast(value)
 
     /**
-     * A null [value] means the cursor is inside the absent block: every present row lies ahead with
-     * [NullsOrder.FIRST], none with [NullsOrder.LAST] (later `order_by` fields break the tie).
+     * The shared shape of [lessCondition]/[greaterCondition], placing absent values per [nullsOrder]. A null [value]
+     * means the cursor is inside the absent block: every present row lies ahead with [NullsOrder.FIRST], none with
+     * [NullsOrder.LAST] (later `order_by` fields break the tie).
      */
     private inline fun afterCondition(
         value: Any?,

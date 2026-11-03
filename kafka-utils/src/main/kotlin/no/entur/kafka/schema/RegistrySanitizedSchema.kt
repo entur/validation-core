@@ -32,7 +32,10 @@ class RegistrySanitizedSchema(
     }
 }
 
-/** By full nesting path, since [FileDescriptor.findMessageTypeByName] only resolves top-level messages. */
+/**
+ * The message in this (sanitized) file at [original]'s nesting path. [FileDescriptor.findMessageTypeByName] only
+ * resolves top-level messages.
+ */
 private fun FileDescriptor.findMessageType(original: Descriptor): Descriptor {
     val path = generateSequence(original) { it.containingType }.map { it.name }.toList().asReversed()
     var current = checkNotNull(findMessageTypeByName(path.first())) { "No top-level message named ${path.first()} in $name" }

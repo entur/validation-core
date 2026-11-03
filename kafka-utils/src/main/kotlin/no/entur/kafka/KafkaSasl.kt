@@ -13,6 +13,7 @@ data class Authentication(
     val user: String,
     val password: String,
 ) {
+    // Redact the password, which the data class's generated toString() would otherwise print.
     override fun toString(): String = "Authentication(user=$user, password=***)"
 }
 

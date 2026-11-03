@@ -59,6 +59,7 @@ object PagingSupport {
         return disjunction?.let { it or idClause } ?: idClause
     }
 
+    /** The shared fold behind both [keysetCondition] overloads. */
     private fun <T : Message> foldKeyset(
         sortableProperties: SortableProperties<T>,
         sort: List<SortField>,
@@ -116,9 +117,10 @@ object PagingSupport {
     ): String = Base64.getUrlEncoder().withoutPadding().encodeToString(objectMapper.writeValueAsBytes(values))
 
     /**
-     * Throws [IllegalArgumentException] for a malformed cursor. A cursor minted under a different
-     * `order_by` isn't detected, and a null for a non-nullable property only fails once the
-     * keyset condition uses it.
+     * Decodes a [cursor] minted by [nextCursor] back into a value per [sort] field. A cursor minted under a different
+     * `order_by` isn't detected, and a null for a non-nullable property only fails once the keyset condition uses it.
+     *
+     * @throws IllegalArgumentException if [cursor] is malformed.
      */
     fun <T : Message> decodeCursor(
         sortableProperties: SortableProperties<T>,
@@ -154,6 +156,10 @@ object PagingSupport {
             field.property to sortableProperties.byName(field.property).decode(value)
         }
 
+    /**
+     * Decodes [cursor] into its raw positional values, or `null` for a null [cursor]. Each [decodeCursor] overload
+     * checks the value count itself.
+     */
     private fun decodeRawCursor(
         cursor: String?,
         objectMapper: ObjectMapper,

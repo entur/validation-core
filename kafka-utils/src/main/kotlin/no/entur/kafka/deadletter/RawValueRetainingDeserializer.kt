@@ -3,6 +3,7 @@ package no.entur.kafka.deadletter
 import org.apache.kafka.common.header.Headers
 import org.apache.kafka.common.serialization.Deserializer
 
+/** The header [RawValueRetainingDeserializer] keeps a record's consumed bytes on. */
 const val RAW_VALUE_HEADER = "entur_dlt_raw_value"
 
 /** Keeps the consumed bytes, schema-id prefix included, so [DeadLetterRecoverer] can dead-letter a value [delegate] can't decode. */

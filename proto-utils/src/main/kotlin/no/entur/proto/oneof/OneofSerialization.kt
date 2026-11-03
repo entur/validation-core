@@ -7,7 +7,9 @@ import no.entur.proto.reflect.DescriptorCache
 
 /** A oneof's set field name and its value as JSON. */
 data class OneofVariant(
+    /** The set field's proto name. */
     val kind: String,
+    /** Its contents, serialized as JSON. */
     val json: String,
 )
 
@@ -18,6 +20,7 @@ object OneofSerialization {
     private val oneofsByDescriptor =
         DescriptorCache { descriptor: Descriptors.Descriptor -> descriptor.oneofs.associateBy { it.name } }
 
+    /** [message]'s set variant of its `oneofName` oneof. */
     fun serialize(
         message: Message,
         oneofName: String,
@@ -29,7 +32,7 @@ object OneofSerialization {
         return OneofVariant(field.name, printer.print(message.getField(field) as Message))
     }
 
-    /** Unknown JSON fields are ignored. */
+    /** Sets [variant] as [builder]'s `oneofName` variant. Unknown JSON fields are ignored. */
     fun deserialize(
         builder: Message.Builder,
         oneofName: String,
