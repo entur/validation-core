@@ -15,6 +15,7 @@ import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
+/** Exercises [UpdateMaskSupport] with generated fixtures, including absent versus present-but-empty masks. */
 internal class UpdateMaskSupportTest {
     // parse
 

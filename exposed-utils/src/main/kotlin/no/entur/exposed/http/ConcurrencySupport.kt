@@ -30,6 +30,7 @@ fun <T : Message> T.withETag(status: HttpStatus = HttpStatus.OK): ResponseEntity
 object ConcurrencySupport {
     private val HEX_FORMAT: HexFormat = HexFormat.of()
 
+    /** Returns a strong, quoted `ETag` for [id] and [updatedAt]. */
     fun etag(
         id: Any,
         updatedAt: Instant,

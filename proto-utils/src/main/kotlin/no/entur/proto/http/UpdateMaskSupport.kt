@@ -33,6 +33,8 @@ object UpdateMaskSupport {
      * Parses the camelCase `updateMask` query parameter into snake_case proto paths. Absent or `*`
      * returns `null` (full replacement); blank returns an empty mask (partial update), so keep the two
      * apart. Unknown field names are only rejected later, by [applyUpdateMask].
+     *
+     * @throws IllegalArgumentException if [updateMask] is malformed.
      */
     fun parse(updateMask: String?): FieldMask? {
         if (updateMask == null || updateMask.trim() == "*") return null
