@@ -124,6 +124,8 @@ https://github.com/entur/ai/blob/main/AGENTS.md
 - Existing comments may be shortened or deleted like any other code. When you touch a verbose
   comment, delete it or trim it. When trimming, cut the wording, not the reason: a comment whose
   why is gone and only restates the code is worse than the original.
+- Keep comments that explain what bare values encode, such as the ranks in a `when` or a magic
+  number: the code shows the values but not what they mean.
 - Keep comments that mark security-sensitive code (redacting secrets, sanitizing or escaping
   input, keeping untrusted values out of commands), even one-liners: they stop a later cleanup
   from removing the protection.

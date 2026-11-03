@@ -12,6 +12,7 @@ allprojects {
 
 val protoDirs = provider { subprojects.map { it.projectDir.resolve("src/main/proto") } }
 
+// Root-level: `buf format` rewrites the whole workspace in one shot.
 val bufFormat = tasks.register<Exec>("bufFormat") {
     description = "Formats all .proto files in place via `buf format -w`."
     group = "build"
@@ -20,6 +21,7 @@ val bufFormat = tasks.register<Exec>("bufFormat") {
     commandLine(miseExecutable("buf"), "format", "-w")
 }
 
+// Root-level: `buf lint` checks the whole workspace in one shot.
 val bufLint = tasks.register<Exec>("bufLint") {
     description = "Lints all .proto files via `buf lint`."
     group = "verification"

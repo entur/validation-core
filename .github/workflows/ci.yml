@@ -33,6 +33,7 @@ jobs:
         run: buf lint
 
       - name: buf format
+        # Fails if a committed .proto file isn't formatted per `buf format -w`.
         run: buf format --diff --exit-code
 
       - name: Check for updated buf-breaking-change label

@@ -101,6 +101,7 @@ val copyOpenApiSpec =
         }
     }
 
+// Run copyOpenApiSpec on every build, so specs/<specFileName> is always rewritten from the current .proto files.
 tasks.named<ProcessResources>("processResources") {
     dependsOn(copyOpenApiSpec)
     from(rootProject.layout.projectDirectory.dir("specs").file(grpcOpenApiModule.specFileName)) { into("openapi") }

@@ -33,6 +33,8 @@ fun newOpenApiYaml(): Yaml {
     return Yaml(representer, options)
 }
 
+// SnakeYAML's object graph is untyped, so recovering the OpenAPI-shaped Map<String, Any?> it's known to
+// contain needs a cast that erasure can't verify.
 @Suppress("UNCHECKED_CAST")
 fun yamlMap(value: Any?): MutableMap<String, Any?> = value as MutableMap<String, Any?>
 

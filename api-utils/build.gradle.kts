@@ -14,8 +14,11 @@ dependencies {
     implementation(platform(libs.spring.boot.bom))
     implementation(platform(libs.kotlin.bom))
 
+    // ResourceLoader/RestController/ResponseEntity/MediaType, and the suspend handler's coroutine support.
     api("org.springframework.boot:spring-boot-starter-webflux")
+    // MethodSecurityConfig's @EnableReactiveMethodSecurity.
     implementation("org.springframework.security:spring-security-config")
+    // YamlJsonConverter's YAML<->JSON conversion.
     implementation("tools.jackson.dataformat:jackson-dataformat-yaml")
     // `api`: EnturAuthProperties is in AudienceValidationGuard's public constructor.
     api(libs.entur.oidc.rs.webflux.config)
@@ -29,6 +32,7 @@ dependencies {
 
 kotlin {
     compilerOptions {
+        // Only this module calls Spring's JSR-305-annotated APIs from Kotlin, so this is set here, not repo-wide.
         freeCompilerArgs.add("-Xjsr305=strict")
     }
 }
