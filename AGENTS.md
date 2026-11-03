@@ -109,10 +109,21 @@ https://github.com/entur/ai/blob/main/AGENTS.md
 - Prefer self-explanatory code over comments.
 - Do not add comments that merely restate what the code does.
 - Comment only the _why_ the code can't show: a constraint, a non-obvious trade-off, a trap.
-- KDoc: one line by default, 2–3 lines at most unless the contract really is subtle.
+- KDoc: one line by default, 2–3 lines at most unless the contract really is subtle. Every public
+  class, object, function, property and constant has one. Trim a verbose KDoc, never delete it, whatever the
+  declaration's visibility.
+- A KDoc is read apart from the implementation, so it starts by saying what the declaration does or
+  returns. The why, edge cases and traps come after that sentence, never instead of it.
+- Never trim away a public function's contract: what it throws and when, and edge-case behaviour a
+  caller relies on (e.g. which of two matching rules wins). Put exceptions in a `@throws` tag rather
+  than in prose.
 - No history or discovery notes ("we found that…", "previously…"). Those belong in the commit
   message or PR description.
 - Don't explain another class's internals; link to it with `[Name]` and leave it there. But
   don't replace explaining _this_ file with a pointer to another file's KDoc.
 - Existing comments may be shortened or deleted like any other code. When you touch a verbose
-  comment, delete it or trim it.
+  comment, delete it or trim it. When trimming, cut the wording, not the reason: a comment whose
+  why is gone and only restates the code is worse than the original.
+- Keep comments that mark security-sensitive code (redacting secrets, sanitizing or escaping
+  input, keeping untrusted values out of commands), even one-liners: they stop a later cleanup
+  from removing the protection.
