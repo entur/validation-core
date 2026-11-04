@@ -1,7 +1,7 @@
 [versions]
 kotlin = "2.4.21"
 protobuf = "4.36.2"
-proto-google-common-protos = "2.78.0"
+proto-google-common-protos = "2.79.0"
 # Only the hand-written modules need this stack: the Spring Boot BOM (api-utils, exposed-utils,
 # kafka-utils), Exposed and coroutines (exposed-utils) and ktlint (all four) - the schema modules are
 # plain protobuf message/schema libraries. Kept aligned with the team-validering services' own catalogs.
