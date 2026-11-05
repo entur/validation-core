@@ -61,8 +61,8 @@ subprojects {
                 name = "EnturJFrog"
                 url = uri("https://entur2.jfrog.io/entur2/entur-release-standard/")
                 credentials {
-                    username = (findProperty("enturArtifactoryUser") as String?) ?: System.getenv("ARTIFACTORY_AUTH_USER")
-                    password = (findProperty("enturArtifactoryPassword") as String?) ?: System.getenv("ARTIFACTORY_AUTH_TOKEN")
+                    username = (findProperty("entur_artifactory_user") as String?) ?: System.getenv("ARTIFACTORY_AUTH_USER")
+                    password = (findProperty("entur_artifactory_password") as String?) ?: System.getenv("ARTIFACTORY_AUTH_TOKEN")
                 }
             }
         }
