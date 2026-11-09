@@ -1,6 +1,6 @@
 ## Description
 
-<Describe the purpose of this change in one or two sentences.>
+_Describe the purpose of this change in one or two sentences._
 
 ## Checklist
 
