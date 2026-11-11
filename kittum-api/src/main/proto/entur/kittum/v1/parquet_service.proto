@@ -61,7 +61,7 @@ message ParquetTable {
     example: {yaml: "\"stops\""}
   }];
   // The number of rows in the table.
-  int32 row_count = 2 [(gnostic.openapi.v3.property) = {
+  int64 row_count = 2 [(gnostic.openapi.v3.property) = {
     example: {yaml: "25"}
   }];
   // The table's columns, in file order.
@@ -78,8 +78,9 @@ message ParquetColumn {
   string type = 2 [(gnostic.openapi.v3.property) = {
     example: {yaml: "\"BIGINT\""}
   }];
-  // The column's values in the table's first ten rows. A number, boolean, string or null;
-  // dates, decimals, lists and structs are returned as text.
+  // The column's values in the table's first ten rows. A number, boolean, string or null.
+  // Integers beyond +/-2^53, which a JSON number cannot hold exactly, and dates, decimals,
+  // lists and structs are returned as text.
   repeated google.protobuf.Value values = 3;
 }
 
@@ -107,7 +108,7 @@ message QueryParquetTablesResponse {
   // At most `limit` of the matching rows, each with its values in `columns` order.
   repeated QueryRow rows = 2;
   // How many rows the query matches in total, regardless of the limit.
-  int32 total_count = 3 [(gnostic.openapi.v3.property) = {
+  int64 total_count = 3 [(gnostic.openapi.v3.property) = {
     example: {yaml: "150"}
   }];
   // Whether `rows` holds fewer rows than `total_count`.
@@ -121,8 +122,9 @@ message QueryParquetTablesResponse {
 
 // One row of a query result.
 message QueryRow {
-  // The row's values in the result's column order. A number, boolean, string or null; dates,
-  // decimals, lists and structs are returned as text.
+  // The row's values in the result's column order. A number, boolean, string or null.
+  // Integers beyond +/-2^53, which a JSON number cannot hold exactly, and dates, decimals,
+  // lists and structs are returned as text.
   repeated google.protobuf.Value values = 1;
 }
 
