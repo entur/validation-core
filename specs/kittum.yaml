@@ -1532,7 +1532,7 @@ components:
             example:
                 tables:
                   - name: stops
-                    rowCount: 25
+                    rowCount: '25'
                     columns:
                       - name: id
                         type: BIGINT
@@ -1725,7 +1725,7 @@ components:
                     type: string
                     description: The file or folder name without its `.parquet` extension.
                 rowCount:
-                    example: 25
+                    example: '25'
                     type: string
                     description: The number of rows in the table.
                 columns:
@@ -1736,7 +1736,7 @@ components:
             description: One Parquet table.
             example:
                 name: stops
-                rowCount: 25
+                rowCount: '25'
                 columns:
                   - name: id
                     type: BIGINT
@@ -1865,7 +1865,7 @@ components:
                     description: At most `limit` of the matching rows, each with its
                         values in `columns` order.
                 totalCount:
-                    example: 150
+                    example: '150'
                     type: string
                     description: How many rows the query matches in total, regardless
                         of the limit.
@@ -1884,7 +1884,7 @@ components:
                 columns:
                   - name: id
                     type: BIGINT
-                totalCount: 150
+                totalCount: '150'
                 durationMs: 42
         QueryRow:
             type: object

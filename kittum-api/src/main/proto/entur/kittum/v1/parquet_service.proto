@@ -62,7 +62,7 @@ message ParquetTable {
   }];
   // The number of rows in the table.
   int64 row_count = 2 [(gnostic.openapi.v3.property) = {
-    example: {yaml: "25"}
+    example: {yaml: "\"25\""}
   }];
   // The table's columns, in file order.
   repeated ParquetColumn columns = 3;
@@ -109,7 +109,7 @@ message QueryParquetTablesResponse {
   repeated QueryRow rows = 2;
   // How many rows the query matches in total, regardless of the limit.
   int64 total_count = 3 [(gnostic.openapi.v3.property) = {
-    example: {yaml: "150"}
+    example: {yaml: "\"150\""}
   }];
   // Whether `rows` holds fewer rows than `total_count`.
   bool truncated = 4;
