@@ -2,6 +2,8 @@ syntax = "proto3";
 
 package entur.validation.v1;
 
+import "gnostic/openapi/v3/annotations.proto";
+import "google/api/field_behavior.proto";
 import "google/protobuf/timestamp.proto";
 
 option go_package = "github.com/entur/validation-core/gen/entur/validation/v1;validationv1";
@@ -10,23 +12,46 @@ option java_package = "no.entur.validation.proto.v1";
 
 // Information about the data to be validated.
 message ValidationData {
-  // The originator of the data.
-  string originator = 1;
-  // An external id that identifies this data.
-  string external_id = 2;
+  // The originator of the data, e.g. the NeTEx codespace of the data provider.
+  string originator = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (gnostic.openapi.v3.property) = {
+      example: {yaml: "\"RUT\""}
+    }
+  ];
+  // An external id that identifies this data. Unique across every originator.
+  string external_id = 2 [
+    (google.api.field_behavior) = IDENTIFIER,
+    (gnostic.openapi.v3.property) = {
+      example: {yaml: "\"b6e43c3a-2e3e-4c5a-8f1a-2f6a6e1c9d3b\""}
+    }
+  ];
   // When the data was imported, if known.
-  optional google.protobuf.Timestamp import_date_time = 3;
+  optional google.protobuf.Timestamp import_date_time = 3 [(gnostic.openapi.v3.property) = {
+    example: {yaml: "\"2026-01-01T00:00:00Z\""}
+  }];
   // The payload type of the data.
-  string payload_type = 4;
+  string payload_type = 4 [
+    (google.api.field_behavior) = REQUIRED,
+    (gnostic.openapi.v3.property) = {
+      example: {yaml: "\"rutedata\""}
+    }
+  ];
   // The location of the data.
   Location location = 5;
   // Various places where the data can be stored. One or more must be set.
   message Location {
     // A GCS uri to the raw data (XML, ZIP or a folder).
-    string raw_gcs_uri = 1;
+    string raw_gcs_uri = 1 [(gnostic.openapi.v3.property) = {
+      example: {yaml: "\"gs://norway-netex-raw-inbound/codespace=RUT/dataset.zip#1234567890123456\""}
+    }];
     // A GCS uri to the local parquet data (a folder).
-    string local_parquet_gcs_uri = 2;
+    string local_parquet_gcs_uri = 2 [(gnostic.openapi.v3.property) = {
+      example: {yaml: "\"gs://norway-netex-parquet/local/RUT/\""}
+    }];
     // A GCS uri to the global parquet data (a folder).
-    string global_parquet_gcs_uri = 3;
+    string global_parquet_gcs_uri = 3 [(gnostic.openapi.v3.property) = {
+      example: {yaml: "\"gs://norway-netex-parquet/aggregated/RUT/\""}
+    }];
   }
 }

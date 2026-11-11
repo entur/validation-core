@@ -10,7 +10,7 @@ jobs:
     if: github.actor != 'dependabot[bot]'
     strategy:
       matrix:
-        spec: ["specs/kittum.yaml", "specs/zagar.yaml"]
+        spec: ["specs/kittum.yaml", "specs/zagar.yaml", "specs/ishum.yaml"]
       fail-fast: false
     uses: entur/gha-api/.github/workflows/lint.yml@v6
     secrets: inherit
