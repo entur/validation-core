@@ -647,6 +647,57 @@ paths:
                         application/problem+json:
                             schema:
                                 $ref: '#/components/schemas/ProblemDetail'
+    /validation/v1/parquet-tables:
+        get:
+            tags:
+              - ParquetService
+            summary: List the Parquet tables with their columns and sample values.
+            description: |-
+                List the Parquet files at the configured location (a local folder or a GCS bucket) as
+                 tables, each with its columns, their types and the first ten values of every column.
+
+                 A table is one file, or a `<name>.parquet` folder of part files, named without its
+                 `.parquet` extension.
+            operationId: ParquetService_ListParquetTables
+            responses:
+                '200':
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ListParquetTablesResponse'
+    /validation/v1/parquet-tables/query:
+        post:
+            tags:
+              - ParquetService
+            summary: Run a SQL query against the Parquet tables.
+            description: |-
+                Run a single SQL `SELECT` against the Parquet tables, each available as a view named after
+                 the table. The response reports how many rows match in total and returns at most `limit`
+                 of them, along with how long the query took.
+
+                 Only `SELECT` is accepted, and the query can read nothing but the tables' own files.
+            operationId: ParquetService_QueryParquetTables
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/QueryParquetTablesRequest'
+                required: true
+            responses:
+                '200':
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/QueryParquetTablesResponse'
+                '400':
+                    description: The SQL is not a single SELECT or fails to run, the
+                        limit is out of range, or a table name is unknown.
+                    content:
+                        application/problem+json:
+                            schema:
+                                $ref: '#/components/schemas/ProblemDetail'
     /validation/v1/payload-types:
         get:
             tags:
@@ -1422,6 +1473,10 @@ components:
                         updatedAt: '2026-01-01T00:00:00Z'
                     severityOverride: WARNING
                 updatedAt: '2026-01-01T00:00:00Z'
+        GoogleProtobufValue:
+            description: Represents a dynamically typed value which can be either
+                null, a number, a string, a boolean, a recursive struct value, or
+                a list of values.
         ListAreasResponse:
             type: object
             properties:
@@ -1465,6 +1520,22 @@ components:
                     name: team-validering
                     updatedAt: '2026-01-01T00:00:00Z'
                 cursor: eyJpZCI6NjJ9
+        ListParquetTablesResponse:
+            type: object
+            properties:
+                tables:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/ParquetTable'
+                    description: The Parquet tables, sorted by name.
+            description: Response for ListParquetTables.
+            example:
+                tables:
+                  - name: stops
+                    rowCount: 25
+                    columns:
+                      - name: id
+                        type: BIGINT
         ListPayloadTypeFlowsResponse:
             type: object
             properties:
@@ -1623,6 +1694,52 @@ components:
                 id: 1
                 name: team-validering
                 updatedAt: '2026-01-01T00:00:00Z'
+        ParquetColumn:
+            type: object
+            properties:
+                name:
+                    example: id
+                    type: string
+                    description: The column name.
+                type:
+                    example: BIGINT
+                    type: string
+                    description: The DuckDB type name of the column.
+                values:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/GoogleProtobufValue'
+                    description: |-
+                        The column's values in the table's first ten rows. A number, boolean, string or null;
+                         dates, decimals, lists and structs are returned as text.
+            description: One column of a Parquet table.
+            example:
+                name: id
+                type: BIGINT
+        ParquetTable:
+            type: object
+            properties:
+                name:
+                    example: stops
+                    type: string
+                    description: The file or folder name without its `.parquet` extension.
+                rowCount:
+                    example: 25
+                    type: integer
+                    description: The number of rows in the table.
+                    format: int32
+                columns:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/ParquetColumn'
+                    description: The table's columns, in file order.
+            description: One Parquet table.
+            example:
+                name: stops
+                rowCount: 25
+                columns:
+                  - name: id
+                    type: BIGINT
         PayloadType:
             required:
               - name
@@ -1692,6 +1809,95 @@ components:
                 errors:
                   - field: name
                     message: must not be blank
+        QueryColumn:
+            type: object
+            properties:
+                name:
+                    example: id
+                    type: string
+                    description: The column name.
+                type:
+                    example: BIGINT
+                    type: string
+                    description: The DuckDB type name of the column.
+            description: One column of a query result.
+            example:
+                name: id
+                type: BIGINT
+        QueryParquetTablesRequest:
+            required:
+              - sql
+            type: object
+            properties:
+                sql:
+                    example: SELECT id, name FROM stops WHERE id >= 100
+                    type: string
+                    description: A single SELECT statement. Every table is available
+                        under its name.
+                limit:
+                    example: 100
+                    type: integer
+                    description: The most rows to return. The default is 100 and the
+                        maximum 1000.
+                    format: int32
+                tables:
+                    type: array
+                    items:
+                        type: string
+                    description: The tables to make available to the query. All tables
+                        when empty.
+            description: Request for QueryParquetTables.
+            example:
+                sql: SELECT id, name FROM stops WHERE id >= 100
+                limit: 100
+        QueryParquetTablesResponse:
+            type: object
+            properties:
+                columns:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/QueryColumn'
+                    description: The result's columns.
+                rows:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/QueryRow'
+                    description: At most `limit` of the matching rows, each with its
+                        values in `columns` order.
+                totalCount:
+                    example: 150
+                    type: integer
+                    description: How many rows the query matches in total, regardless
+                        of the limit.
+                    format: int32
+                truncated:
+                    type: boolean
+                    description: Whether `rows` holds fewer rows than `total_count`.
+                durationMs:
+                    example: 42
+                    type: integer
+                    description: |-
+                        How long running the query took in milliseconds, counting and fetching the rows. Fetching
+                         the files from a remote source is not included.
+                    format: int32
+            description: Response for QueryParquetTables.
+            example:
+                columns:
+                  - name: id
+                    type: BIGINT
+                totalCount: 150
+                durationMs: 42
+        QueryRow:
+            type: object
+            properties:
+                values:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/GoogleProtobufValue'
+                    description: |-
+                        The row's values in the result's column order. A number, boolean, string or null; dates,
+                         decimals, lists and structs are returned as text.
+            description: One row of a query result.
         RequestDryRunRequest:
             required:
               - rules
@@ -2140,6 +2346,9 @@ tags:
     description: This service's own generated OpenAPI specification.
   - name: OwnerService
     description: The gRPC service to view and administrate owners.
+  - name: ParquetService
+    description: The gRPC service to browse and query the Parquet files at the configured
+        location.
   - name: PayloadTypeService
     description: The gRPC service to view and administrate payload types.
   - name: ValidationFlowService
