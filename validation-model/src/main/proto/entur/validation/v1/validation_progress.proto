@@ -26,6 +26,10 @@ message ValidationProgress {
   // Whether this progress comes from a dry run, i.e. should not be considered official.
   bool is_dry_run = 6;
 
+  // Every stage the validation job runs, copied from the delivery. The job is complete once each of
+  // them is. Empty means unknown, which consumers treat as every stage.
+  repeated ValidationStage job_stages = 7;
+
   // A progress bar for this validation stage. When completed + skipped = total, this stage is complete.
   // (The progress only reflects the number of rules completed or skipped, not the time it takes to run them.)
   message Overview {
