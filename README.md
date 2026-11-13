@@ -3,9 +3,9 @@
 ## Description
 
 This repository contains shared code for Entur's validation platform and its APIs, published as
-Java libraries. Most of it is schema and generated code; four modules (`proto-utils`,
-`exposed-utils`, `api-utils`, `kafka-utils`) are hand-written support libraries built on top of
-the generated types.
+Java libraries. Most of it is schema and generated code; a few modules (`proto-utils`,
+`exposed-utils`, `api-utils`, `kafka-utils`, `gcs-utils`) are hand-written support libraries built
+on top of the generated types.
 
 ## Modules
 
@@ -22,6 +22,7 @@ Several Gradle modules, each published as its own Maven artifact, sharing one ve
 | [`exposed-utils`](exposed-utils) | — (hand-written, not proto-generated) | `no.entur.validation:exposed-utils` | Persistence support for the Exposed SQL library (ETag concurrency, cursor paging) built on `proto-utils`. See "Non-schema modules" below. |
 | [`api-utils`](api-utils) | — (hand-written, not proto-generated) | `no.entur.validation:api-utils` | Spring WebFlux/Security support (protobuf-JSON codecs, `ProblemDetail` error mapping, OpenAPI spec serving, content negotiation, audience-validation and method-security configuration) for services built on this schema. See "Non-schema modules" below. |
 | [`kafka-utils`](kafka-utils) | — (hand-written, not proto-generated) | `no.entur.validation:kafka-utils` | Kafka tracing (the `X-Correlation-Id`/`ET-Client-Name` headers every validation service stamps on what it produces, and the `correlationId`/`clientName` MDC entries it logs with while processing a consumed record), dead-lettering (which listener failures are permanent, the `entur.validation.v1.DeadLetter` envelope they are published in, and the error handler that does it), SASL/client-property setup, log sanitizing, and schema-registry sanitizing for a message that is also a REST resource. See "Non-schema modules" below. |
+| [`gcs-utils`](gcs-utils) | — (hand-written, not proto-generated) | `no.entur.validation:gcs-utils` | GCS URI parsing (`gs://bucket/object[#generation]` via `BlobId`) and generation-based polling (`readIfChanged`/`newest`/`listGenerations`) shared by validation-platform services. See "Non-schema modules" below. |
 
 More packages (and modules) are expected as new APIs are added on top of the shared model.
 
@@ -123,7 +124,7 @@ Copy the pattern from [`kittum-api`](kittum-api):
 
 ## Non-schema modules
 
-Four modules contain hand-written Kotlin instead of `.proto` files. They hold shared code that the
+A few modules contain hand-written Kotlin instead of `.proto` files. They hold shared code that the
 validation services would otherwise each write themselves.
 
 | Module | Use it for | Key classes |
@@ -132,8 +133,10 @@ validation services would otherwise each write themselves.
 | `exposed-utils` | Storing those messages in Postgres with the Exposed SQL library | `ConcurrencySupport` (ETag/`If-Match`), `PagingSupport` + `SortableProperties` (`order_by` and cursor paging), `PostgresEnumColumnType` |
 | `api-utils` | Spring WebFlux REST services | Protobuf JSON codecs, `ApiExceptionHandler` (exceptions to `ProblemDetail`), `OpenApiController` (serves the spec), `AudienceValidationGuard`, `MethodSecurityConfig` |
 | `kafka-utils` | Kafka producers and listeners | Tracing interceptors, dead-lettering, client config (`KafkaClientProperties`, `KafkaSasl`, `singleRecordContainerFactory`), `sanitizeForLog`, `RegistrySanitizedSchema` (see below) |
+| `gcs-utils` | Reading and polling objects in Google Cloud Storage | `parseGcsUri`, `readIfChanged`/`newest`/`listGenerations`, `GcsFile`, `asGenerationInstant` |
 
-All three others build on `proto-utils`. `api-utils` also uses `http-model`, and `kafka-utils` uses `validation-model`.
+The others build on `proto-utils`, except `gcs-utils`, which builds on `kafka-utils` for log
+sanitizing. `api-utils` also uses `http-model`, and `kafka-utils` uses `validation-model`.
 
 ### Wiring them into a service
 
@@ -143,7 +146,7 @@ All three others build on `proto-utils`. `api-utils` also uses `http-model`, and
   classpath path, and configure accepted audiences in `entur.auth.apis` for every trusted issuer.
   When you add or remove a bean, update that file too; `AutoConfigurationImportsTest` fails if
   you forget.
-- **The other three have no Spring beans.** Call their functions directly, or for `kafka-utils`,
+- **The others have no Spring beans.** Call their functions directly, or for `kafka-utils`,
   register its classes on your Kafka setup as described below.
 
 ### kafka-utils

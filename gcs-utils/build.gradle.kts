@@ -1,5 +1,5 @@
 description = "GCS URI parsing (gs://bucket/object[#generation] via BlobId) and generation-polling " +
-    "(readIfChanged/changed/listGenerations) shared by validation-platform services."
+    "(readIfChanged/newest/listGenerations) shared by validation-platform services."
 
 plugins {
     alias(libs.plugins.ktlint)
@@ -10,7 +10,7 @@ dependencies {
     // declares spring-kafka the same way, so its version doesn't reach here without this too.
     implementation(platform(libs.spring.boot.bom))
 
-    // In this module's public API (parseGcsUri/readIfChanged/changed/listGenerations all use it).
+    // In this module's public API (parseGcsUri/readIfChanged/newest/listGenerations all use it).
     api(libs.google.cloud.storage)
     implementation(project(":kafka-utils"))
     // Used directly (not just transitively via kafka-utils' own `api`), since this module's own
