@@ -1,0 +1,141 @@
+syntax = "proto3";
+
+package entur.kittum.v1;
+
+import "entur/http/v1/failure.proto";
+import "gnostic/openapi/v3/annotations.proto";
+import "google/api/annotations.proto";
+import "google/api/client.proto";
+import "google/api/field_behavior.proto";
+import "google/protobuf/struct.proto";
+
+option go_package = "github.com/entur/validation-core/gen/entur/kittum/v1;kittumv1";
+option java_multiple_files = true;
+option java_package = "no.entur.kittum.proto.v1";
+
+// The gRPC service to browse and query the Parquet files at the configured location.
+service ParquetService {
+  option (google.api.default_host) = "kittum.entur.io";
+
+  // List the Parquet files at the configured location (a local folder or a GCS bucket) as
+  // tables, each with its columns, their types and the first ten values of every column.
+  //
+  // A table is one file, or a `<name>.parquet` folder of part files, named without its
+  // `.parquet` extension.
+  rpc ListParquetTables(ListParquetTablesRequest) returns (ListParquetTablesResponse) {
+    option (google.api.http) = {get: "/validation/v1/parquet-tables"};
+    option (gnostic.openapi.v3.operation) = {summary: "List the Parquet tables with their columns and sample values."};
+  }
+
+  // Run a single SQL `SELECT` against the Parquet tables, each available as a view named after
+  // the table. The response reports how many rows match in total and returns at most `limit`
+  // of them, along with how long the query took.
+  //
+  // Only `SELECT` is accepted, and the query can read nothing but the tables' own files.
+  rpc QueryParquetTables(QueryParquetTablesRequest) returns (QueryParquetTablesResponse) {
+    option (google.api.http) = {
+      post: "/validation/v1/parquet-tables/query"
+      body: "*"
+    };
+    option (gnostic.openapi.v3.operation) = {summary: "Run a SQL query against the Parquet tables."};
+    option (entur.http.v1.failure) = {
+      code: "400"
+      description: "The SQL is not a single SELECT or fails to run, the limit is out of range, or a table name is unknown."
+    };
+  }
+}
+
+// Request for ListParquetTables.
+message ListParquetTablesRequest {}
+
+// Response for ListParquetTables.
+message ListParquetTablesResponse {
+  // The Parquet tables, sorted by name.
+  repeated ParquetTable tables = 1;
+}
+
+// One Parquet table.
+message ParquetTable {
+  // The file or folder name without its `.parquet` extension.
+  string name = 1 [(gnostic.openapi.v3.property) = {
+    example: {yaml: "\"stops\""}
+  }];
+  // The number of rows in the table.
+  int64 row_count = 2 [(gnostic.openapi.v3.property) = {
+    example: {yaml: "\"25\""}
+  }];
+  // The table's columns, in file order.
+  repeated ParquetColumn columns = 3;
+}
+
+// One column of a Parquet table.
+message ParquetColumn {
+  // The column name.
+  string name = 1 [(gnostic.openapi.v3.property) = {
+    example: {yaml: "\"id\""}
+  }];
+  // The DuckDB type name of the column.
+  string type = 2 [(gnostic.openapi.v3.property) = {
+    example: {yaml: "\"BIGINT\""}
+  }];
+  // The column's values in the table's first ten rows. A number, boolean, string or null.
+  // Integers beyond +/-2^53, which a JSON number cannot hold exactly, and dates, decimals,
+  // lists and structs are returned as text.
+  repeated google.protobuf.Value values = 3;
+}
+
+// Request for QueryParquetTables.
+message QueryParquetTablesRequest {
+  // A single SELECT statement. Every table is available under its name.
+  string sql = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (gnostic.openapi.v3.property) = {
+      example: {yaml: "\"SELECT id, name FROM stops WHERE id >= 100\""}
+    }
+  ];
+  // The most rows to return. The default is 100 and the maximum 1000.
+  optional int32 limit = 2 [(gnostic.openapi.v3.property) = {
+    example: {yaml: "100"}
+  }];
+  // The tables to make available to the query. All tables when empty.
+  repeated string tables = 3;
+}
+
+// Response for QueryParquetTables.
+message QueryParquetTablesResponse {
+  // The result's columns.
+  repeated QueryColumn columns = 1;
+  // At most `limit` of the matching rows, each with its values in `columns` order.
+  repeated QueryRow rows = 2;
+  // How many rows the query matches in total, regardless of the limit.
+  int64 total_count = 3 [(gnostic.openapi.v3.property) = {
+    example: {yaml: "\"150\""}
+  }];
+  // Whether `rows` holds fewer rows than `total_count`.
+  bool truncated = 4;
+  // How long running the query took in milliseconds, counting and fetching the rows. Fetching
+  // the files from a remote source is not included.
+  int32 duration_ms = 5 [(gnostic.openapi.v3.property) = {
+    example: {yaml: "42"}
+  }];
+}
+
+// One row of a query result.
+message QueryRow {
+  // The row's values in the result's column order. A number, boolean, string or null.
+  // Integers beyond +/-2^53, which a JSON number cannot hold exactly, and dates, decimals,
+  // lists and structs are returned as text.
+  repeated google.protobuf.Value values = 1;
+}
+
+// One column of a query result.
+message QueryColumn {
+  // The column name.
+  string name = 1 [(gnostic.openapi.v3.property) = {
+    example: {yaml: "\"id\""}
+  }];
+  // The DuckDB type name of the column.
+  string type = 2 [(gnostic.openapi.v3.property) = {
+    example: {yaml: "\"BIGINT\""}
+  }];
+}
