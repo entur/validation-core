@@ -9,7 +9,7 @@ the generated types.
 
 ## Modules
 
-Eight Gradle modules, each published as its own Maven artifact, sharing one version:
+Several Gradle modules, each published as its own Maven artifact, sharing one version:
 
 | Module | Proto package | Artifact | Contents |
 |--------|---------------|----------|----------|
@@ -17,6 +17,7 @@ Eight Gradle modules, each published as its own Maven artifact, sharing one vers
 | [`validation-model`](validation-model) | `entur.validation.v1` | `no.entur.validation:validation-model` | The domain messages. |
 | [`kittum-api`](kittum-api) | `entur.kittum.v1` | `no.entur.validation:kittum-api` | Kittum's gRPC/REST service definitions and their Request/Response messages. |
 | [`zagar-api`](zagar-api) | `entur.zagar.v1` | `no.entur.validation:zagar-api` | Zagar's gRPC/REST service definitions and their Request/Response messages. |
+| [`ishum-api`](ishum-api) | `entur.ishum.v1` | `no.entur.validation:ishum-api` | Ishum's gRPC/REST service definitions and their Request/Response messages. |
 | [`proto-utils`](proto-utils) | — (hand-written, not proto-generated) | `no.entur.validation:proto-utils` | Domain-agnostic proto/HTTP plumbing (update masks, id checks, oneof serialization, timestamps, schema-registry sanitizing). See "Non-schema modules" below. |
 | [`exposed-utils`](exposed-utils) | — (hand-written, not proto-generated) | `no.entur.validation:exposed-utils` | Persistence support for the Exposed SQL library (ETag concurrency, cursor paging) built on `proto-utils`. See "Non-schema modules" below. |
 | [`api-utils`](api-utils) | — (hand-written, not proto-generated) | `no.entur.validation:api-utils` | Spring WebFlux/Security support (protobuf-JSON codecs, `ProblemDetail` error mapping, OpenAPI spec serving, content negotiation, audience-validation and method-security configuration) for services built on this schema. See "Non-schema modules" below. |
