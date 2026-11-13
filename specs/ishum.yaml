@@ -1,0 +1,278 @@
+# Generated with protoc-gen-openapi and OpenApiAugmentationPipeline
+# https://github.com/google/gnostic/tree/master/cmd/protoc-gen-openapi
+# https://github.com/entur/validation-core/tree/master/buildSrc/src/main/kotlin/no/entur/http/OpenApiAugmentationPipeline.kt
+
+openapi: 3.0.3
+info:
+    title: ishum
+    description: OpenAPI contract for ishum - the validation data storage.
+    version: 0.0.1
+    x-entur-metadata:
+        id: ishum
+        audience: internal
+        owner: team-validering
+    x-stability-level: draft
+servers:
+  - url: https://ishum.entur.io
+paths:
+    /v3/api-docs:
+        get:
+            tags:
+              - OpenApi
+            summary: Get the OpenAPI specification for this service
+            description: Returns this specification itself, as YAML by default or
+                JSON when requested via the Accept header.
+            operationId: getOpenApiSpec
+            parameters:
+              - name: Accept
+                in: header
+                description: The desired response format - `application/yaml` (the
+                    default) or `application/json`.
+                required: false
+                schema:
+                    type: string
+            responses:
+                '200':
+                    description: The OpenAPI specification
+                    content:
+                        application/yaml:
+                            schema:
+                                type: string
+                                example: |
+                                    openapi: 3.0.3
+                                    info:
+                                        title: api-name
+                                        version: 0.0.1
+                                    paths: {}
+                                    components:
+                                        schemas: {}
+                        application/json:
+                            schema:
+                                type: object
+                                example:
+                                    openapi: 3.0.3
+                                    info:
+                                        title: api-name
+                                        version: 0.0.1
+                                    paths: {}
+                                    components:
+                                        schemas: {}
+    /validation/v1/validation-data:
+        get:
+            tags:
+              - ValidationDataService
+            summary: List validation data.
+            description: |-
+                List validation data.
+
+                 The request is paginated with a default page size of 100.
+            operationId: ValidationDataService_ListValidationData
+            parameters:
+              - name: cursor
+                in: query
+                description: The cursor to resume listing from, as returned by a previous
+                    call's cursor.
+                schema:
+                    type: string
+              - name: pageSize
+                in: query
+                description: The maximum number of validation data to return. The
+                    default page size is 100.
+                schema:
+                    type: integer
+                    format: int32
+              - name: orderBy
+                in: query
+                description: |-
+                    A comma-separated list of fields to order by, each optionally suffixed with " desc"
+                     for descending order (ascending is the default). See https://google.aip.dev/132. Field names
+                     are camelCase, e.g. "importDateTime desc", not the proto's own snake_case field names.
+                     Supported fields: importDateTime (the default, desc), externalId, originator, payloadType.
+                schema:
+                    type: string
+              - name: originator
+                in: query
+                description: Only return data from this originator. Unset returns
+                    data from every originator.
+                schema:
+                    type: string
+            responses:
+                '200':
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ListValidationDataResponse'
+    /validation/v1/validation-data/{externalId}:
+        get:
+            tags:
+              - ValidationDataService
+            summary: Get one validation data by its external id.
+            description: Get one validation data by its external id.
+            operationId: ValidationDataService_GetValidationData
+            parameters:
+              - name: externalId
+                in: path
+                description: The external id of the validation data to look up.
+                required: true
+                schema:
+                    type: string
+            responses:
+                '200':
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ValidationData'
+                '404':
+                    description: No validation data exists with the given external
+                        id.
+                    content:
+                        application/problem+json:
+                            schema:
+                                $ref: '#/components/schemas/ProblemDetail'
+components:
+    schemas:
+        FieldViolation:
+            description: One request field that failed validation.
+            required:
+              - field
+              - message
+            type: object
+            properties:
+                field:
+                    type: string
+                    description: The offending field, e.g. "name" or "items[2].severity_override".
+                    example: name
+                message:
+                    type: string
+                    description: A human-readable explanation of why this field is
+                        invalid.
+                    example: must not be blank
+            example:
+                field: name
+                message: must not be blank
+        ListValidationDataResponse:
+            type: object
+            properties:
+                items:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/ValidationData'
+                    description: The validation data in this page of results.
+                cursor:
+                    example: eyJpZCI6NjJ9
+                    type: string
+                    description: |-
+                        The cursor to pass to a subsequent call to continue listing. Empty
+                         when there are no more results.
+            description: Response for ListValidationData.
+            example:
+                items:
+                  - originator: RUT
+                    externalId: b6e43c3a-2e3e-4c5a-8f1a-2f6a6e1c9d3b
+                    importDateTime: '2026-01-01T00:00:00Z'
+                    payloadType: rutedata
+                    location:
+                        rawGcsUri: gs://norway-netex-raw-inbound/codespace=RUT/dataset.zip#1234567890123456
+                        localParquetGcsUri: gs://norway-netex-parquet/local/RUT/
+                        globalParquetGcsUri: gs://norway-netex-parquet/aggregated/RUT/
+                cursor: eyJpZCI6NjJ9
+        ProblemDetail:
+            description: RFC 9457 Problem Details for HTTP APIs.
+            required:
+              - title
+              - status
+            type: object
+            properties:
+                title:
+                    type: string
+                    description: A short, human-readable summary of the problem type.
+                    example: Not Found
+                status:
+                    type: integer
+                    format: int32
+                    description: The HTTP status code.
+                    example: 404
+                detail:
+                    type: string
+                    description: A human-readable explanation specific to this occurrence.
+                    example: No payload type exists with the name 'rutedata'.
+                errors:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/FieldViolation'
+                    description: |-
+                        Field-level validation errors that caused this problem, if any. This is an RFC 9457 extension
+                         member; it is absent when the problem isn't a per-field validation failure.
+            example:
+                title: Not Found
+                status: 404
+                detail: No payload type exists with the name 'rutedata'.
+                errors:
+                  - field: name
+                    message: must not be blank
+        ValidationData:
+            required:
+              - originator
+              - payloadType
+            type: object
+            properties:
+                originator:
+                    example: RUT
+                    type: string
+                    description: The originator of the data, e.g. the NeTEx codespace
+                        of the data provider.
+                externalId:
+                    example: b6e43c3a-2e3e-4c5a-8f1a-2f6a6e1c9d3b
+                    type: string
+                    description: An external id that identifies this data. Unique
+                        across every originator.
+                importDateTime:
+                    example: '2026-01-01T00:00:00Z'
+                    type: string
+                    description: When the data was imported, if known.
+                    format: date-time
+                payloadType:
+                    example: rutedata
+                    type: string
+                    description: The payload type of the data.
+                location:
+                    allOf:
+                      - $ref: '#/components/schemas/ValidationData_Location'
+                    description: The location of the data.
+            description: Information about the data to be validated.
+            example:
+                originator: RUT
+                externalId: b6e43c3a-2e3e-4c5a-8f1a-2f6a6e1c9d3b
+                importDateTime: '2026-01-01T00:00:00Z'
+                payloadType: rutedata
+                location:
+                    rawGcsUri: gs://norway-netex-raw-inbound/codespace=RUT/dataset.zip#1234567890123456
+                    localParquetGcsUri: gs://norway-netex-parquet/local/RUT/
+                    globalParquetGcsUri: gs://norway-netex-parquet/aggregated/RUT/
+        ValidationData_Location:
+            type: object
+            properties:
+                rawGcsUri:
+                    example: gs://norway-netex-raw-inbound/codespace=RUT/dataset.zip#1234567890123456
+                    type: string
+                    description: A GCS uri to the raw data (XML, ZIP or a folder).
+                localParquetGcsUri:
+                    example: gs://norway-netex-parquet/local/RUT/
+                    type: string
+                    description: A GCS uri to the local parquet data (a folder).
+                globalParquetGcsUri:
+                    example: gs://norway-netex-parquet/aggregated/RUT/
+                    type: string
+                    description: A GCS uri to the global parquet data (a folder).
+            description: Various places where the data can be stored. One or more
+                must be set.
+            example:
+                rawGcsUri: gs://norway-netex-raw-inbound/codespace=RUT/dataset.zip#1234567890123456
+                localParquetGcsUri: gs://norway-netex-parquet/local/RUT/
+                globalParquetGcsUri: gs://norway-netex-parquet/aggregated/RUT/
+tags:
+  - name: OpenApi
+    description: This service's own generated OpenAPI specification.
+  - name: ValidationDataService
