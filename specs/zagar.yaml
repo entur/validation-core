@@ -650,8 +650,13 @@ components:
                     type: boolean
                     description: |-
                         Whether this rule runs. Defaults to false, so a newly created rule must be activated
-                         explicitly. An empty `update_mask` skips a `false` value (it updates only non-empty fields);
-                         name `active` in the mask to deactivate.
+                         explicitly. This is a plain proto3 bool, so "not sent" and `false` are indistinguishable:
+                         - An update without an `update_mask` (or with `*`) is a full replacement, so a body that
+                           omits `active` deactivates the rule. Send `active` explicitly, or use a mask.
+                         - An empty `update_mask` skips `false` (it updates only non-empty fields); to deactivate
+                           with a mask, name `active` in it.
+                         - Data written before this field existed decodes as `false`, and a reader of such data
+                           must not take that to mean the rule was deactivated.
                 maturity:
                     enum:
                       - MATURITY_UNSPECIFIED

@@ -49,20 +49,23 @@ service ValidationFlowService {
   // Get the validation flow connected to a payload type, for one stage and area.
   // The returned flow is deep: every rule and sub-flow item it contains,
   // recursively, carries both the database id of what it refers to and the
-  // referred-to ValidationRule/ValidationFlow itself.
+  // referred-to ValidationRule/ValidationFlow itself. Only active content is returned: an
+  // inactive rule or sub-flow is left out entirely (with everything under an inactive sub-flow),
+  // and a connected flow that is itself inactive is a 404, as if none were connected.
   rpc GetPayloadTypeFlow(GetPayloadTypeFlowRequest) returns (entur.validation.v1.ValidationFlow) {
     option (google.api.http) = {get: "/validation/v1/payload-types/{payload_type}/flows/{stage}/{area}"};
     option (gnostic.openapi.v3.operation) = {summary: "Get the flow connected to a payload type, for one stage and area."};
     option (entur.http.v1.failure) = {
       code: "404"
-      description: "The payload type or area does not exist, or no flow is connected for the given stage and area."
+      description: "The payload type or area does not exist, or no active flow is connected for the given stage and area."
     };
   }
 
   // List every validation flow connected to a payload type for one stage, across every area
   // that has one assigned. Each returned flow is deep: every rule and sub-flow item it
   // contains, recursively, carries both the database id of what it refers to and the
-  // referred-to ValidationRule/ValidationFlow itself.
+  // referred-to ValidationRule/ValidationFlow itself. Only active content is returned, as for
+  // GetPayloadTypeFlow; an area whose connected flow is inactive is omitted.
   rpc ListPayloadTypeFlows(ListPayloadTypeFlowsRequest) returns (ListPayloadTypeFlowsResponse) {
     option (google.api.http) = {get: "/validation/v1/payload-types/{payload_type}/flows/{stage}"};
     option (gnostic.openapi.v3.operation) = {summary: "List the flows connected to a payload type for one stage, across every area."};

@@ -896,7 +896,8 @@ paths:
                 List every validation flow connected to a payload type for one stage, across every area
                  that has one assigned. Each returned flow is deep: every rule and sub-flow item it
                  contains, recursively, carries both the database id of what it refers to and the
-                 referred-to ValidationRule/ValidationFlow itself.
+                 referred-to ValidationRule/ValidationFlow itself. Only active content is returned, as for
+                 GetPayloadTypeFlow; an area whose connected flow is inactive is omitted.
             operationId: ValidationFlowService_ListPayloadTypeFlows
             parameters:
               - name: payloadType
@@ -942,7 +943,9 @@ paths:
                 Get the validation flow connected to a payload type, for one stage and area.
                  The returned flow is deep: every rule and sub-flow item it contains,
                  recursively, carries both the database id of what it refers to and the
-                 referred-to ValidationRule/ValidationFlow itself.
+                 referred-to ValidationRule/ValidationFlow itself. Only active content is returned: an
+                 inactive rule or sub-flow is left out entirely (with everything under an inactive sub-flow),
+                 and a connected flow that is itself inactive is a 404, as if none were connected.
             operationId: ValidationFlowService_GetPayloadTypeFlow
             parameters:
               - name: payloadType
@@ -980,8 +983,8 @@ paths:
                             schema:
                                 $ref: '#/components/schemas/ValidationFlow'
                 '404':
-                    description: The payload type or area does not exist, or no flow
-                        is connected for the given stage and area.
+                    description: The payload type or area does not exist, or no active
+                        flow is connected for the given stage and area.
                     content:
                         application/problem+json:
                             schema:
@@ -2183,8 +2186,13 @@ components:
                     type: boolean
                     description: |-
                         Whether this flow runs. Defaults to false, so a newly created flow must be activated
-                         explicitly. An empty `update_mask` skips a `false` value (it updates only non-empty fields);
-                         name `active` in the mask to deactivate.
+                         explicitly. This is a plain proto3 bool, so "not sent" and `false` are indistinguishable:
+                         - An update without an `update_mask` (or with `*`) is a full replacement, so a body that
+                           omits `active` deactivates the flow. Send `active` explicitly, or use a mask.
+                         - An empty `update_mask` skips `false` (it updates only non-empty fields); to deactivate
+                           with a mask, name `active` in it.
+                         - Data written before this field existed decodes as `false`, and a reader of such data
+                           must not take that to mean the flow was deactivated.
                 maturity:
                     enum:
                       - MATURITY_UNSPECIFIED
@@ -2297,8 +2305,13 @@ components:
                     type: boolean
                     description: |-
                         Whether this rule runs. Defaults to false, so a newly created rule must be activated
-                         explicitly. An empty `update_mask` skips a `false` value (it updates only non-empty fields);
-                         name `active` in the mask to deactivate.
+                         explicitly. This is a plain proto3 bool, so "not sent" and `false` are indistinguishable:
+                         - An update without an `update_mask` (or with `*`) is a full replacement, so a body that
+                           omits `active` deactivates the rule. Send `active` explicitly, or use a mask.
+                         - An empty `update_mask` skips `false` (it updates only non-empty fields); to deactivate
+                           with a mask, name `active` in it.
+                         - Data written before this field existed decodes as `false`, and a reader of such data
+                           must not take that to mean the rule was deactivated.
                 maturity:
                     enum:
                       - MATURITY_UNSPECIFIED
