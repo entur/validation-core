@@ -67,6 +67,14 @@ message ValidationRule {
     SqlRule sql_rule = 8;
   }
 
+  // Whether this rule runs. Defaults to false, so a newly created rule must be activated
+  // explicitly. An empty `update_mask` skips a `false` value (it updates only non-empty fields);
+  // name `active` in the mask to deactivate.
+  bool active = 10;
+
+  // How mature this rule is. Informational only - it does not affect whether the rule runs.
+  Maturity maturity = 11;
+
   // The timestamp the validation rule was last updated. Always populated by the server; a
   // value set by the client is ignored, not an error.
   google.protobuf.Timestamp updated_at = 100 [

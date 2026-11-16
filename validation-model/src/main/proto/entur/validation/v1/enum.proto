@@ -45,3 +45,16 @@ enum Cardinality {
   // The specified field should exist exactly twice.
   EXACTLY_TWO = 4;
 }
+
+// How mature a validation rule or flow is. Informational: whether something runs is decided by
+// its `active` field alone, never by its maturity.
+enum Maturity {
+  // Not set. A server treats it as STABLE when creating a rule or flow.
+  MATURITY_UNSPECIFIED = 0;
+  // Still being evaluated; its results may not be trustworthy yet.
+  EXPERIMENTAL = 1;
+  // Production-ready.
+  STABLE = 2;
+  // Scheduled for removal; prefer an alternative.
+  DEPRECATED = 3;
+}

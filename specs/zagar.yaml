@@ -646,6 +646,22 @@ components:
                     allOf:
                       - $ref: '#/components/schemas/SqlRule'
                     description: A SQL rule.
+                active:
+                    type: boolean
+                    description: |-
+                        Whether this rule runs. Defaults to false, so a newly created rule must be activated
+                         explicitly. An empty `update_mask` skips a `false` value (it updates only non-empty fields);
+                         name `active` in the mask to deactivate.
+                maturity:
+                    enum:
+                      - MATURITY_UNSPECIFIED
+                      - EXPERIMENTAL
+                      - STABLE
+                      - DEPRECATED
+                    type: string
+                    description: How mature this rule is. Informational only - it
+                        does not affect whether the rule runs.
+                    format: enum
                 updatedAt:
                     readOnly: true
                     example: '2026-01-01T00:00:00Z'

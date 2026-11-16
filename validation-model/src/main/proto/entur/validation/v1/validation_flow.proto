@@ -55,6 +55,14 @@ message ValidationFlow {
       example: {yaml: "2"}
     }
   ];
+  // Whether this flow runs. Defaults to false, so a newly created flow must be activated
+  // explicitly. An empty `update_mask` skips a `false` value (it updates only non-empty fields);
+  // name `active` in the mask to deactivate.
+  bool active = 7;
+
+  // How mature this flow is. Informational only - it does not affect whether the flow runs.
+  Maturity maturity = 8;
+
   // The timestamp the validation flow was last updated. Always populated by the server; a
   // value set by the client is ignored, not an error.
   google.protobuf.Timestamp updated_at = 100 [
