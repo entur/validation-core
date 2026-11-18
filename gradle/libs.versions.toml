@@ -17,7 +17,7 @@ oidcAuthResourceServer = "3.0.5"
 # doesn't exist in kafka-clients 4.2.2.
 confluent = "8.3.2"
 # Only gcs-utils needs this. Kept aligned with the team-validering services' own catalogs.
-googleCloudStorage = "2.76.0"
+googleCloudStorage = "2.78.0"
 
 [libraries]
 protobuf-java = { group = "com.google.protobuf", name = "protobuf-java", version.ref = "protobuf" }
