@@ -303,6 +303,9 @@ components:
                             message: File does not match its XSD.
                             xsdPath: xsd/netex/NeTEx_publication.xsd
                             fileFilter: .*\.xml
+                            schemas:
+                              - versionPattern: 1\.15:NO-NeTEx-networktimetable:1\.5
+                                xsdPath: xsd/netex/NeTEx_publication.xsd
                         updatedAt: '2026-01-01T00:00:00Z'
                 cursor: eyJpZCI6NjJ9
         ListValidationJobsResponse:
@@ -463,6 +466,9 @@ components:
                         message: File does not match its XSD.
                         xsdPath: xsd/netex/NeTEx_publication.xsd
                         fileFilter: .*\.xml
+                        schemas:
+                          - versionPattern: 1\.15:NO-NeTEx-networktimetable:1\.5
+                            xsdPath: xsd/netex/NeTEx_publication.xsd
                     updatedAt: '2026-01-01T00:00:00Z'
         SqlRule:
             required:
@@ -666,6 +672,9 @@ components:
                     message: File does not match its XSD.
                     xsdPath: xsd/netex/NeTEx_publication.xsd
                     fileFilter: .*\.xml
+                    schemas:
+                      - versionPattern: 1\.15:NO-NeTEx-networktimetable:1\.5
+                        xsdPath: xsd/netex/NeTEx_publication.xsd
                 updatedAt: '2026-01-01T00:00:00Z'
         XPathRule:
             required:
@@ -710,7 +719,6 @@ components:
         XsdRule:
             required:
               - message
-              - xsdPath
             type: object
             properties:
                 message:
@@ -720,19 +728,53 @@ components:
                 xsdPath:
                     example: xsd/netex/NeTEx_publication.xsd
                     type: string
-                    description: The path to the XSD, relative to some externally
-                        configured root.
+                    description: |-
+                        Deprecated: use `schemas`. The path to the XSD, relative to some externally configured root.
+                         Only read when `schemas` is empty, as if it were `[{version_pattern: ".*", xsd_path: <this>}]`.
                 fileFilter:
                     example: .*\.xml
                     type: string
                     description: A regexp a file's name must match to be processed
                         by this rule. Runs against every file when absent.
+                schemas:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/XsdSchema'
+                    description: |-
+                        The XSDs to validate a file against, chosen by the version the file declares. Tried in order;
+                         the first whose `version_pattern` matches is used. A file no pattern matches fails validation.
             description: A validation rule that checks a file against an XSD. Always
                 stage STRUCTURAL.
             example:
                 message: File does not match its XSD.
                 xsdPath: xsd/netex/NeTEx_publication.xsd
                 fileFilter: .*\.xml
+                schemas:
+                  - versionPattern: 1\.15:NO-NeTEx-networktimetable:1\.5
+                    xsdPath: xsd/netex/NeTEx_publication.xsd
+        XsdSchema:
+            required:
+              - versionPattern
+              - xsdPath
+            type: object
+            properties:
+                versionPattern:
+                    example: 1\.15:NO-NeTEx-networktimetable:1\.5
+                    type: string
+                    description: |-
+                        A regexp that must match the whole of a file's PublicationDelivery/@version, e.g.
+                         "1.15:NO-NeTEx-networktimetable:1.5". A file without one is matched as the empty string, so
+                         ".*" matches every file.
+                xsdPath:
+                    example: xsd/netex/NeTEx_publication.xsd
+                    type: string
+                    description: The path to the XSD, relative to some externally
+                        configured root.
+            description: An XSD to validate files against, for the files whose declared
+                version matches a pattern.
+            example:
+                versionPattern: 1\.15:NO-NeTEx-networktimetable:1\.5
+                xsdPath: xsd/netex/NeTEx_publication.xsd
 tags:
   - name: OpenApi
     description: This service's own generated OpenAPI specification.

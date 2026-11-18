@@ -86,9 +86,10 @@ message XsdRule {
       example: {yaml: "\"File does not match its XSD.\""}
     }
   ];
-  // The path to the XSD, relative to some externally configured root.
+  // Deprecated: use `schemas`. The path to the XSD, relative to some externally configured root.
+  // Only read when `schemas` is empty, as if it were `[{version_pattern: ".*", xsd_path: <this>}]`.
   string xsd_path = 2 [
-    (google.api.field_behavior) = REQUIRED,
+    deprecated = true,
     (gnostic.openapi.v3.property) = {
       example: {yaml: "\"xsd/netex/NeTEx_publication.xsd\""}
     }
@@ -97,6 +98,29 @@ message XsdRule {
   optional string file_filter = 3 [(gnostic.openapi.v3.property) = {
     example: {yaml: "\".*\\\\.xml\""}
   }];
+  // The XSDs to validate a file against, chosen by the version the file declares. Tried in order;
+  // the first whose `version_pattern` matches is used. A file no pattern matches fails validation.
+  repeated XsdSchema schemas = 4;
+}
+
+// An XSD to validate files against, for the files whose declared version matches a pattern.
+message XsdSchema {
+  // A regexp that must match the whole of a file's PublicationDelivery/@version, e.g.
+  // "1.15:NO-NeTEx-networktimetable:1.5". A file without one is matched as the empty string, so
+  // ".*" matches every file.
+  string version_pattern = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (gnostic.openapi.v3.property) = {
+      example: {yaml: "\"1\\\\.15:NO-NeTEx-networktimetable:1\\\\.5\""}
+    }
+  ];
+  // The path to the XSD, relative to some externally configured root.
+  string xsd_path = 2 [
+    (google.api.field_behavior) = REQUIRED,
+    (gnostic.openapi.v3.property) = {
+      example: {yaml: "\"xsd/netex/NeTEx_publication.xsd\""}
+    }
+  ];
 }
 
 // A validation rule that runs an XPath expression against one or more XML files and checks the number of matches. Always stage LOCAL.
