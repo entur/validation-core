@@ -301,7 +301,6 @@ components:
                         description: Validates the file against its XSD.
                         xsdRule:
                             message: File does not match its XSD.
-                            xsdPath: xsd/netex/NeTEx_publication.xsd
                             fileFilter: .*\.xml
                             schemas:
                               - versionPattern: 1\.15:NO-NeTEx-networktimetable:1\.5
@@ -464,7 +463,6 @@ components:
                     description: Validates the file against its XSD.
                     xsdRule:
                         message: File does not match its XSD.
-                        xsdPath: xsd/netex/NeTEx_publication.xsd
                         fileFilter: .*\.xml
                         schemas:
                           - versionPattern: 1\.15:NO-NeTEx-networktimetable:1\.5
@@ -670,7 +668,6 @@ components:
                 description: Validates the file against its XSD.
                 xsdRule:
                     message: File does not match its XSD.
-                    xsdPath: xsd/netex/NeTEx_publication.xsd
                     fileFilter: .*\.xml
                     schemas:
                       - versionPattern: 1\.15:NO-NeTEx-networktimetable:1\.5
@@ -719,18 +716,13 @@ components:
         XsdRule:
             required:
               - message
+              - schemas
             type: object
             properties:
                 message:
                     example: File does not match its XSD.
                     type: string
                     description: The message to print if the validation rule fails.
-                xsdPath:
-                    example: xsd/netex/NeTEx_publication.xsd
-                    type: string
-                    description: |-
-                        Deprecated: use `schemas`. The path to the XSD, relative to some externally configured root.
-                         Only read when `schemas` is empty, as if it were `[{version_pattern: ".*", xsd_path: <this>}]`.
                 fileFilter:
                     example: .*\.xml
                     type: string
@@ -748,7 +740,6 @@ components:
                 stage STRUCTURAL.
             example:
                 message: File does not match its XSD.
-                xsdPath: xsd/netex/NeTEx_publication.xsd
                 fileFilter: .*\.xml
                 schemas:
                   - versionPattern: 1\.15:NO-NeTEx-networktimetable:1\.5
