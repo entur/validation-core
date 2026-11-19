@@ -155,11 +155,9 @@ class OpenApiExampleAugmenter {
 
     /**
      * Maps each `components.schemas` key (a short message name) to the message's full name. [files] spans the
-     * whole buf workspace (see bufBuildDescriptorSet's own KDoc), so two modules defining a same-named message -
-     * kittum-api's and ishum-api's identically named Parquet messages, say - would otherwise be indistinguishable.
-     * When that happens, the candidate declared in one of [ownFiles] (this module's own `src/main/proto` files,
-     * by their buf-relative path, e.g. "entur/ishum/v1/parquet_service.proto") wins; a short name still matching
-     * more than one such candidate, or none, is left unresolved as before.
+     * whole buf workspace (see bufBuildDescriptorSet's own KDoc), so two modules defining a same-named message would
+     * otherwise be indistinguishable. When that happens, the candidate declared in one of [ownFiles] wins; a short name
+     * still matching more than one such candidate, or none, is left unresolved as before.
      */
     private fun indexMessagesByShortName(
         files: Collection<Descriptors.FileDescriptor>,
