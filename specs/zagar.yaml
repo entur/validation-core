@@ -301,10 +301,10 @@ components:
                         description: Validates the file against its XSD.
                         xsdRule:
                             message: File does not match its XSD.
-                            fileFilter: .*\.xml
                             schemas:
                               - versionPattern: 1\.15:NO-NeTEx-networktimetable:1\.5
                                 xsdPath: xsd/netex/NeTEx_publication.xsd
+                            fileFilter: .*\.xml
                         updatedAt: '2026-01-01T00:00:00Z'
                 cursor: eyJpZCI6NjJ9
         ListValidationJobsResponse:
@@ -463,10 +463,10 @@ components:
                     description: Validates the file against its XSD.
                     xsdRule:
                         message: File does not match its XSD.
-                        fileFilter: .*\.xml
                         schemas:
                           - versionPattern: 1\.15:NO-NeTEx-networktimetable:1\.5
                             xsdPath: xsd/netex/NeTEx_publication.xsd
+                        fileFilter: .*\.xml
                     updatedAt: '2026-01-01T00:00:00Z'
         SqlRule:
             required:
@@ -668,10 +668,10 @@ components:
                 description: Validates the file against its XSD.
                 xsdRule:
                     message: File does not match its XSD.
-                    fileFilter: .*\.xml
                     schemas:
                       - versionPattern: 1\.15:NO-NeTEx-networktimetable:1\.5
                         xsdPath: xsd/netex/NeTEx_publication.xsd
+                    fileFilter: .*\.xml
                 updatedAt: '2026-01-01T00:00:00Z'
         XPathRule:
             required:
@@ -723,11 +723,6 @@ components:
                     example: File does not match its XSD.
                     type: string
                     description: The message to print if the validation rule fails.
-                fileFilter:
-                    example: .*\.xml
-                    type: string
-                    description: A regexp a file's name must match to be processed
-                        by this rule. Runs against every file when absent.
                 schemas:
                     type: array
                     items:
@@ -736,14 +731,19 @@ components:
                         The XSDs to validate a file against, chosen by the version the file declares. Tried in order;
                          the first whose `version_pattern` matches is used. If no pattern matches a file, the file fails
                          validation.
+                fileFilter:
+                    example: .*\.xml
+                    type: string
+                    description: A regexp a file's name must match to be processed
+                        by this rule. Runs against every file when absent.
             description: A validation rule that checks a file against an XSD. Always
                 stage STRUCTURAL.
             example:
                 message: File does not match its XSD.
-                fileFilter: .*\.xml
                 schemas:
                   - versionPattern: 1\.15:NO-NeTEx-networktimetable:1\.5
                     xsdPath: xsd/netex/NeTEx_publication.xsd
+                fileFilter: .*\.xml
         XsdSchema:
             required:
               - versionPattern
