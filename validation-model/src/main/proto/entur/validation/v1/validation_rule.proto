@@ -99,7 +99,8 @@ message XsdRule {
     example: {yaml: "\".*\\\\.xml\""}
   }];
   // The XSDs to validate a file against, chosen by the version the file declares. Tried in order;
-  // the first whose `version_pattern` matches is used. A file no pattern matches fails validation.
+  // the first whose `version_pattern` matches is used. If no pattern matches a file, the file fails
+  // validation.
   repeated XsdSchema schemas = 4;
 }
 
