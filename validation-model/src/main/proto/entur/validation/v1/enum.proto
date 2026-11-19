@@ -47,7 +47,7 @@ enum Cardinality {
 }
 
 // Where a version of a validation rule or flow is in its lifecycle. A version moves
-// DRAFT, IN_REVIEW, optionally SHADOW, ACTIVE, DEPRECATED, RETIRED. At most one version of a rule
+// DRAFT, IN_REVIEW, SHADOW, ACTIVE, DEPRECATED, RETIRED. At most one version of a rule
 // or flow is ACTIVE at a time.
 enum VersionStatus {
   // Unspecified version status. This is an invalid value.
@@ -58,7 +58,8 @@ enum VersionStatus {
   // recorded in `VersionInfo.approved_by` and does not change the status.
   IN_REVIEW = 2;
   // Approved and running next to the ACTIVE version on real deliveries, with its findings kept
-  // separate from the ACTIVE version's. Frozen.
+  // separate from the ACTIVE version's. Every version passes through SHADOW before it is first
+  // activated. Frozen.
   SHADOW = 3;
   // The version that is served. Frozen.
   ACTIVE = 4;

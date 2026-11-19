@@ -763,12 +763,11 @@ paths:
             tags:
               - ValidationFlowVersionService
             summary: Activate a version of a validation flow.
-            description: Make an approved IN_REVIEW or SHADOW version, or a DEPRECATED
-                one, the ACTIVE version of a validation flow. The previously ACTIVE
-                version becomes DEPRECATED, in the same transaction, so there is never
-                more than one. Activating a DEPRECATED version is a rollback. Fails
-                with 409 if the version has no approval (unless DEPRECATED) or has
-                another status.
+            description: Make a SHADOW version, or a DEPRECATED one, the ACTIVE version
+                of a validation flow. An IN_REVIEW version has to go through SHADOW
+                first. The previously ACTIVE version becomes DEPRECATED, in the same
+                transaction, so there is never more than one. Activating a DEPRECATED
+                version is a rollback. Fails with 409 if the version has another status.
             operationId: ValidationFlowVersionService_ActivateValidationFlowVersion
             parameters:
               - name: id
@@ -800,8 +799,7 @@ paths:
                             schema:
                                 $ref: '#/components/schemas/ProblemDetail'
                 '409':
-                    description: The version is not approved, or is not IN_REVIEW,
-                        SHADOW or DEPRECATED.
+                    description: The version is not SHADOW or DEPRECATED.
                     content:
                         application/problem+json:
                             schema:
@@ -813,9 +811,8 @@ paths:
             summary: Approve a version of a validation flow that is in review.
             description: Approve an IN_REVIEW version of a validation flow. This records
                 the caller in `approved_by` and keeps the status IN_REVIEW. Start
-                shadow and activate both need it. Fails with 403 if the caller is
-                the version's author, and 409 if the version is not IN_REVIEW or is
-                already approved.
+                shadow needs it. Fails with 403 if the caller is the version's author,
+                and 409 if the version is not IN_REVIEW or is already approved.
             operationId: ValidationFlowVersionService_ApproveValidationFlowVersion
             parameters:
               - name: id
@@ -999,7 +996,10 @@ paths:
             summary: Start a shadow run of a version of a validation flow.
             description: Start running an approved IN_REVIEW version of a validation
                 flow next to the ACTIVE version on real deliveries. The version becomes
-                SHADOW. Fails with 409 if the version is not IN_REVIEW or is not approved.
+                SHADOW, which every version must pass before it can be activated.
+                If the validation flow has no ACTIVE version yet, the shadow run has
+                nothing to compare with and reports no findings from it. Fails with
+                409 if the version is not IN_REVIEW or is not approved.
             operationId: ValidationFlowVersionService_StartShadowValidationFlowVersion
             parameters:
               - name: id
@@ -2226,12 +2226,11 @@ paths:
             tags:
               - ValidationRuleVersionService
             summary: Activate a version of a validation rule.
-            description: Make an approved IN_REVIEW or SHADOW version, or a DEPRECATED
-                one, the ACTIVE version of a validation rule. The previously ACTIVE
-                version becomes DEPRECATED, in the same transaction, so there is never
-                more than one. Activating a DEPRECATED version is a rollback. Fails
-                with 409 if the version has no approval (unless DEPRECATED) or has
-                another status.
+            description: Make a SHADOW version, or a DEPRECATED one, the ACTIVE version
+                of a validation rule. An IN_REVIEW version has to go through SHADOW
+                first. The previously ACTIVE version becomes DEPRECATED, in the same
+                transaction, so there is never more than one. Activating a DEPRECATED
+                version is a rollback. Fails with 409 if the version has another status.
             operationId: ValidationRuleVersionService_ActivateValidationRuleVersion
             parameters:
               - name: id
@@ -2263,8 +2262,7 @@ paths:
                             schema:
                                 $ref: '#/components/schemas/ProblemDetail'
                 '409':
-                    description: The version is not approved, or is not IN_REVIEW,
-                        SHADOW or DEPRECATED.
+                    description: The version is not SHADOW or DEPRECATED.
                     content:
                         application/problem+json:
                             schema:
@@ -2276,9 +2274,8 @@ paths:
             summary: Approve a version of a validation rule that is in review.
             description: Approve an IN_REVIEW version of a validation rule. This records
                 the caller in `approved_by` and keeps the status IN_REVIEW. Start
-                shadow and activate both need it. Fails with 403 if the caller is
-                the version's author, and 409 if the version is not IN_REVIEW or is
-                already approved.
+                shadow needs it. Fails with 403 if the caller is the version's author,
+                and 409 if the version is not IN_REVIEW or is already approved.
             operationId: ValidationRuleVersionService_ApproveValidationRuleVersion
             parameters:
               - name: id
@@ -2424,7 +2421,10 @@ paths:
             summary: Start a shadow run of a version of a validation rule.
             description: Start running an approved IN_REVIEW version of a validation
                 rule next to the ACTIVE version on real deliveries. The version becomes
-                SHADOW. Fails with 409 if the version is not IN_REVIEW or is not approved.
+                SHADOW, which every version must pass before it can be activated.
+                If the validation rule has no ACTIVE version yet, the shadow run has
+                nothing to compare with and reports no findings from it. Fails with
+                409 if the version is not IN_REVIEW or is not approved.
             operationId: ValidationRuleVersionService_StartShadowValidationRuleVersion
             parameters:
               - name: id
@@ -3889,7 +3889,7 @@ tags:
     description: |-
         The gRPC service to view and administrate the versions of validation rules.
 
-         A rule's lifecycle is DRAFT, IN_REVIEW, optionally SHADOW, ACTIVE, DEPRECATED, RETIRED, see
+         A rule's lifecycle is DRAFT, IN_REVIEW, SHADOW, ACTIVE, DEPRECATED, RETIRED, see
          VersionStatus. Only a DRAFT can be edited; every other change goes through a new version.
   - name: ValidationRunService
     description: The gRPC service to request validation runs of specific validation
