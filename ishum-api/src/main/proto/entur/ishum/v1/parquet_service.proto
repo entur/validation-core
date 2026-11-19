@@ -13,13 +13,9 @@ option go_package = "github.com/entur/validation-core/gen/entur/ishum/v1;ishumv1
 option java_multiple_files = true;
 option java_package = "no.entur.ishum.proto.v1";
 
-// The gRPC service to browse and query the Parquet files at the configured location. A duplicate
+// The gRPC service to browse and query the Parquet files at the configured location. A copy
 // of kittum-api's own ParquetService (ETU-80815), kept running there in parallel for a short
-// while before kittum's copy is retired. The messages below are otherwise identical to kittum's
-// but renamed (Ishum*, or ParquetService* for the two request types buf's own naming rule
-// constrains) because OpenApiExampleAugmenter resolves `components.schemas` by short name across
-// the whole buf workspace, not by package - two same-named messages in different packages would
-// make it unable to tell which one a schema refers to.
+// while before kittum's copy is retired.
 service ParquetService {
   option (google.api.default_host) = "ishum.entur.io";
 
@@ -28,7 +24,7 @@ service ParquetService {
   //
   // A table is one file, or a `<name>.parquet` folder of part files, named without its
   // `.parquet` extension.
-  rpc ListParquetTables(ParquetServiceListParquetTablesRequest) returns (IshumListParquetTablesResponse) {
+  rpc ListParquetTables(ListParquetTablesRequest) returns (ListParquetTablesResponse) {
     option (google.api.http) = {get: "/validation/v1/parquet-tables"};
     option (gnostic.openapi.v3.operation) = {summary: "List the Parquet tables with their columns and sample values."};
   }
@@ -38,7 +34,7 @@ service ParquetService {
   // of them, along with how long the query took.
   //
   // Only `SELECT` is accepted, and the query can read nothing but the tables' own files.
-  rpc QueryParquetTables(ParquetServiceQueryParquetTablesRequest) returns (IshumQueryParquetTablesResponse) {
+  rpc QueryParquetTables(QueryParquetTablesRequest) returns (QueryParquetTablesResponse) {
     option (google.api.http) = {
       post: "/validation/v1/parquet-tables/query"
       body: "*"
@@ -52,16 +48,16 @@ service ParquetService {
 }
 
 // Request for ListParquetTables.
-message ParquetServiceListParquetTablesRequest {}
+message ListParquetTablesRequest {}
 
 // Response for ListParquetTables.
-message IshumListParquetTablesResponse {
+message ListParquetTablesResponse {
   // The Parquet tables, sorted by name.
-  repeated IshumParquetTable tables = 1;
+  repeated ParquetTable tables = 1;
 }
 
 // One Parquet table.
-message IshumParquetTable {
+message ParquetTable {
   // The file or folder name without its `.parquet` extension.
   string name = 1 [(gnostic.openapi.v3.property) = {
     example: {yaml: "\"stops\""}
@@ -71,11 +67,11 @@ message IshumParquetTable {
     example: {yaml: "\"25\""}
   }];
   // The table's columns, in file order.
-  repeated IshumParquetColumn columns = 3;
+  repeated ParquetColumn columns = 3;
 }
 
 // One column of a Parquet table.
-message IshumParquetColumn {
+message ParquetColumn {
   // The column name.
   string name = 1 [(gnostic.openapi.v3.property) = {
     example: {yaml: "\"id\""}
@@ -91,7 +87,7 @@ message IshumParquetColumn {
 }
 
 // Request for QueryParquetTables.
-message ParquetServiceQueryParquetTablesRequest {
+message QueryParquetTablesRequest {
   // A single SELECT statement. Every table is available under its name.
   string sql = 1 [
     (google.api.field_behavior) = REQUIRED,
@@ -108,11 +104,11 @@ message ParquetServiceQueryParquetTablesRequest {
 }
 
 // Response for QueryParquetTables.
-message IshumQueryParquetTablesResponse {
+message QueryParquetTablesResponse {
   // The result's columns.
-  repeated IshumQueryColumn columns = 1;
+  repeated QueryColumn columns = 1;
   // At most `limit` of the matching rows, each with its values in `columns` order.
-  repeated IshumQueryRow rows = 2;
+  repeated QueryRow rows = 2;
   // How many rows the query matches in total, regardless of the limit.
   int64 total_count = 3 [(gnostic.openapi.v3.property) = {
     example: {yaml: "\"150\""}
@@ -127,7 +123,7 @@ message IshumQueryParquetTablesResponse {
 }
 
 // One row of a query result.
-message IshumQueryRow {
+message QueryRow {
   // The row's values in the result's column order. A number, boolean, string or null.
   // Integers beyond +/-2^53, which a JSON number cannot hold exactly, and dates, decimals,
   // lists and structs are returned as text.
@@ -135,7 +131,7 @@ message IshumQueryRow {
 }
 
 // One column of a query result.
-message IshumQueryColumn {
+message QueryColumn {
   // The column name.
   string name = 1 [(gnostic.openapi.v3.property) = {
     example: {yaml: "\"id\""}

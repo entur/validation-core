@@ -10,6 +10,7 @@ class OpenApiAugmentationPipeline {
     fun augment(
         fileDescriptorSet: DescriptorProtos.FileDescriptorSet,
         openApiYaml: String,
+        ownFiles: Set<String> = emptySet(),
     ): String {
         val files = buildFileDescriptors(fileDescriptorSet)
         val registry = buildExtensionRegistry(files)
@@ -18,7 +19,7 @@ class OpenApiAugmentationPipeline {
         val spec: MutableMap<String, Any?> = yaml.load(openApiYaml)
 
         OpenApiFailureAugmenter().augment(files, registry, spec)
-        OpenApiExampleAugmenter().augment(files, registry, spec)
+        OpenApiExampleAugmenter().augment(files, registry, spec, ownFiles)
         OpenApiMetaPathAugmenter().augment(spec)
 
         return buildString {

@@ -83,6 +83,13 @@ val augmentOpenApi =
         descriptorSet = layout.buildDirectory.file("generated/descriptor-set/descriptor.binpb")
         openApiYaml = layout.buildDirectory.file("generated/openapi/openapi.yaml")
         outputYaml = layout.buildDirectory.file("generated/openapi/openapi-augmented.yaml")
+        // Lets OpenApiExampleAugmenter resolve a components.schemas short name that also matches
+        // another module's message (bufBuildDescriptorSet's image spans the whole workspace) to
+        // this module's own message, instead of failing.
+        ownProtoFiles =
+            fileTree(rootProject.file(moduleProtoPath)) { include("**/*.proto") }
+                .map { it.relativeTo(rootProject.file(moduleProtoPath)).invariantSeparatorsPath }
+                .toSet()
     }
 
 // Committed so a .proto change shows up in review as a diff of the HTTP contract.

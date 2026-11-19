@@ -20,11 +20,12 @@ class OpenApiExampleAugmenter {
         files: Collection<Descriptors.FileDescriptor>,
         registry: ExtensionRegistry,
         spec: MutableMap<String, Any?>,
+        ownFiles: Set<String> = emptySet(),
     ) {
         val examplesByMessage = collectFieldExamples(files, registry)
 
         val schemas = yamlMap(yamlMap(spec["components"])["schemas"])
-        val messageFullNameByShortName = indexMessagesByShortName(files, schemas.keys)
+        val messageFullNameByShortName = indexMessagesByShortName(files, schemas.keys, ownFiles)
         val oneofFieldGroupsByMessage = collectOneofFieldGroups(files)
 
         for (name in schemas.keys) {
@@ -152,22 +153,31 @@ class OpenApiExampleAugmenter {
         return yamlText?.takeIf { it.isNotEmpty() }?.let { Yaml().load(it) }
     }
 
-    /** Maps each `components.schemas` key (a short message name) to the message's full name. */
+    /**
+     * Maps each `components.schemas` key (a short message name) to the message's full name. [files] spans the
+     * whole buf workspace (see bufBuildDescriptorSet's own KDoc), so two modules defining a same-named message -
+     * kittum-api's and ishum-api's identically named Parquet messages, say - would otherwise be indistinguishable.
+     * When that happens, the candidate declared in one of [ownFiles] (this module's own `src/main/proto` files,
+     * by their buf-relative path, e.g. "entur/ishum/v1/parquet_service.proto") wins; a short name still matching
+     * more than one such candidate, or none, is left unresolved as before.
+     */
     private fun indexMessagesByShortName(
         files: Collection<Descriptors.FileDescriptor>,
         schemaNames: Set<String>,
+        ownFiles: Set<String>,
     ): Map<String, String> {
         val messagesByShortName = files.flatMap { it.messageTypes }.groupBy { it.name }
         return schemaNames
             .filter { messagesByShortName.containsKey(it) }
             .associateWith { name ->
                 val candidates = messagesByShortName[name]!!
-                check(candidates.size == 1) {
-                    "Schema '$name' matches more than one message by short name - " +
-                            "OpenApiExampleAugmenter can't tell which one it refers to: " +
-                            candidates.joinToString { it.fullName }
+                val resolved = candidates.singleOrNull() ?: candidates.singleOrNull { it.file.name in ownFiles }
+                checkNotNull(resolved) {
+                    "Schema '$name' matches more than one message by short name, and not exactly one of them is " +
+                            "defined in this module's own .proto files - OpenApiExampleAugmenter can't tell which " +
+                            "one it refers to: " + candidates.joinToString { it.fullName }
                 }
-                candidates.single().fullName
+                resolved.fullName
             }
     }
 

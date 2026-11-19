@@ -4,8 +4,10 @@ import com.google.protobuf.DescriptorProtos
 import java.io.File
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertNotSame
+import kotlin.test.assertTrue
 import no.entur.http.buildExtensionRegistry
 import no.entur.http.buildFileDescriptors
 import no.entur.http.newOpenApiYaml
@@ -89,19 +91,20 @@ class OpenApiExampleAugmenterTest {
                                 type: integer
         """.trimIndent()
 
-    private fun compileFixture(): DescriptorProtos.FileDescriptorSet {
+    private fun compileFixtures(vararg protoFiles: String): DescriptorProtos.FileDescriptorSet {
         val descriptorSetFile = File.createTempFile("fixture", ".binpb").apply { deleteOnExit() }
         val protoc = File(System.getProperty("user.home"), ".local/share/mise/shims/protoc")
             .let { if (it.canExecute()) it.absolutePath else "protoc" }
 
         val process =
             ProcessBuilder(
-                protoc,
-                "-I", fixtureDir.absolutePath,
-                "--include_source_info",
-                "--include_imports",
-                "--descriptor_set_out=${descriptorSetFile.absolutePath}",
-                "mock/example_messages.proto",
+                listOf(
+                    protoc,
+                    "-I", fixtureDir.absolutePath,
+                    "--include_source_info",
+                    "--include_imports",
+                    "--descriptor_set_out=${descriptorSetFile.absolutePath}",
+                ) + protoFiles,
             ).redirectErrorStream(true).start()
         val output = process.inputStream.bufferedReader().readText()
         check(process.waitFor() == 0) { "protoc failed compiling the fixture:\n$output" }
@@ -109,11 +112,13 @@ class OpenApiExampleAugmenterTest {
         return descriptorSetFile.inputStream().use { DescriptorProtos.FileDescriptorSet.parseFrom(it) }
     }
 
-    private fun result(): Map<String, Any?> {
+    private fun compileFixture(): DescriptorProtos.FileDescriptorSet = compileFixtures("mock/example_messages.proto")
+
+    private fun result(ownFiles: Set<String> = emptySet()): Map<String, Any?> {
         val files = buildFileDescriptors(compileFixture())
         val registry = buildExtensionRegistry(files)
         val spec: MutableMap<String, Any?> = newOpenApiYaml().load(openApiYaml)
-        OpenApiExampleAugmenter().augment(files, registry, spec)
+        OpenApiExampleAugmenter().augment(files, registry, spec, ownFiles)
         return spec
     }
 
@@ -183,5 +188,37 @@ class OpenApiExampleAugmenterTest {
         val objectExample = (withList["example"] as Map<*, *>)["ids"]
         assertEquals(listOf(1, 2), objectExample)
         assertNotSame(fieldExample, objectExample)
+    }
+
+    @Test
+    fun `resolves a schema short name that also matches another module's message to this module's own one`() {
+        val files = buildFileDescriptors(compileFixtures("mock/example_messages.proto", "othermodule/duplicate_short_name.proto"))
+        val registry = buildExtensionRegistry(files)
+        val spec: MutableMap<String, Any?> = newOpenApiYaml().load(openApiYaml)
+
+        OpenApiExampleAugmenter().augment(files, registry, spec, ownFiles = setOf("mock/example_messages.proto"))
+
+        assertEquals(mapOf("name" to "leaf"), spec.at("components", "schemas", "Leaf")["example"])
+    }
+
+    @Test
+    fun `still refuses a short-name collision that ownFiles doesn't narrow to exactly one candidate`() {
+        val files = buildFileDescriptors(compileFixtures("mock/example_messages.proto", "othermodule/duplicate_short_name.proto"))
+        val registry = buildExtensionRegistry(files)
+        val spec: MutableMap<String, Any?> = newOpenApiYaml().load(openApiYaml)
+
+        val withoutOwnFiles = assertFailsWith<IllegalStateException> { OpenApiExampleAugmenter().augment(files, registry, spec) }
+        assertTrue("Leaf" in withoutOwnFiles.message!!, withoutOwnFiles.message!!)
+
+        val withBothAsOwnFiles =
+            assertFailsWith<IllegalStateException> {
+                OpenApiExampleAugmenter().augment(
+                    files,
+                    registry,
+                    spec,
+                    ownFiles = setOf("mock/example_messages.proto", "othermodule/duplicate_short_name.proto"),
+                )
+            }
+        assertTrue("Leaf" in withBothAsOwnFiles.message!!, withBothAsOwnFiles.message!!)
     }
 }

@@ -3,6 +3,8 @@ package no.entur.http
 import com.google.protobuf.DescriptorProtos
 import org.gradle.api.DefaultTask
 import org.gradle.api.file.RegularFileProperty
+import org.gradle.api.provider.SetProperty
+import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.InputFile
 import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.TaskAction
@@ -19,6 +21,13 @@ abstract class AugmentOpenApi : DefaultTask() {
     @get:InputFile
     abstract val openApiYaml: RegularFileProperty
 
+    /**
+     * This module's own `.proto` files, by their buf-relative path - see
+     * [no.entur.http.augmenters.OpenApiExampleAugmenter]'s own KDoc.
+     */
+    @get:Input
+    abstract val ownProtoFiles: SetProperty<String>
+
     @get:OutputFile
     abstract val outputYaml: RegularFileProperty
 
@@ -26,7 +35,8 @@ abstract class AugmentOpenApi : DefaultTask() {
     fun run() {
         val fileDescriptorSet =
             FileInputStream(descriptorSet.get().asFile).use { DescriptorProtos.FileDescriptorSet.parseFrom(it) }
-        val augmented = OpenApiAugmentationPipeline().augment(fileDescriptorSet, openApiYaml.get().asFile.readText())
+        val augmented =
+            OpenApiAugmentationPipeline().augment(fileDescriptorSet, openApiYaml.get().asFile.readText(), ownProtoFiles.get())
         outputYaml.get().asFile.writeText(augmented)
     }
 }
