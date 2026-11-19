@@ -86,8 +86,6 @@ message XsdRule {
       example: {yaml: "\"File does not match its XSD.\""}
     }
   ];
-  reserved 2;
-  reserved "xsd_path";
   // A regexp a file's name must match to be processed by this rule. Runs against every file when absent.
   optional string file_filter = 3 [(gnostic.openapi.v3.property) = {
     example: {yaml: "\".*\\\\.xml\""}
@@ -95,7 +93,7 @@ message XsdRule {
   // The XSDs to validate a file against, chosen by the version the file declares. Tried in order;
   // the first whose `version_pattern` matches is used. If no pattern matches a file, the file fails
   // validation.
-  repeated XsdSchema schemas = 4 [(google.api.field_behavior) = REQUIRED];
+  repeated XsdSchema schemas = 2 [(google.api.field_behavior) = REQUIRED];
 }
 
 // An XSD to validate files against, for the files whose declared version matches a pattern.
