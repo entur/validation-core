@@ -3,6 +3,7 @@ syntax = "proto3";
 package entur.validation.v1;
 
 import "entur/validation/v1/enum.proto";
+import "entur/validation/v1/validation_version.proto";
 import "gnostic/openapi/v3/annotations.proto";
 import "google/api/field_behavior.proto";
 import "google/protobuf/timestamp.proto";
@@ -11,7 +12,8 @@ option go_package = "github.com/entur/validation-core/gen/entur/validation/v1;va
 option java_multiple_files = true;
 option java_package = "no.entur.validation.proto.v1";
 
-// A single validation rule, owned by one Area.
+// A single validation rule, owned by one Area. A rule is versioned: its `id` is stable and each
+// version, described by `version_info`, has its own content. A message carries one version.
 message ValidationRule {
   // The database id of the validation rule.
   int32 id = 1 [
@@ -66,6 +68,10 @@ message ValidationRule {
     // A SQL rule.
     SqlRule sql_rule = 8;
   }
+
+  // Which version of the validation rule this message carries and its lifecycle status. Always
+  // populated by the server; a value set by the client is ignored, not an error.
+  VersionInfo version_info = 10 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // The timestamp the validation rule was last updated. Always populated by the server; a
   // value set by the client is ignored, not an error.

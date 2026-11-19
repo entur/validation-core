@@ -45,3 +45,25 @@ enum Cardinality {
   // The specified field should exist exactly twice.
   EXACTLY_TWO = 4;
 }
+
+// Where a version of a validation rule or flow is in its lifecycle. A version moves
+// DRAFT, IN_REVIEW, optionally SHADOW, ACTIVE, DEPRECATED, RETIRED. At most one version of a rule
+// or flow is ACTIVE at a time.
+enum VersionStatus {
+  // Unspecified version status. This is an invalid value.
+  VERSION_STATUS_UNSPECIFIED = 0;
+  // Being edited. The only status whose content can change.
+  DRAFT = 1;
+  // Submitted and frozen, waiting for approval. Approval by someone other than the author is
+  // recorded in `VersionInfo.approved_by` and does not change the status.
+  IN_REVIEW = 2;
+  // Approved and running next to the ACTIVE version on real deliveries, with its findings kept
+  // separate from the ACTIVE version's. Frozen.
+  SHADOW = 3;
+  // The version that is served. Frozen.
+  ACTIVE = 4;
+  // Replaced by a newer ACTIVE version. Can be activated again, which is a rollback.
+  DEPRECATED = 5;
+  // Never runs again. Terminal.
+  RETIRED = 6;
+}

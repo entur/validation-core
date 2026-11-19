@@ -305,6 +305,11 @@ components:
                               - versionPattern: 1\.15:NO-NeTEx-networktimetable:1\.5
                                 xsdPath: xsd/netex/NeTEx_publication.xsd
                             fileFilter: .*\.xml
+                        versionInfo:
+                            version: 2
+                            status: ACTIVE
+                            createdBy: waad|qNAK7-vOft2yUu_XO8UdrBJ4OAiaFybm-DXPrnGAoV8
+                            createdAt: '2026-01-01T00:00:00Z'
                         updatedAt: '2026-01-01T00:00:00Z'
                 cursor: eyJpZCI6NjJ9
         ListValidationJobsResponse:
@@ -467,7 +472,41 @@ components:
                           - versionPattern: 1\.15:NO-NeTEx-networktimetable:1\.5
                             xsdPath: xsd/netex/NeTEx_publication.xsd
                         fileFilter: .*\.xml
+                    versionInfo:
+                        version: 2
+                        status: ACTIVE
+                        createdBy: waad|qNAK7-vOft2yUu_XO8UdrBJ4OAiaFybm-DXPrnGAoV8
+                        createdAt: '2026-01-01T00:00:00Z'
                     updatedAt: '2026-01-01T00:00:00Z'
+        ShadowResult:
+            type: object
+            properties:
+                startedAt:
+                    readOnly: true
+                    type: string
+                    description: The timestamp the shadow run started.
+                    format: date-time
+                deliveries:
+                    readOnly: true
+                    type: integer
+                    description: The number of deliveries validated by both versions
+                        so far.
+                    format: int32
+                activeFindings:
+                    readOnly: true
+                    type: integer
+                    description: The number of findings the ACTIVE version reported
+                        on those deliveries.
+                    format: int32
+                shadowFindings:
+                    readOnly: true
+                    type: integer
+                    description: The number of findings the SHADOW version reported
+                        on those deliveries.
+                    format: int32
+            description: |-
+                What a shadow run of a version found so far, compared with the ACTIVE version on the same
+                 deliveries.
         SqlRule:
             required:
               - message
@@ -650,6 +689,13 @@ components:
                     allOf:
                       - $ref: '#/components/schemas/SqlRule'
                     description: A SQL rule.
+                versionInfo:
+                    readOnly: true
+                    allOf:
+                      - $ref: '#/components/schemas/VersionInfo'
+                    description: |-
+                        Which version of the validation rule this message carries and its lifecycle status. Always
+                         populated by the server; a value set by the client is ignored, not an error.
                 updatedAt:
                     readOnly: true
                     example: '2026-01-01T00:00:00Z'
@@ -658,7 +704,9 @@ components:
                         The timestamp the validation rule was last updated. Always populated by the server; a
                          value set by the client is ignored, not an error.
                     format: date-time
-            description: A single validation rule, owned by one Area.
+            description: |-
+                A single validation rule, owned by one Area. A rule is versioned: its `id` is stable and each
+                 version, described by `version_info`, has its own content. A message carries one version.
             example:
                 id: 1
                 area: 7
@@ -672,7 +720,80 @@ components:
                       - versionPattern: 1\.15:NO-NeTEx-networktimetable:1\.5
                         xsdPath: xsd/netex/NeTEx_publication.xsd
                     fileFilter: .*\.xml
+                versionInfo:
+                    version: 2
+                    status: ACTIVE
+                    createdBy: waad|qNAK7-vOft2yUu_XO8UdrBJ4OAiaFybm-DXPrnGAoV8
+                    createdAt: '2026-01-01T00:00:00Z'
                 updatedAt: '2026-01-01T00:00:00Z'
+        VersionInfo:
+            type: object
+            properties:
+                version:
+                    example: 2
+                    type: integer
+                    description: |-
+                        The version number, starting at 1 and increasing by one for each new version of the same
+                         rule or flow.
+                    format: int32
+                status:
+                    example: ACTIVE
+                    enum:
+                      - VERSION_STATUS_UNSPECIFIED
+                      - DRAFT
+                      - IN_REVIEW
+                      - SHADOW
+                      - ACTIVE
+                      - DEPRECATED
+                      - RETIRED
+                    type: string
+                    description: The lifecycle status of the version.
+                    format: enum
+                createdBy:
+                    example: waad|qNAK7-vOft2yUu_XO8UdrBJ4OAiaFybm-DXPrnGAoV8
+                    type: string
+                    description: |-
+                        The user that created the version, as the stable user reference from the access token's
+                         `sub` claim.
+                createdAt:
+                    example: '2026-01-01T00:00:00Z'
+                    type: string
+                    description: The timestamp the version was created.
+                    format: date-time
+                submittedAt:
+                    type: string
+                    description: |-
+                        The timestamp the version was submitted for review. Absent while it is a DRAFT that was
+                         never submitted.
+                    format: date-time
+                approvedBy:
+                    type: string
+                    description: |-
+                        The user that approved the version. Always different from `created_by`. Absent until
+                         approved, and cleared again when changes are requested or a shadow run is aborted.
+                activatedAt:
+                    type: string
+                    description: The timestamp the version last became ACTIVE. Absent
+                        if it never was.
+                    format: date-time
+                dryRunCount:
+                    type: integer
+                    description: The number of dry-runs of this version. Reset to
+                        zero whenever the DRAFT is edited.
+                    format: int32
+                shadow:
+                    allOf:
+                      - $ref: '#/components/schemas/ShadowResult'
+                    description: The shadow run of the version. Present once the version
+                        has entered SHADOW.
+            description: |-
+                Which version of a validation rule or flow a message carries, and where that version is in
+                 its lifecycle. Always populated by the server.
+            example:
+                version: 2
+                status: ACTIVE
+                createdBy: waad|qNAK7-vOft2yUu_XO8UdrBJ4OAiaFybm-DXPrnGAoV8
+                createdAt: '2026-01-01T00:00:00Z'
         XPathRule:
             required:
               - message

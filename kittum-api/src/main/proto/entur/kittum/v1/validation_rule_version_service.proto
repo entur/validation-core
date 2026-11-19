@@ -1,0 +1,420 @@
+syntax = "proto3";
+
+package entur.kittum.v1;
+
+import "entur/http/v1/failure.proto";
+import "entur/validation/v1/validation_rule.proto";
+import "gnostic/openapi/v3/annotations.proto";
+import "google/api/annotations.proto";
+import "google/api/client.proto";
+import "google/api/field_behavior.proto";
+import "google/protobuf/empty.proto";
+import "google/protobuf/field_mask.proto";
+
+option go_package = "github.com/entur/validation-core/gen/entur/kittum/v1;kittumv1";
+option java_multiple_files = true;
+option java_package = "no.entur.kittum.proto.v1";
+
+// The gRPC service to view and administrate the versions of validation rules.
+//
+// A rule's lifecycle is DRAFT, IN_REVIEW, optionally SHADOW, ACTIVE, DEPRECATED, RETIRED, see
+// VersionStatus. Only a DRAFT can be edited; every other change goes through a new version.
+service ValidationRuleVersionService {
+  option (google.api.default_host) = "kittum.entur.io";
+
+  // List every version of a validation rule, newest first, each with its own content and `version_info`. The request is paginated with a default page size of 100.
+  rpc ListValidationRuleVersions(ListValidationRuleVersionsRequest) returns (ListValidationRuleVersionsResponse) {
+    option (google.api.http) = {get: "/validation/v1/rules/{id}/versions"};
+    option (gnostic.openapi.v3.operation) = {summary: "List the versions of a validation rule."};
+    option (entur.http.v1.failure) = {
+      code: "404"
+      description: "No validation rule exists with the given id."
+    };
+  }
+
+  // Get one version of a validation rule, with its content and `version_info`.
+  rpc GetValidationRuleVersion(GetValidationRuleVersionRequest) returns (entur.validation.v1.ValidationRule) {
+    option (google.api.http) = {get: "/validation/v1/rules/{id}/versions/{version}"};
+    option (gnostic.openapi.v3.operation) = {summary: "Get one version of a validation rule."};
+    option (entur.http.v1.failure) = {
+      code: "404"
+      description: "No validation rule exists with the given id, or it has no such version."
+    };
+  }
+
+  // Create a new DRAFT version of a validation rule as a copy of its ACTIVE version, numbered one higher than its latest version. The ACTIVE version keeps being served unchanged. Fails with 409 if the validation rule already has a version that is DRAFT, IN_REVIEW or SHADOW, or has no ACTIVE version to copy.
+  rpc CreateValidationRuleVersion(CreateValidationRuleVersionRequest) returns (entur.validation.v1.ValidationRule) {
+    option (google.api.http) = {post: "/validation/v1/rules/{id}/versions"};
+    option (gnostic.openapi.v3.operation) = {summary: "Create a new draft version of a validation rule."};
+    option (entur.http.v1.failure) = {
+      code: "404"
+      description: "No validation rule exists with the given id."
+    };
+    option (entur.http.v1.failure) = {
+      code: "409"
+      description: "The validation rule already has a pending version, or has no ACTIVE version to copy."
+    };
+  }
+
+  // Update a DRAFT version of a validation rule. Resets the version's dry-run count to zero. Over REST, this is a conditional request: it requires a matching `If-Match` request header and fails with 409 Conflict if it no longer matches the version's current `ETag`.
+  rpc UpdateValidationRuleVersion(UpdateValidationRuleVersionRequest) returns (entur.validation.v1.ValidationRule) {
+    option (google.api.http) = {
+      patch: "/validation/v1/rules/{id}/versions/{version}"
+      body: "validation_rule"
+    };
+    option (gnostic.openapi.v3.operation) = {summary: "Update a draft version of a validation rule."};
+    option (entur.http.v1.failure) = {
+      code: "404"
+      description: "No validation rule exists with the given id, or it has no such version."
+    };
+    option (entur.http.v1.failure) = {
+      code: "409"
+      description: "The version is not a DRAFT, or the `If-Match` header does not match its current ETag."
+    };
+  }
+
+  // Delete a DRAFT version of a validation rule. Fails with 409 if the version is not a DRAFT or, for a rule, if a flow version still pins it. Deleting the only version deletes the validation rule.
+  rpc DeleteValidationRuleVersion(DeleteValidationRuleVersionRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {delete: "/validation/v1/rules/{id}/versions/{version}"};
+    option (gnostic.openapi.v3.operation) = {summary: "Delete a draft version of a validation rule."};
+    option (entur.http.v1.failure) = {
+      code: "404"
+      description: "No validation rule exists with the given id, or it has no such version."
+    };
+    option (entur.http.v1.failure) = {
+      code: "409"
+      description: "The version is not a DRAFT, or is still pinned by a flow version."
+    };
+  }
+
+  // Submit a DRAFT version of a validation rule for review. The version becomes IN_REVIEW and its content is frozen. It needs at least one dry-run. Fails with 409 if any of this is not met.
+  rpc SubmitValidationRuleVersion(SubmitValidationRuleVersionRequest) returns (entur.validation.v1.ValidationRule) {
+    option (google.api.http) = {post: "/validation/v1/rules/{id}/versions/{version}/submit"};
+    option (gnostic.openapi.v3.operation) = {summary: "Submit a draft version of a validation rule for review."};
+    option (entur.http.v1.failure) = {
+      code: "404"
+      description: "No validation rule exists with the given id, or it has no such version."
+    };
+    option (entur.http.v1.failure) = {
+      code: "409"
+      description: "The version is not a DRAFT or has no dry-run."
+    };
+  }
+
+  // Approve an IN_REVIEW version of a validation rule. This records the caller in `approved_by` and keeps the status IN_REVIEW. Start shadow and activate both need it. Fails with 403 if the caller is the version's author, and 409 if the version is not IN_REVIEW or is already approved.
+  rpc ApproveValidationRuleVersion(ApproveValidationRuleVersionRequest) returns (entur.validation.v1.ValidationRule) {
+    option (google.api.http) = {post: "/validation/v1/rules/{id}/versions/{version}/approve"};
+    option (gnostic.openapi.v3.operation) = {summary: "Approve a version of a validation rule that is in review."};
+    option (entur.http.v1.failure) = {
+      code: "404"
+      description: "No validation rule exists with the given id, or it has no such version."
+    };
+    option (entur.http.v1.failure) = {
+      code: "403"
+      description: "The caller is the author of the version."
+    };
+    option (entur.http.v1.failure) = {
+      code: "409"
+      description: "The version is not IN_REVIEW, or is already approved."
+    };
+  }
+
+  // Send an IN_REVIEW version of a validation rule back to DRAFT and clear its approval. Fails with 403 if the caller is the version's author, and 409 if the version is not IN_REVIEW.
+  rpc RequestChangesValidationRuleVersion(RequestChangesValidationRuleVersionRequest) returns (entur.validation.v1.ValidationRule) {
+    option (google.api.http) = {post: "/validation/v1/rules/{id}/versions/{version}/request-changes"};
+    option (gnostic.openapi.v3.operation) = {summary: "Send a version of a validation rule back to draft."};
+    option (entur.http.v1.failure) = {
+      code: "404"
+      description: "No validation rule exists with the given id, or it has no such version."
+    };
+    option (entur.http.v1.failure) = {
+      code: "403"
+      description: "The caller is the author of the version."
+    };
+    option (entur.http.v1.failure) = {
+      code: "409"
+      description: "The version is not IN_REVIEW."
+    };
+  }
+
+  // Start running an approved IN_REVIEW version of a validation rule next to the ACTIVE version on real deliveries. The version becomes SHADOW. Fails with 409 if the version is not IN_REVIEW or is not approved.
+  rpc StartShadowValidationRuleVersion(StartShadowValidationRuleVersionRequest) returns (entur.validation.v1.ValidationRule) {
+    option (google.api.http) = {post: "/validation/v1/rules/{id}/versions/{version}/start-shadow"};
+    option (gnostic.openapi.v3.operation) = {summary: "Start a shadow run of a version of a validation rule."};
+    option (entur.http.v1.failure) = {
+      code: "404"
+      description: "No validation rule exists with the given id, or it has no such version."
+    };
+    option (entur.http.v1.failure) = {
+      code: "409"
+      description: "The version is not IN_REVIEW, or is not approved."
+    };
+  }
+
+  // Stop the shadow run of a SHADOW version of a validation rule. The version becomes DRAFT again, and its shadow result and approval are cleared. Fails with 409 if the version is not SHADOW.
+  rpc AbortShadowValidationRuleVersion(AbortShadowValidationRuleVersionRequest) returns (entur.validation.v1.ValidationRule) {
+    option (google.api.http) = {post: "/validation/v1/rules/{id}/versions/{version}/abort-shadow"};
+    option (gnostic.openapi.v3.operation) = {summary: "Abort the shadow run of a version of a validation rule."};
+    option (entur.http.v1.failure) = {
+      code: "404"
+      description: "No validation rule exists with the given id, or it has no such version."
+    };
+    option (entur.http.v1.failure) = {
+      code: "409"
+      description: "The version is not SHADOW."
+    };
+  }
+
+  // Make an approved IN_REVIEW or SHADOW version, or a DEPRECATED one, the ACTIVE version of a validation rule. The previously ACTIVE version becomes DEPRECATED, in the same transaction, so there is never more than one. Activating a DEPRECATED version is a rollback. Fails with 409 if the version has no approval (unless DEPRECATED) or has another status.
+  rpc ActivateValidationRuleVersion(ActivateValidationRuleVersionRequest) returns (entur.validation.v1.ValidationRule) {
+    option (google.api.http) = {post: "/validation/v1/rules/{id}/versions/{version}/activate"};
+    option (gnostic.openapi.v3.operation) = {summary: "Activate a version of a validation rule."};
+    option (entur.http.v1.failure) = {
+      code: "404"
+      description: "No validation rule exists with the given id, or it has no such version."
+    };
+    option (entur.http.v1.failure) = {
+      code: "409"
+      description: "The version is not approved, or is not IN_REVIEW, SHADOW or DEPRECATED."
+    };
+  }
+
+  // Retire an ACTIVE or DEPRECATED version of a validation rule. A retired version never runs again. Fails with 409 if an ACTIVE flow version still pins it. If the retired version was ACTIVE, nothing is served for the validation rule afterwards.
+  rpc RetireValidationRuleVersion(RetireValidationRuleVersionRequest) returns (entur.validation.v1.ValidationRule) {
+    option (google.api.http) = {post: "/validation/v1/rules/{id}/versions/{version}/retire"};
+    option (gnostic.openapi.v3.operation) = {summary: "Retire a version of a validation rule."};
+    option (entur.http.v1.failure) = {
+      code: "404"
+      description: "No validation rule exists with the given id, or it has no such version."
+    };
+    option (entur.http.v1.failure) = {
+      code: "409"
+      description: "The version is not ACTIVE or DEPRECATED. The version is pinned by an ACTIVE flow version."
+    };
+  }
+}
+
+// Request for ListValidationRuleVersions.
+message ListValidationRuleVersionsRequest {
+  // The database id of the validation rule.
+  int32 id = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (gnostic.openapi.v3.property) = {
+      example: {yaml: "1"}
+    }
+  ];
+  // The cursor to resume listing from, as returned by a previous call's cursor.
+  string cursor = 2 [(gnostic.openapi.v3.property) = {
+    example: {yaml: "\"eyJpZCI6NDJ9\""}
+  }];
+  // The maximum number of versions to return. The default page size is 100.
+  optional int32 page_size = 3 [(gnostic.openapi.v3.property) = {
+    example: {yaml: "20"}
+  }];
+}
+
+// Response for ListValidationRuleVersions.
+message ListValidationRuleVersionsResponse {
+  // The versions in this page of results, newest first.
+  repeated entur.validation.v1.ValidationRule items = 1;
+  // The cursor to pass to a subsequent call to continue listing. Empty
+  // when there are no more results.
+  string cursor = 2 [(gnostic.openapi.v3.property) = {
+    example: {yaml: "\"eyJpZCI6NjJ9\""}
+  }];
+}
+
+// Request for GetValidationRuleVersion.
+message GetValidationRuleVersionRequest {
+  // The database id of the validation rule.
+  int32 id = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (gnostic.openapi.v3.property) = {
+      example: {yaml: "1"}
+    }
+  ];
+  // The version number.
+  int32 version = 2 [
+    (google.api.field_behavior) = REQUIRED,
+    (gnostic.openapi.v3.property) = {
+      example: {yaml: "2"}
+    }
+  ];
+}
+
+// Request for CreateValidationRuleVersion.
+message CreateValidationRuleVersionRequest {
+  // The database id of the validation rule.
+  int32 id = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (gnostic.openapi.v3.property) = {
+      example: {yaml: "1"}
+    }
+  ];
+}
+
+// Request for UpdateValidationRuleVersion.
+message UpdateValidationRuleVersionRequest {
+  // The database id of the validation rule.
+  int32 id = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (gnostic.openapi.v3.property) = {
+      example: {yaml: "1"}
+    }
+  ];
+  // The version number.
+  int32 version = 2 [
+    (google.api.field_behavior) = REQUIRED,
+    (gnostic.openapi.v3.property) = {
+      example: {yaml: "2"}
+    }
+  ];
+  // The version's new field values.
+  entur.validation.v1.ValidationRule validation_rule = 3 [(google.api.field_behavior) = REQUIRED];
+  // The fields of `validation_rule` to update, with the same meaning as in UpdateValidationRuleRequest.
+  optional google.protobuf.FieldMask update_mask = 4;
+}
+
+// Request for DeleteValidationRuleVersion.
+message DeleteValidationRuleVersionRequest {
+  // The database id of the validation rule.
+  int32 id = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (gnostic.openapi.v3.property) = {
+      example: {yaml: "1"}
+    }
+  ];
+  // The version number.
+  int32 version = 2 [
+    (google.api.field_behavior) = REQUIRED,
+    (gnostic.openapi.v3.property) = {
+      example: {yaml: "2"}
+    }
+  ];
+}
+
+// Request for SubmitValidationRuleVersion.
+message SubmitValidationRuleVersionRequest {
+  // The database id of the validation rule.
+  int32 id = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (gnostic.openapi.v3.property) = {
+      example: {yaml: "1"}
+    }
+  ];
+  // The version number.
+  int32 version = 2 [
+    (google.api.field_behavior) = REQUIRED,
+    (gnostic.openapi.v3.property) = {
+      example: {yaml: "2"}
+    }
+  ];
+}
+
+// Request for ApproveValidationRuleVersion.
+message ApproveValidationRuleVersionRequest {
+  // The database id of the validation rule.
+  int32 id = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (gnostic.openapi.v3.property) = {
+      example: {yaml: "1"}
+    }
+  ];
+  // The version number.
+  int32 version = 2 [
+    (google.api.field_behavior) = REQUIRED,
+    (gnostic.openapi.v3.property) = {
+      example: {yaml: "2"}
+    }
+  ];
+}
+
+// Request for RequestChangesValidationRuleVersion.
+message RequestChangesValidationRuleVersionRequest {
+  // The database id of the validation rule.
+  int32 id = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (gnostic.openapi.v3.property) = {
+      example: {yaml: "1"}
+    }
+  ];
+  // The version number.
+  int32 version = 2 [
+    (google.api.field_behavior) = REQUIRED,
+    (gnostic.openapi.v3.property) = {
+      example: {yaml: "2"}
+    }
+  ];
+}
+
+// Request for StartShadowValidationRuleVersion.
+message StartShadowValidationRuleVersionRequest {
+  // The database id of the validation rule.
+  int32 id = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (gnostic.openapi.v3.property) = {
+      example: {yaml: "1"}
+    }
+  ];
+  // The version number.
+  int32 version = 2 [
+    (google.api.field_behavior) = REQUIRED,
+    (gnostic.openapi.v3.property) = {
+      example: {yaml: "2"}
+    }
+  ];
+}
+
+// Request for AbortShadowValidationRuleVersion.
+message AbortShadowValidationRuleVersionRequest {
+  // The database id of the validation rule.
+  int32 id = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (gnostic.openapi.v3.property) = {
+      example: {yaml: "1"}
+    }
+  ];
+  // The version number.
+  int32 version = 2 [
+    (google.api.field_behavior) = REQUIRED,
+    (gnostic.openapi.v3.property) = {
+      example: {yaml: "2"}
+    }
+  ];
+}
+
+// Request for ActivateValidationRuleVersion.
+message ActivateValidationRuleVersionRequest {
+  // The database id of the validation rule.
+  int32 id = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (gnostic.openapi.v3.property) = {
+      example: {yaml: "1"}
+    }
+  ];
+  // The version number.
+  int32 version = 2 [
+    (google.api.field_behavior) = REQUIRED,
+    (gnostic.openapi.v3.property) = {
+      example: {yaml: "2"}
+    }
+  ];
+}
+
+// Request for RetireValidationRuleVersion.
+message RetireValidationRuleVersionRequest {
+  // The database id of the validation rule.
+  int32 id = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (gnostic.openapi.v3.property) = {
+      example: {yaml: "1"}
+    }
+  ];
+  // The version number.
+  int32 version = 2 [
+    (google.api.field_behavior) = REQUIRED,
+    (gnostic.openapi.v3.property) = {
+      example: {yaml: "2"}
+    }
+  ];
+}

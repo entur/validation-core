@@ -1,0 +1,60 @@
+syntax = "proto3";
+
+package entur.validation.v1;
+
+import "entur/validation/v1/enum.proto";
+import "gnostic/openapi/v3/annotations.proto";
+import "google/api/field_behavior.proto";
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/entur/validation-core/gen/entur/validation/v1;validationv1";
+option java_multiple_files = true;
+option java_package = "no.entur.validation.proto.v1";
+
+// Which version of a validation rule or flow a message carries, and where that version is in
+// its lifecycle. Always populated by the server.
+message VersionInfo {
+  // The version number, starting at 1 and increasing by one for each new version of the same
+  // rule or flow.
+  int32 version = 1 [(gnostic.openapi.v3.property) = {
+    example: {yaml: "2"}
+  }];
+  // The lifecycle status of the version.
+  VersionStatus status = 2 [(gnostic.openapi.v3.property) = {
+    example: {yaml: "\"ACTIVE\""}
+  }];
+  // The user that created the version, as the stable user reference from the access token's
+  // `sub` claim.
+  string created_by = 3 [(gnostic.openapi.v3.property) = {
+    example: {yaml: "\"waad|qNAK7-vOft2yUu_XO8UdrBJ4OAiaFybm-DXPrnGAoV8\""}
+  }];
+  // The timestamp the version was created.
+  google.protobuf.Timestamp created_at = 4 [(gnostic.openapi.v3.property) = {
+    example: {yaml: "\"2026-01-01T00:00:00Z\""}
+  }];
+  // The timestamp the version was submitted for review. Absent while it is a DRAFT that was
+  // never submitted.
+  optional google.protobuf.Timestamp submitted_at = 5;
+  // The user that approved the version. Always different from `created_by`. Absent until
+  // approved, and cleared again when changes are requested or a shadow run is aborted.
+  optional string approved_by = 6;
+  // The timestamp the version last became ACTIVE. Absent if it never was.
+  optional google.protobuf.Timestamp activated_at = 7;
+  // The number of dry-runs of this version. Reset to zero whenever the DRAFT is edited.
+  int32 dry_run_count = 8;
+  // The shadow run of the version. Present once the version has entered SHADOW.
+  optional ShadowResult shadow = 9;
+}
+
+// What a shadow run of a version found so far, compared with the ACTIVE version on the same
+// deliveries.
+message ShadowResult {
+  // The timestamp the shadow run started.
+  google.protobuf.Timestamp started_at = 1 [(google.api.field_behavior) = OUTPUT_ONLY];
+  // The number of deliveries validated by both versions so far.
+  int32 deliveries = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
+  // The number of findings the ACTIVE version reported on those deliveries.
+  int32 active_findings = 3 [(google.api.field_behavior) = OUTPUT_ONLY];
+  // The number of findings the SHADOW version reported on those deliveries.
+  int32 shadow_findings = 4 [(google.api.field_behavior) = OUTPUT_ONLY];
+}

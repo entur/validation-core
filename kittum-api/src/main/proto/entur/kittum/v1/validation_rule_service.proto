@@ -27,7 +27,9 @@ service ValidationRuleService {
     option (gnostic.openapi.v3.operation) = {summary: "List existing validation rules."};
   }
 
-  // Get one validation rule by its id.
+  // Get one validation rule by its id: its working version, which is the DRAFT, IN_REVIEW or
+  // SHADOW version if one exists, otherwise the ACTIVE one, otherwise the latest. See
+  // ValidationRuleVersionService for the other versions.
   rpc GetValidationRule(GetValidationRuleRequest) returns (entur.validation.v1.ValidationRule) {
     option (google.api.http) = {get: "/validation/v1/rules/{id}"};
     option (gnostic.openapi.v3.operation) = {summary: "Get one validation rule by its id."};
@@ -37,7 +39,7 @@ service ValidationRuleService {
     };
   }
 
-  // Create a new validation rule. Exactly one field of its `rule` oneof must be set. Its
+  // Create a new validation rule as a DRAFT version 1; it is not served until activated. Exactly one field of its `rule` oneof must be set. Its
   // `id` and `updated_at` are OUTPUT_ONLY and ignored if set; the server assigns both.
   // Returns the full created rule, including its server-assigned `id` and `updated_at`.
   rpc CreateValidationRule(CreateValidationRuleRequest) returns (entur.validation.v1.ValidationRule) {
@@ -48,7 +50,8 @@ service ValidationRuleService {
     option (gnostic.openapi.v3.operation) = {summary: "Create a new validation rule."};
   }
 
-  // Update an existing validation rule. Its `id`, if set, must match the path `id`.
+  // Update the working DRAFT version of an existing validation rule, and fails with 409 if the
+  // working version is not a DRAFT. Its `id`, if set, must match the path `id`.
   // The `rule` oneof's set field is immutable: it must be the same variant (e.g. `xsd_rule`)
   // as the rule's current type, and the request fails with INVALID_ARGUMENT if it is not -
   // changing a rule's type requires deleting it and creating a new one. Returns the full
@@ -73,11 +76,12 @@ service ValidationRuleService {
     };
     option (entur.http.v1.failure) = {
       code: "409"
-      description: "The `If-Match` header does not match the rule's current ETag."
+      description: "The working version is not a DRAFT, or the `If-Match` header does not match the rule's current ETag."
     };
   }
 
-  // Delete a validation rule. Over REST, this is a conditional request: it requires a
+  // Delete a validation rule that has never been released, with all its versions. Fails with 409
+  // if any version has been ACTIVE; retire it instead. Over REST, this is a conditional request: it requires a
   // matching `If-Match` request header and fails with 409 Conflict (not the RFC
   // 7232-standard 412, which Entur's API guidelines don't allow) if it no longer matches
   // the rule's current `ETag`, e.g. because another update happened concurrently. This is
@@ -91,7 +95,7 @@ service ValidationRuleService {
     };
     option (entur.http.v1.failure) = {
       code: "409"
-      description: "The `If-Match` header does not match the rule's current ETag, or the validation rule is still referenced by a validation flow item."
+      description: "The `If-Match` header does not match the rule's current ETag, a version has been released, or the validation rule is still referenced by a validation flow item."
     };
   }
 }

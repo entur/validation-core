@@ -459,6 +459,630 @@ paths:
                         application/problem+json:
                             schema:
                                 $ref: '#/components/schemas/ProblemDetail'
+    /validation/v1/flows/{id}/bump-pins:
+        post:
+            tags:
+              - ValidationFlowVersionService
+            summary: Move a flow's rule pins to the latest active rule versions.
+            description: |-
+                Create or update the working DRAFT version of a flow so that every rule item pins the latest
+                 ACTIVE version of its rule. Creates a draft as CreateValidationFlowVersion does when none
+                 exists. Fails with 409 if the working version is IN_REVIEW or SHADOW, or if the flow has
+                 no ACTIVE version and no draft.
+            operationId: ValidationFlowVersionService_BumpValidationFlowPins
+            parameters:
+              - name: id
+                in: path
+                description: The database id of the validation flow.
+                required: true
+                schema:
+                    type: integer
+                    format: int32
+            responses:
+                '200':
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ValidationFlow'
+                '404':
+                    description: No validation flow exists with the given id.
+                    content:
+                        application/problem+json:
+                            schema:
+                                $ref: '#/components/schemas/ProblemDetail'
+                '409':
+                    description: The working version is IN_REVIEW or SHADOW, or the
+                        flow has no ACTIVE version and no draft.
+                    content:
+                        application/problem+json:
+                            schema:
+                                $ref: '#/components/schemas/ProblemDetail'
+    /validation/v1/flows/{id}/versions:
+        get:
+            tags:
+              - ValidationFlowVersionService
+            summary: List the versions of a validation flow.
+            description: List every version of a validation flow, newest first, each
+                with its own content and `version_info`. The request is paginated
+                with a default page size of 100.
+            operationId: ValidationFlowVersionService_ListValidationFlowVersions
+            parameters:
+              - name: id
+                in: path
+                description: The database id of the validation flow.
+                required: true
+                schema:
+                    type: integer
+                    format: int32
+              - name: cursor
+                in: query
+                description: The cursor to resume listing from, as returned by a previous
+                    call's cursor.
+                schema:
+                    type: string
+              - name: pageSize
+                in: query
+                description: The maximum number of versions to return. The default
+                    page size is 100.
+                schema:
+                    type: integer
+                    format: int32
+            responses:
+                '200':
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ListValidationFlowVersionsResponse'
+                '404':
+                    description: No validation flow exists with the given id.
+                    content:
+                        application/problem+json:
+                            schema:
+                                $ref: '#/components/schemas/ProblemDetail'
+        post:
+            tags:
+              - ValidationFlowVersionService
+            summary: Create a new draft version of a validation flow.
+            description: Create a new DRAFT version of a validation flow as a copy
+                of its ACTIVE version, numbered one higher than its latest version.
+                The ACTIVE version keeps being served unchanged. Fails with 409 if
+                the validation flow already has a version that is DRAFT, IN_REVIEW
+                or SHADOW, or has no ACTIVE version to copy.
+            operationId: ValidationFlowVersionService_CreateValidationFlowVersion
+            parameters:
+              - name: id
+                in: path
+                description: The database id of the validation flow.
+                required: true
+                schema:
+                    type: integer
+                    format: int32
+            responses:
+                '200':
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ValidationFlow'
+                '404':
+                    description: No validation flow exists with the given id.
+                    content:
+                        application/problem+json:
+                            schema:
+                                $ref: '#/components/schemas/ProblemDetail'
+                '409':
+                    description: The validation flow already has a pending version,
+                        or has no ACTIVE version to copy.
+                    content:
+                        application/problem+json:
+                            schema:
+                                $ref: '#/components/schemas/ProblemDetail'
+    /validation/v1/flows/{id}/versions/{version}:
+        get:
+            tags:
+              - ValidationFlowVersionService
+            summary: Get one version of a validation flow.
+            description: Get one version of a validation flow, with its content and
+                `version_info`.
+            operationId: ValidationFlowVersionService_GetValidationFlowVersion
+            parameters:
+              - name: id
+                in: path
+                description: The database id of the validation flow.
+                required: true
+                schema:
+                    type: integer
+                    format: int32
+              - name: version
+                in: path
+                description: The version number.
+                required: true
+                schema:
+                    type: integer
+                    format: int32
+            responses:
+                '200':
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ValidationFlow'
+                '404':
+                    description: No validation flow exists with the given id, or it
+                        has no such version.
+                    content:
+                        application/problem+json:
+                            schema:
+                                $ref: '#/components/schemas/ProblemDetail'
+        delete:
+            tags:
+              - ValidationFlowVersionService
+            summary: Delete a draft version of a validation flow.
+            description: Delete a DRAFT version of a validation flow. Fails with 409
+                if the version is not a DRAFT or, for a rule, if a flow version still
+                pins it. Deleting the only version deletes the validation flow.
+            operationId: ValidationFlowVersionService_DeleteValidationFlowVersion
+            parameters:
+              - name: id
+                in: path
+                description: The database id of the validation flow.
+                required: true
+                schema:
+                    type: integer
+                    format: int32
+              - name: version
+                in: path
+                description: The version number.
+                required: true
+                schema:
+                    type: integer
+                    format: int32
+            responses:
+                '200':
+                    description: OK
+                    content: {}
+                '404':
+                    description: No validation flow exists with the given id, or it
+                        has no such version.
+                    content:
+                        application/problem+json:
+                            schema:
+                                $ref: '#/components/schemas/ProblemDetail'
+                '409':
+                    description: The version is not a DRAFT.
+                    content:
+                        application/problem+json:
+                            schema:
+                                $ref: '#/components/schemas/ProblemDetail'
+        patch:
+            tags:
+              - ValidationFlowVersionService
+            summary: Update a draft version of a validation flow.
+            description: 'Update a DRAFT version of a validation flow. Resets the
+                version''s dry-run count to zero. Over REST, this is a conditional
+                request: it requires a matching `If-Match` request header and fails
+                with 409 Conflict if it no longer matches the version''s current `ETag`.'
+            operationId: ValidationFlowVersionService_UpdateValidationFlowVersion
+            parameters:
+              - name: id
+                in: path
+                description: The database id of the validation flow.
+                required: true
+                schema:
+                    type: integer
+                    format: int32
+              - name: version
+                in: path
+                description: The version number.
+                required: true
+                schema:
+                    type: integer
+                    format: int32
+              - name: updateMask
+                in: query
+                description: The fields of `validation_flow` to update, with the same
+                    meaning as in UpdateValidationFlowRequest.
+                schema:
+                    type: string
+                    format: field-mask
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/ValidationFlow'
+                required: true
+            responses:
+                '200':
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ValidationFlow'
+                '404':
+                    description: No validation flow exists with the given id, or it
+                        has no such version.
+                    content:
+                        application/problem+json:
+                            schema:
+                                $ref: '#/components/schemas/ProblemDetail'
+                '409':
+                    description: The version is not a DRAFT, or the `If-Match` header
+                        does not match its current ETag.
+                    content:
+                        application/problem+json:
+                            schema:
+                                $ref: '#/components/schemas/ProblemDetail'
+    /validation/v1/flows/{id}/versions/{version}/abort-shadow:
+        post:
+            tags:
+              - ValidationFlowVersionService
+            summary: Abort the shadow run of a version of a validation flow.
+            description: Stop the shadow run of a SHADOW version of a validation flow.
+                The version becomes DRAFT again, and its shadow result and approval
+                are cleared. Fails with 409 if the version is not SHADOW.
+            operationId: ValidationFlowVersionService_AbortShadowValidationFlowVersion
+            parameters:
+              - name: id
+                in: path
+                description: The database id of the validation flow.
+                required: true
+                schema:
+                    type: integer
+                    format: int32
+              - name: version
+                in: path
+                description: The version number.
+                required: true
+                schema:
+                    type: integer
+                    format: int32
+            responses:
+                '200':
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ValidationFlow'
+                '404':
+                    description: No validation flow exists with the given id, or it
+                        has no such version.
+                    content:
+                        application/problem+json:
+                            schema:
+                                $ref: '#/components/schemas/ProblemDetail'
+                '409':
+                    description: The version is not SHADOW.
+                    content:
+                        application/problem+json:
+                            schema:
+                                $ref: '#/components/schemas/ProblemDetail'
+    /validation/v1/flows/{id}/versions/{version}/activate:
+        post:
+            tags:
+              - ValidationFlowVersionService
+            summary: Activate a version of a validation flow.
+            description: Make an approved IN_REVIEW or SHADOW version, or a DEPRECATED
+                one, the ACTIVE version of a validation flow. The previously ACTIVE
+                version becomes DEPRECATED, in the same transaction, so there is never
+                more than one. Activating a DEPRECATED version is a rollback. Fails
+                with 409 if the version has no approval (unless DEPRECATED) or has
+                another status.
+            operationId: ValidationFlowVersionService_ActivateValidationFlowVersion
+            parameters:
+              - name: id
+                in: path
+                description: The database id of the validation flow.
+                required: true
+                schema:
+                    type: integer
+                    format: int32
+              - name: version
+                in: path
+                description: The version number.
+                required: true
+                schema:
+                    type: integer
+                    format: int32
+            responses:
+                '200':
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ValidationFlow'
+                '404':
+                    description: No validation flow exists with the given id, or it
+                        has no such version.
+                    content:
+                        application/problem+json:
+                            schema:
+                                $ref: '#/components/schemas/ProblemDetail'
+                '409':
+                    description: The version is not approved, or is not IN_REVIEW,
+                        SHADOW or DEPRECATED.
+                    content:
+                        application/problem+json:
+                            schema:
+                                $ref: '#/components/schemas/ProblemDetail'
+    /validation/v1/flows/{id}/versions/{version}/approve:
+        post:
+            tags:
+              - ValidationFlowVersionService
+            summary: Approve a version of a validation flow that is in review.
+            description: Approve an IN_REVIEW version of a validation flow. This records
+                the caller in `approved_by` and keeps the status IN_REVIEW. Start
+                shadow and activate both need it. Fails with 403 if the caller is
+                the version's author, and 409 if the version is not IN_REVIEW or is
+                already approved.
+            operationId: ValidationFlowVersionService_ApproveValidationFlowVersion
+            parameters:
+              - name: id
+                in: path
+                description: The database id of the validation flow.
+                required: true
+                schema:
+                    type: integer
+                    format: int32
+              - name: version
+                in: path
+                description: The version number.
+                required: true
+                schema:
+                    type: integer
+                    format: int32
+            responses:
+                '200':
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ValidationFlow'
+                '404':
+                    description: No validation flow exists with the given id, or it
+                        has no such version.
+                    content:
+                        application/problem+json:
+                            schema:
+                                $ref: '#/components/schemas/ProblemDetail'
+                '403':
+                    description: The caller is the author of the version.
+                    content:
+                        application/problem+json:
+                            schema:
+                                $ref: '#/components/schemas/ProblemDetail'
+                '409':
+                    description: The version is not IN_REVIEW, or is already approved.
+                    content:
+                        application/problem+json:
+                            schema:
+                                $ref: '#/components/schemas/ProblemDetail'
+    /validation/v1/flows/{id}/versions/{version}/copy:
+        post:
+            tags:
+              - ValidationFlowVersionService
+            summary: Copy a version of a flow as a new draft flow.
+            description: |-
+                Create a new flow as a DRAFT copy of one version of a flow: the same items and pins, the
+                 name suffixed " (copy)", and version 1. It is a new flow, not a new version of the same one.
+            operationId: ValidationFlowVersionService_CopyValidationFlowVersion
+            parameters:
+              - name: id
+                in: path
+                description: The database id of the validation flow to copy.
+                required: true
+                schema:
+                    type: integer
+                    format: int32
+              - name: version
+                in: path
+                description: The version number to copy.
+                required: true
+                schema:
+                    type: integer
+                    format: int32
+            responses:
+                '200':
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ValidationFlow'
+                '404':
+                    description: No validation flow exists with the given id, or it
+                        has no such version.
+                    content:
+                        application/problem+json:
+                            schema:
+                                $ref: '#/components/schemas/ProblemDetail'
+    /validation/v1/flows/{id}/versions/{version}/request-changes:
+        post:
+            tags:
+              - ValidationFlowVersionService
+            summary: Send a version of a validation flow back to draft.
+            description: Send an IN_REVIEW version of a validation flow back to DRAFT
+                and clear its approval. Fails with 403 if the caller is the version's
+                author, and 409 if the version is not IN_REVIEW.
+            operationId: ValidationFlowVersionService_RequestChangesValidationFlowVersion
+            parameters:
+              - name: id
+                in: path
+                description: The database id of the validation flow.
+                required: true
+                schema:
+                    type: integer
+                    format: int32
+              - name: version
+                in: path
+                description: The version number.
+                required: true
+                schema:
+                    type: integer
+                    format: int32
+            responses:
+                '200':
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ValidationFlow'
+                '404':
+                    description: No validation flow exists with the given id, or it
+                        has no such version.
+                    content:
+                        application/problem+json:
+                            schema:
+                                $ref: '#/components/schemas/ProblemDetail'
+                '403':
+                    description: The caller is the author of the version.
+                    content:
+                        application/problem+json:
+                            schema:
+                                $ref: '#/components/schemas/ProblemDetail'
+                '409':
+                    description: The version is not IN_REVIEW.
+                    content:
+                        application/problem+json:
+                            schema:
+                                $ref: '#/components/schemas/ProblemDetail'
+    /validation/v1/flows/{id}/versions/{version}/retire:
+        post:
+            tags:
+              - ValidationFlowVersionService
+            summary: Retire a version of a validation flow.
+            description: Retire an ACTIVE or DEPRECATED version of a validation flow.
+                A retired version never runs again. Fails with 409 if the flow is
+                assigned to a payload type. If the retired version was ACTIVE, nothing
+                is served for the validation flow afterwards.
+            operationId: ValidationFlowVersionService_RetireValidationFlowVersion
+            parameters:
+              - name: id
+                in: path
+                description: The database id of the validation flow.
+                required: true
+                schema:
+                    type: integer
+                    format: int32
+              - name: version
+                in: path
+                description: The version number.
+                required: true
+                schema:
+                    type: integer
+                    format: int32
+            responses:
+                '200':
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ValidationFlow'
+                '404':
+                    description: No validation flow exists with the given id, or it
+                        has no such version.
+                    content:
+                        application/problem+json:
+                            schema:
+                                $ref: '#/components/schemas/ProblemDetail'
+                '409':
+                    description: The version is not ACTIVE or DEPRECATED. The flow
+                        is assigned to a payload type.
+                    content:
+                        application/problem+json:
+                            schema:
+                                $ref: '#/components/schemas/ProblemDetail'
+    /validation/v1/flows/{id}/versions/{version}/start-shadow:
+        post:
+            tags:
+              - ValidationFlowVersionService
+            summary: Start a shadow run of a version of a validation flow.
+            description: Start running an approved IN_REVIEW version of a validation
+                flow next to the ACTIVE version on real deliveries. The version becomes
+                SHADOW. Fails with 409 if the version is not IN_REVIEW or is not approved.
+            operationId: ValidationFlowVersionService_StartShadowValidationFlowVersion
+            parameters:
+              - name: id
+                in: path
+                description: The database id of the validation flow.
+                required: true
+                schema:
+                    type: integer
+                    format: int32
+              - name: version
+                in: path
+                description: The version number.
+                required: true
+                schema:
+                    type: integer
+                    format: int32
+            responses:
+                '200':
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ValidationFlow'
+                '404':
+                    description: No validation flow exists with the given id, or it
+                        has no such version.
+                    content:
+                        application/problem+json:
+                            schema:
+                                $ref: '#/components/schemas/ProblemDetail'
+                '409':
+                    description: The version is not IN_REVIEW, or is not approved.
+                    content:
+                        application/problem+json:
+                            schema:
+                                $ref: '#/components/schemas/ProblemDetail'
+    /validation/v1/flows/{id}/versions/{version}/submit:
+        post:
+            tags:
+              - ValidationFlowVersionService
+            summary: Submit a draft version of a validation flow for review.
+            description: Submit a DRAFT version of a validation flow for review. The
+                version becomes IN_REVIEW and its content is frozen. It needs at least
+                one dry-run. Every pinned rule version must be ACTIVE or DEPRECATED,
+                every sub-flow must have an ACTIVE version, and the flow must contain
+                at least one item. Fails with 409 if any of this is not met.
+            operationId: ValidationFlowVersionService_SubmitValidationFlowVersion
+            parameters:
+              - name: id
+                in: path
+                description: The database id of the validation flow.
+                required: true
+                schema:
+                    type: integer
+                    format: int32
+              - name: version
+                in: path
+                description: The version number.
+                required: true
+                schema:
+                    type: integer
+                    format: int32
+            responses:
+                '200':
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ValidationFlow'
+                '404':
+                    description: No validation flow exists with the given id, or it
+                        has no such version.
+                    content:
+                        application/problem+json:
+                            schema:
+                                $ref: '#/components/schemas/ProblemDetail'
+                '409':
+                    description: The version is not a DRAFT, has no dry-run, or a
+                        precondition on its items is not met.
+                    content:
+                        application/problem+json:
+                            schema:
+                                $ref: '#/components/schemas/ProblemDetail'
     /validation/v1/owners:
         get:
             tags:
@@ -1183,7 +1807,7 @@ paths:
               - ValidationRuleService
             summary: Create a new validation rule.
             description: |-
-                Create a new validation rule. Exactly one field of its `rule` oneof must be set. Its
+                Create a new validation rule as a DRAFT version 1; it is not served until activated. Exactly one field of its `rule` oneof must be set. Its
                  `id` and `updated_at` are OUTPUT_ONLY and ignored if set; the server assigns both.
                  Returns the full created rule, including its server-assigned `id` and `updated_at`.
             operationId: ValidationRuleService_CreateValidationRule
@@ -1205,7 +1829,10 @@ paths:
             tags:
               - ValidationRuleService
             summary: Get one validation rule by its id.
-            description: Get one validation rule by its id.
+            description: |-
+                Get one validation rule by its id: its working version, which is the DRAFT, IN_REVIEW or
+                 SHADOW version if one exists, otherwise the ACTIVE one, otherwise the latest. See
+                 ValidationRuleVersionService for the other versions.
             operationId: ValidationRuleService_GetValidationRule
             parameters:
               - name: id
@@ -1233,7 +1860,8 @@ paths:
               - ValidationRuleService
             summary: Delete a validation rule.
             description: |-
-                Delete a validation rule. Over REST, this is a conditional request: it requires a
+                Delete a validation rule that has never been released, with all its versions. Fails with 409
+                 if any version has been ACTIVE; retire it instead. Over REST, this is a conditional request: it requires a
                  matching `If-Match` request header and fails with 409 Conflict (not the RFC
                  7232-standard 412, which Entur's API guidelines don't allow) if it no longer matches
                  the rule's current `ETag`, e.g. because another update happened concurrently. This is
@@ -1259,8 +1887,8 @@ paths:
                                 $ref: '#/components/schemas/ProblemDetail'
                 '409':
                     description: The `If-Match` header does not match the rule's current
-                        ETag, or the validation rule is still referenced by a validation
-                        flow item.
+                        ETag, a version has been released, or the validation rule
+                        is still referenced by a validation flow item.
                     content:
                         application/problem+json:
                             schema:
@@ -1270,7 +1898,8 @@ paths:
               - ValidationRuleService
             summary: Update an existing validation rule.
             description: |-
-                Update an existing validation rule. Its `id`, if set, must match the path `id`.
+                Update the working DRAFT version of an existing validation rule, and fails with 409 if the
+                 working version is not a DRAFT. Its `id`, if set, must match the path `id`.
                  The `rule` oneof's set field is immutable: it must be the same variant (e.g. `xsd_rule`)
                  as the rule's current type, and the request fails with INVALID_ARGUMENT if it is not -
                  changing a rule's type requires deleting it and creating a new one. Returns the full
@@ -1325,8 +1954,553 @@ paths:
                             schema:
                                 $ref: '#/components/schemas/ProblemDetail'
                 '409':
-                    description: The `If-Match` header does not match the rule's current
-                        ETag.
+                    description: The working version is not a DRAFT, or the `If-Match`
+                        header does not match the rule's current ETag.
+                    content:
+                        application/problem+json:
+                            schema:
+                                $ref: '#/components/schemas/ProblemDetail'
+    /validation/v1/rules/{id}/versions:
+        get:
+            tags:
+              - ValidationRuleVersionService
+            summary: List the versions of a validation rule.
+            description: List every version of a validation rule, newest first, each
+                with its own content and `version_info`. The request is paginated
+                with a default page size of 100.
+            operationId: ValidationRuleVersionService_ListValidationRuleVersions
+            parameters:
+              - name: id
+                in: path
+                description: The database id of the validation rule.
+                required: true
+                schema:
+                    type: integer
+                    format: int32
+              - name: cursor
+                in: query
+                description: The cursor to resume listing from, as returned by a previous
+                    call's cursor.
+                schema:
+                    type: string
+              - name: pageSize
+                in: query
+                description: The maximum number of versions to return. The default
+                    page size is 100.
+                schema:
+                    type: integer
+                    format: int32
+            responses:
+                '200':
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ListValidationRuleVersionsResponse'
+                '404':
+                    description: No validation rule exists with the given id.
+                    content:
+                        application/problem+json:
+                            schema:
+                                $ref: '#/components/schemas/ProblemDetail'
+        post:
+            tags:
+              - ValidationRuleVersionService
+            summary: Create a new draft version of a validation rule.
+            description: Create a new DRAFT version of a validation rule as a copy
+                of its ACTIVE version, numbered one higher than its latest version.
+                The ACTIVE version keeps being served unchanged. Fails with 409 if
+                the validation rule already has a version that is DRAFT, IN_REVIEW
+                or SHADOW, or has no ACTIVE version to copy.
+            operationId: ValidationRuleVersionService_CreateValidationRuleVersion
+            parameters:
+              - name: id
+                in: path
+                description: The database id of the validation rule.
+                required: true
+                schema:
+                    type: integer
+                    format: int32
+            responses:
+                '200':
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ValidationRule'
+                '404':
+                    description: No validation rule exists with the given id.
+                    content:
+                        application/problem+json:
+                            schema:
+                                $ref: '#/components/schemas/ProblemDetail'
+                '409':
+                    description: The validation rule already has a pending version,
+                        or has no ACTIVE version to copy.
+                    content:
+                        application/problem+json:
+                            schema:
+                                $ref: '#/components/schemas/ProblemDetail'
+    /validation/v1/rules/{id}/versions/{version}:
+        get:
+            tags:
+              - ValidationRuleVersionService
+            summary: Get one version of a validation rule.
+            description: Get one version of a validation rule, with its content and
+                `version_info`.
+            operationId: ValidationRuleVersionService_GetValidationRuleVersion
+            parameters:
+              - name: id
+                in: path
+                description: The database id of the validation rule.
+                required: true
+                schema:
+                    type: integer
+                    format: int32
+              - name: version
+                in: path
+                description: The version number.
+                required: true
+                schema:
+                    type: integer
+                    format: int32
+            responses:
+                '200':
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ValidationRule'
+                '404':
+                    description: No validation rule exists with the given id, or it
+                        has no such version.
+                    content:
+                        application/problem+json:
+                            schema:
+                                $ref: '#/components/schemas/ProblemDetail'
+        delete:
+            tags:
+              - ValidationRuleVersionService
+            summary: Delete a draft version of a validation rule.
+            description: Delete a DRAFT version of a validation rule. Fails with 409
+                if the version is not a DRAFT or, for a rule, if a flow version still
+                pins it. Deleting the only version deletes the validation rule.
+            operationId: ValidationRuleVersionService_DeleteValidationRuleVersion
+            parameters:
+              - name: id
+                in: path
+                description: The database id of the validation rule.
+                required: true
+                schema:
+                    type: integer
+                    format: int32
+              - name: version
+                in: path
+                description: The version number.
+                required: true
+                schema:
+                    type: integer
+                    format: int32
+            responses:
+                '200':
+                    description: OK
+                    content: {}
+                '404':
+                    description: No validation rule exists with the given id, or it
+                        has no such version.
+                    content:
+                        application/problem+json:
+                            schema:
+                                $ref: '#/components/schemas/ProblemDetail'
+                '409':
+                    description: The version is not a DRAFT, or is still pinned by
+                        a flow version.
+                    content:
+                        application/problem+json:
+                            schema:
+                                $ref: '#/components/schemas/ProblemDetail'
+        patch:
+            tags:
+              - ValidationRuleVersionService
+            summary: Update a draft version of a validation rule.
+            description: 'Update a DRAFT version of a validation rule. Resets the
+                version''s dry-run count to zero. Over REST, this is a conditional
+                request: it requires a matching `If-Match` request header and fails
+                with 409 Conflict if it no longer matches the version''s current `ETag`.'
+            operationId: ValidationRuleVersionService_UpdateValidationRuleVersion
+            parameters:
+              - name: id
+                in: path
+                description: The database id of the validation rule.
+                required: true
+                schema:
+                    type: integer
+                    format: int32
+              - name: version
+                in: path
+                description: The version number.
+                required: true
+                schema:
+                    type: integer
+                    format: int32
+              - name: updateMask
+                in: query
+                description: The fields of `validation_rule` to update, with the same
+                    meaning as in UpdateValidationRuleRequest.
+                schema:
+                    type: string
+                    format: field-mask
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/ValidationRule'
+                required: true
+            responses:
+                '200':
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ValidationRule'
+                '404':
+                    description: No validation rule exists with the given id, or it
+                        has no such version.
+                    content:
+                        application/problem+json:
+                            schema:
+                                $ref: '#/components/schemas/ProblemDetail'
+                '409':
+                    description: The version is not a DRAFT, or the `If-Match` header
+                        does not match its current ETag.
+                    content:
+                        application/problem+json:
+                            schema:
+                                $ref: '#/components/schemas/ProblemDetail'
+    /validation/v1/rules/{id}/versions/{version}/abort-shadow:
+        post:
+            tags:
+              - ValidationRuleVersionService
+            summary: Abort the shadow run of a version of a validation rule.
+            description: Stop the shadow run of a SHADOW version of a validation rule.
+                The version becomes DRAFT again, and its shadow result and approval
+                are cleared. Fails with 409 if the version is not SHADOW.
+            operationId: ValidationRuleVersionService_AbortShadowValidationRuleVersion
+            parameters:
+              - name: id
+                in: path
+                description: The database id of the validation rule.
+                required: true
+                schema:
+                    type: integer
+                    format: int32
+              - name: version
+                in: path
+                description: The version number.
+                required: true
+                schema:
+                    type: integer
+                    format: int32
+            responses:
+                '200':
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ValidationRule'
+                '404':
+                    description: No validation rule exists with the given id, or it
+                        has no such version.
+                    content:
+                        application/problem+json:
+                            schema:
+                                $ref: '#/components/schemas/ProblemDetail'
+                '409':
+                    description: The version is not SHADOW.
+                    content:
+                        application/problem+json:
+                            schema:
+                                $ref: '#/components/schemas/ProblemDetail'
+    /validation/v1/rules/{id}/versions/{version}/activate:
+        post:
+            tags:
+              - ValidationRuleVersionService
+            summary: Activate a version of a validation rule.
+            description: Make an approved IN_REVIEW or SHADOW version, or a DEPRECATED
+                one, the ACTIVE version of a validation rule. The previously ACTIVE
+                version becomes DEPRECATED, in the same transaction, so there is never
+                more than one. Activating a DEPRECATED version is a rollback. Fails
+                with 409 if the version has no approval (unless DEPRECATED) or has
+                another status.
+            operationId: ValidationRuleVersionService_ActivateValidationRuleVersion
+            parameters:
+              - name: id
+                in: path
+                description: The database id of the validation rule.
+                required: true
+                schema:
+                    type: integer
+                    format: int32
+              - name: version
+                in: path
+                description: The version number.
+                required: true
+                schema:
+                    type: integer
+                    format: int32
+            responses:
+                '200':
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ValidationRule'
+                '404':
+                    description: No validation rule exists with the given id, or it
+                        has no such version.
+                    content:
+                        application/problem+json:
+                            schema:
+                                $ref: '#/components/schemas/ProblemDetail'
+                '409':
+                    description: The version is not approved, or is not IN_REVIEW,
+                        SHADOW or DEPRECATED.
+                    content:
+                        application/problem+json:
+                            schema:
+                                $ref: '#/components/schemas/ProblemDetail'
+    /validation/v1/rules/{id}/versions/{version}/approve:
+        post:
+            tags:
+              - ValidationRuleVersionService
+            summary: Approve a version of a validation rule that is in review.
+            description: Approve an IN_REVIEW version of a validation rule. This records
+                the caller in `approved_by` and keeps the status IN_REVIEW. Start
+                shadow and activate both need it. Fails with 403 if the caller is
+                the version's author, and 409 if the version is not IN_REVIEW or is
+                already approved.
+            operationId: ValidationRuleVersionService_ApproveValidationRuleVersion
+            parameters:
+              - name: id
+                in: path
+                description: The database id of the validation rule.
+                required: true
+                schema:
+                    type: integer
+                    format: int32
+              - name: version
+                in: path
+                description: The version number.
+                required: true
+                schema:
+                    type: integer
+                    format: int32
+            responses:
+                '200':
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ValidationRule'
+                '404':
+                    description: No validation rule exists with the given id, or it
+                        has no such version.
+                    content:
+                        application/problem+json:
+                            schema:
+                                $ref: '#/components/schemas/ProblemDetail'
+                '403':
+                    description: The caller is the author of the version.
+                    content:
+                        application/problem+json:
+                            schema:
+                                $ref: '#/components/schemas/ProblemDetail'
+                '409':
+                    description: The version is not IN_REVIEW, or is already approved.
+                    content:
+                        application/problem+json:
+                            schema:
+                                $ref: '#/components/schemas/ProblemDetail'
+    /validation/v1/rules/{id}/versions/{version}/request-changes:
+        post:
+            tags:
+              - ValidationRuleVersionService
+            summary: Send a version of a validation rule back to draft.
+            description: Send an IN_REVIEW version of a validation rule back to DRAFT
+                and clear its approval. Fails with 403 if the caller is the version's
+                author, and 409 if the version is not IN_REVIEW.
+            operationId: ValidationRuleVersionService_RequestChangesValidationRuleVersion
+            parameters:
+              - name: id
+                in: path
+                description: The database id of the validation rule.
+                required: true
+                schema:
+                    type: integer
+                    format: int32
+              - name: version
+                in: path
+                description: The version number.
+                required: true
+                schema:
+                    type: integer
+                    format: int32
+            responses:
+                '200':
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ValidationRule'
+                '404':
+                    description: No validation rule exists with the given id, or it
+                        has no such version.
+                    content:
+                        application/problem+json:
+                            schema:
+                                $ref: '#/components/schemas/ProblemDetail'
+                '403':
+                    description: The caller is the author of the version.
+                    content:
+                        application/problem+json:
+                            schema:
+                                $ref: '#/components/schemas/ProblemDetail'
+                '409':
+                    description: The version is not IN_REVIEW.
+                    content:
+                        application/problem+json:
+                            schema:
+                                $ref: '#/components/schemas/ProblemDetail'
+    /validation/v1/rules/{id}/versions/{version}/retire:
+        post:
+            tags:
+              - ValidationRuleVersionService
+            summary: Retire a version of a validation rule.
+            description: Retire an ACTIVE or DEPRECATED version of a validation rule.
+                A retired version never runs again. Fails with 409 if an ACTIVE flow
+                version still pins it. If the retired version was ACTIVE, nothing
+                is served for the validation rule afterwards.
+            operationId: ValidationRuleVersionService_RetireValidationRuleVersion
+            parameters:
+              - name: id
+                in: path
+                description: The database id of the validation rule.
+                required: true
+                schema:
+                    type: integer
+                    format: int32
+              - name: version
+                in: path
+                description: The version number.
+                required: true
+                schema:
+                    type: integer
+                    format: int32
+            responses:
+                '200':
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ValidationRule'
+                '404':
+                    description: No validation rule exists with the given id, or it
+                        has no such version.
+                    content:
+                        application/problem+json:
+                            schema:
+                                $ref: '#/components/schemas/ProblemDetail'
+                '409':
+                    description: The version is not ACTIVE or DEPRECATED. The version
+                        is pinned by an ACTIVE flow version.
+                    content:
+                        application/problem+json:
+                            schema:
+                                $ref: '#/components/schemas/ProblemDetail'
+    /validation/v1/rules/{id}/versions/{version}/start-shadow:
+        post:
+            tags:
+              - ValidationRuleVersionService
+            summary: Start a shadow run of a version of a validation rule.
+            description: Start running an approved IN_REVIEW version of a validation
+                rule next to the ACTIVE version on real deliveries. The version becomes
+                SHADOW. Fails with 409 if the version is not IN_REVIEW or is not approved.
+            operationId: ValidationRuleVersionService_StartShadowValidationRuleVersion
+            parameters:
+              - name: id
+                in: path
+                description: The database id of the validation rule.
+                required: true
+                schema:
+                    type: integer
+                    format: int32
+              - name: version
+                in: path
+                description: The version number.
+                required: true
+                schema:
+                    type: integer
+                    format: int32
+            responses:
+                '200':
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ValidationRule'
+                '404':
+                    description: No validation rule exists with the given id, or it
+                        has no such version.
+                    content:
+                        application/problem+json:
+                            schema:
+                                $ref: '#/components/schemas/ProblemDetail'
+                '409':
+                    description: The version is not IN_REVIEW, or is not approved.
+                    content:
+                        application/problem+json:
+                            schema:
+                                $ref: '#/components/schemas/ProblemDetail'
+    /validation/v1/rules/{id}/versions/{version}/submit:
+        post:
+            tags:
+              - ValidationRuleVersionService
+            summary: Submit a draft version of a validation rule for review.
+            description: Submit a DRAFT version of a validation rule for review. The
+                version becomes IN_REVIEW and its content is frozen. It needs at least
+                one dry-run. Fails with 409 if any of this is not met.
+            operationId: ValidationRuleVersionService_SubmitValidationRuleVersion
+            parameters:
+              - name: id
+                in: path
+                description: The database id of the validation rule.
+                required: true
+                schema:
+                    type: integer
+                    format: int32
+              - name: version
+                in: path
+                description: The version number.
+                required: true
+                schema:
+                    type: integer
+                    format: int32
+            responses:
+                '200':
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ValidationRule'
+                '404':
+                    description: No validation rule exists with the given id, or it
+                        has no such version.
+                    content:
+                        application/problem+json:
+                            schema:
+                                $ref: '#/components/schemas/ProblemDetail'
+                '409':
+                    description: The version is not a DRAFT or has no dry-run.
                     content:
                         application/problem+json:
                             schema:
@@ -1472,8 +2646,14 @@ components:
                               - versionPattern: 1\.15:NO-NeTEx-networktimetable:1\.5
                                 xsdPath: xsd/netex/NeTEx_publication.xsd
                             fileFilter: .*\.xml
+                        versionInfo:
+                            version: 2
+                            status: ACTIVE
+                            createdBy: waad|qNAK7-vOft2yUu_XO8UdrBJ4OAiaFybm-DXPrnGAoV8
+                            createdAt: '2026-01-01T00:00:00Z'
                         updatedAt: '2026-01-01T00:00:00Z'
                     severityOverride: WARNING
+                    version: 2
                 updatedAt: '2026-01-01T00:00:00Z'
         GoogleProtobufValue:
             description: Represents a dynamically typed value which can be either
@@ -1573,10 +2753,21 @@ components:
                                           - versionPattern: 1\.15:NO-NeTEx-networktimetable:1\.5
                                             xsdPath: xsd/netex/NeTEx_publication.xsd
                                         fileFilter: .*\.xml
+                                    versionInfo:
+                                        version: 2
+                                        status: ACTIVE
+                                        createdBy: waad|qNAK7-vOft2yUu_XO8UdrBJ4OAiaFybm-DXPrnGAoV8
+                                        createdAt: '2026-01-01T00:00:00Z'
                                     updatedAt: '2026-01-01T00:00:00Z'
                                 severityOverride: WARNING
+                                version: 2
                             updatedAt: '2026-01-01T00:00:00Z'
                         owner: 2
+                        versionInfo:
+                            version: 2
+                            status: ACTIVE
+                            createdBy: waad|qNAK7-vOft2yUu_XO8UdrBJ4OAiaFybm-DXPrnGAoV8
+                            createdAt: '2026-01-01T00:00:00Z'
                         updatedAt: '2026-01-01T00:00:00Z'
         ListPayloadTypesResponse:
             type: object
@@ -1598,6 +2789,61 @@ components:
                   - id: 42
                     name: rutedata
                     owner: 3
+                    updatedAt: '2026-01-01T00:00:00Z'
+                cursor: eyJpZCI6NjJ9
+        ListValidationFlowVersionsResponse:
+            type: object
+            properties:
+                items:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/ValidationFlow'
+                    description: The versions in this page of results, newest first.
+                cursor:
+                    example: eyJpZCI6NjJ9
+                    type: string
+                    description: |-
+                        The cursor to pass to a subsequent call to continue listing. Empty
+                         when there are no more results.
+            description: Response for ListValidationFlowVersions.
+            example:
+                items:
+                  - id: 1
+                    name: netex-structural
+                    description: Runs structural checks for NeTEx deliveries.
+                    stage: STRUCTURAL
+                    items:
+                      - id: 1
+                        ruleFlowItem:
+                            id: 1
+                            validationRule:
+                                id: 1
+                                area: 7
+                                defaultSeverity: ERROR
+                                stage: STRUCTURAL
+                                name: netex-xsd
+                                description: Validates the file against its XSD.
+                                xsdRule:
+                                    message: File does not match its XSD.
+                                    schemas:
+                                      - versionPattern: 1\.15:NO-NeTEx-networktimetable:1\.5
+                                        xsdPath: xsd/netex/NeTEx_publication.xsd
+                                    fileFilter: .*\.xml
+                                versionInfo:
+                                    version: 2
+                                    status: ACTIVE
+                                    createdBy: waad|qNAK7-vOft2yUu_XO8UdrBJ4OAiaFybm-DXPrnGAoV8
+                                    createdAt: '2026-01-01T00:00:00Z'
+                                updatedAt: '2026-01-01T00:00:00Z'
+                            severityOverride: WARNING
+                            version: 2
+                        updatedAt: '2026-01-01T00:00:00Z'
+                    owner: 2
+                    versionInfo:
+                        version: 2
+                        status: ACTIVE
+                        createdBy: waad|qNAK7-vOft2yUu_XO8UdrBJ4OAiaFybm-DXPrnGAoV8
+                        createdAt: '2026-01-01T00:00:00Z'
                     updatedAt: '2026-01-01T00:00:00Z'
                 cursor: eyJpZCI6NjJ9
         ListValidationFlowsResponse:
@@ -1638,10 +2884,57 @@ components:
                                       - versionPattern: 1\.15:NO-NeTEx-networktimetable:1\.5
                                         xsdPath: xsd/netex/NeTEx_publication.xsd
                                     fileFilter: .*\.xml
+                                versionInfo:
+                                    version: 2
+                                    status: ACTIVE
+                                    createdBy: waad|qNAK7-vOft2yUu_XO8UdrBJ4OAiaFybm-DXPrnGAoV8
+                                    createdAt: '2026-01-01T00:00:00Z'
                                 updatedAt: '2026-01-01T00:00:00Z'
                             severityOverride: WARNING
+                            version: 2
                         updatedAt: '2026-01-01T00:00:00Z'
                     owner: 2
+                    versionInfo:
+                        version: 2
+                        status: ACTIVE
+                        createdBy: waad|qNAK7-vOft2yUu_XO8UdrBJ4OAiaFybm-DXPrnGAoV8
+                        createdAt: '2026-01-01T00:00:00Z'
+                    updatedAt: '2026-01-01T00:00:00Z'
+                cursor: eyJpZCI6NjJ9
+        ListValidationRuleVersionsResponse:
+            type: object
+            properties:
+                items:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/ValidationRule'
+                    description: The versions in this page of results, newest first.
+                cursor:
+                    example: eyJpZCI6NjJ9
+                    type: string
+                    description: |-
+                        The cursor to pass to a subsequent call to continue listing. Empty
+                         when there are no more results.
+            description: Response for ListValidationRuleVersions.
+            example:
+                items:
+                  - id: 1
+                    area: 7
+                    defaultSeverity: ERROR
+                    stage: STRUCTURAL
+                    name: netex-xsd
+                    description: Validates the file against its XSD.
+                    xsdRule:
+                        message: File does not match its XSD.
+                        schemas:
+                          - versionPattern: 1\.15:NO-NeTEx-networktimetable:1\.5
+                            xsdPath: xsd/netex/NeTEx_publication.xsd
+                        fileFilter: .*\.xml
+                    versionInfo:
+                        version: 2
+                        status: ACTIVE
+                        createdBy: waad|qNAK7-vOft2yUu_XO8UdrBJ4OAiaFybm-DXPrnGAoV8
+                        createdAt: '2026-01-01T00:00:00Z'
                     updatedAt: '2026-01-01T00:00:00Z'
                 cursor: eyJpZCI6NjJ9
         ListValidationRulesResponse:
@@ -1673,6 +2966,11 @@ components:
                           - versionPattern: 1\.15:NO-NeTEx-networktimetable:1\.5
                             xsdPath: xsd/netex/NeTEx_publication.xsd
                         fileFilter: .*\.xml
+                    versionInfo:
+                        version: 2
+                        status: ACTIVE
+                        createdBy: waad|qNAK7-vOft2yUu_XO8UdrBJ4OAiaFybm-DXPrnGAoV8
+                        createdAt: '2026-01-01T00:00:00Z'
                     updatedAt: '2026-01-01T00:00:00Z'
                 cursor: eyJpZCI6NjJ9
         Owner:
@@ -1969,8 +3267,8 @@ components:
                     allOf:
                       - $ref: '#/components/schemas/ValidationRule'
                     description: |-
-                        The full validation rule. Populated on a deep read (GetValidationFlow,
-                         GetPayloadTypeFlow); absent on a shallow listing (ListValidationFlows).
+                        The full validation rule, at the pinned `version`. Populated on a deep read
+                         (GetValidationFlow, GetPayloadTypeFlow); absent on a shallow listing (ListValidationFlows).
                 severityOverride:
                     example: WARNING
                     enum:
@@ -1983,6 +3281,17 @@ components:
                     description: If present, overrides the rule's own default_severity
                         for this inclusion only.
                     format: enum
+                version:
+                    example: 2
+                    type: integer
+                    description: |-
+                        The version of the rule this item pins. A flow keeps running the pinned version when newer
+                         versions of the rule are activated, until the pin is moved in a new flow version. When
+                         absent on create or update, the server pins the rule's ACTIVE version, or its working
+                         version if it has no ACTIVE one; on update, an item that already pins a version keeps it.
+                         A flow version can only be submitted for review if every pinned version is ACTIVE or
+                         DEPRECATED.
+                    format: int32
             description: |-
                 A flow item that runs one concrete ValidationRule, optionally overriding
                  its default severity for this inclusion only.
@@ -2001,8 +3310,43 @@ components:
                           - versionPattern: 1\.15:NO-NeTEx-networktimetable:1\.5
                             xsdPath: xsd/netex/NeTEx_publication.xsd
                         fileFilter: .*\.xml
+                    versionInfo:
+                        version: 2
+                        status: ACTIVE
+                        createdBy: waad|qNAK7-vOft2yUu_XO8UdrBJ4OAiaFybm-DXPrnGAoV8
+                        createdAt: '2026-01-01T00:00:00Z'
                     updatedAt: '2026-01-01T00:00:00Z'
                 severityOverride: WARNING
+                version: 2
+        ShadowResult:
+            type: object
+            properties:
+                startedAt:
+                    readOnly: true
+                    type: string
+                    description: The timestamp the shadow run started.
+                    format: date-time
+                deliveries:
+                    readOnly: true
+                    type: integer
+                    description: The number of deliveries validated by both versions
+                        so far.
+                    format: int32
+                activeFindings:
+                    readOnly: true
+                    type: integer
+                    description: The number of findings the ACTIVE version reported
+                        on those deliveries.
+                    format: int32
+                shadowFindings:
+                    readOnly: true
+                    type: integer
+                    description: The number of findings the SHADOW version reported
+                        on those deliveries.
+                    format: int32
+            description: |-
+                What a shadow run of a version found so far, compared with the ACTIVE version on the same
+                 deliveries.
         SqlRule:
             required:
               - message
@@ -2083,10 +3427,21 @@ components:
                                       - versionPattern: 1\.15:NO-NeTEx-networktimetable:1\.5
                                         xsdPath: xsd/netex/NeTEx_publication.xsd
                                     fileFilter: .*\.xml
+                                versionInfo:
+                                    version: 2
+                                    status: ACTIVE
+                                    createdBy: waad|qNAK7-vOft2yUu_XO8UdrBJ4OAiaFybm-DXPrnGAoV8
+                                    createdAt: '2026-01-01T00:00:00Z'
                                 updatedAt: '2026-01-01T00:00:00Z'
                             severityOverride: WARNING
+                            version: 2
                         updatedAt: '2026-01-01T00:00:00Z'
                     owner: 2
+                    versionInfo:
+                        version: 2
+                        status: ACTIVE
+                        createdBy: waad|qNAK7-vOft2yUu_XO8UdrBJ4OAiaFybm-DXPrnGAoV8
+                        createdAt: '2026-01-01T00:00:00Z'
                     updatedAt: '2026-01-01T00:00:00Z'
         ValidationData:
             required:
@@ -2191,6 +3546,13 @@ components:
                     type: integer
                     description: The database id of the owner of the validation flow.
                     format: int32
+                versionInfo:
+                    readOnly: true
+                    allOf:
+                      - $ref: '#/components/schemas/VersionInfo'
+                    description: |-
+                        Which version of the validation flow this message carries and its lifecycle status. Always
+                         populated by the server; a value set by the client is ignored, not an error.
                 updatedAt:
                     readOnly: true
                     example: '2026-01-01T00:00:00Z'
@@ -2225,10 +3587,21 @@ components:
                                   - versionPattern: 1\.15:NO-NeTEx-networktimetable:1\.5
                                     xsdPath: xsd/netex/NeTEx_publication.xsd
                                 fileFilter: .*\.xml
+                            versionInfo:
+                                version: 2
+                                status: ACTIVE
+                                createdBy: waad|qNAK7-vOft2yUu_XO8UdrBJ4OAiaFybm-DXPrnGAoV8
+                                createdAt: '2026-01-01T00:00:00Z'
                             updatedAt: '2026-01-01T00:00:00Z'
                         severityOverride: WARNING
+                        version: 2
                     updatedAt: '2026-01-01T00:00:00Z'
                 owner: 2
+                versionInfo:
+                    version: 2
+                    status: ACTIVE
+                    createdBy: waad|qNAK7-vOft2yUu_XO8UdrBJ4OAiaFybm-DXPrnGAoV8
+                    createdAt: '2026-01-01T00:00:00Z'
                 updatedAt: '2026-01-01T00:00:00Z'
         ValidationRule:
             required:
@@ -2291,6 +3664,13 @@ components:
                     allOf:
                       - $ref: '#/components/schemas/SqlRule'
                     description: A SQL rule.
+                versionInfo:
+                    readOnly: true
+                    allOf:
+                      - $ref: '#/components/schemas/VersionInfo'
+                    description: |-
+                        Which version of the validation rule this message carries and its lifecycle status. Always
+                         populated by the server; a value set by the client is ignored, not an error.
                 updatedAt:
                     readOnly: true
                     example: '2026-01-01T00:00:00Z'
@@ -2299,7 +3679,9 @@ components:
                         The timestamp the validation rule was last updated. Always populated by the server; a
                          value set by the client is ignored, not an error.
                     format: date-time
-            description: A single validation rule, owned by one Area.
+            description: |-
+                A single validation rule, owned by one Area. A rule is versioned: its `id` is stable and each
+                 version, described by `version_info`, has its own content. A message carries one version.
             example:
                 id: 1
                 area: 7
@@ -2313,7 +3695,80 @@ components:
                       - versionPattern: 1\.15:NO-NeTEx-networktimetable:1\.5
                         xsdPath: xsd/netex/NeTEx_publication.xsd
                     fileFilter: .*\.xml
+                versionInfo:
+                    version: 2
+                    status: ACTIVE
+                    createdBy: waad|qNAK7-vOft2yUu_XO8UdrBJ4OAiaFybm-DXPrnGAoV8
+                    createdAt: '2026-01-01T00:00:00Z'
                 updatedAt: '2026-01-01T00:00:00Z'
+        VersionInfo:
+            type: object
+            properties:
+                version:
+                    example: 2
+                    type: integer
+                    description: |-
+                        The version number, starting at 1 and increasing by one for each new version of the same
+                         rule or flow.
+                    format: int32
+                status:
+                    example: ACTIVE
+                    enum:
+                      - VERSION_STATUS_UNSPECIFIED
+                      - DRAFT
+                      - IN_REVIEW
+                      - SHADOW
+                      - ACTIVE
+                      - DEPRECATED
+                      - RETIRED
+                    type: string
+                    description: The lifecycle status of the version.
+                    format: enum
+                createdBy:
+                    example: waad|qNAK7-vOft2yUu_XO8UdrBJ4OAiaFybm-DXPrnGAoV8
+                    type: string
+                    description: |-
+                        The user that created the version, as the stable user reference from the access token's
+                         `sub` claim.
+                createdAt:
+                    example: '2026-01-01T00:00:00Z'
+                    type: string
+                    description: The timestamp the version was created.
+                    format: date-time
+                submittedAt:
+                    type: string
+                    description: |-
+                        The timestamp the version was submitted for review. Absent while it is a DRAFT that was
+                         never submitted.
+                    format: date-time
+                approvedBy:
+                    type: string
+                    description: |-
+                        The user that approved the version. Always different from `created_by`. Absent until
+                         approved, and cleared again when changes are requested or a shadow run is aborted.
+                activatedAt:
+                    type: string
+                    description: The timestamp the version last became ACTIVE. Absent
+                        if it never was.
+                    format: date-time
+                dryRunCount:
+                    type: integer
+                    description: The number of dry-runs of this version. Reset to
+                        zero whenever the DRAFT is edited.
+                    format: int32
+                shadow:
+                    allOf:
+                      - $ref: '#/components/schemas/ShadowResult'
+                    description: The shadow run of the version. Present once the version
+                        has entered SHADOW.
+            description: |-
+                Which version of a validation rule or flow a message carries, and where that version is in
+                 its lifecycle. Always populated by the server.
+            example:
+                version: 2
+                status: ACTIVE
+                createdBy: waad|qNAK7-vOft2yUu_XO8UdrBJ4OAiaFybm-DXPrnGAoV8
+                createdAt: '2026-01-01T00:00:00Z'
         XPathRule:
             required:
               - message
@@ -2422,8 +3877,20 @@ tags:
     description: The gRPC service to view and administrate payload types.
   - name: ValidationFlowService
     description: The gRPC service to view and administrate flows.
+  - name: ValidationFlowVersionService
+    description: |-
+        The gRPC service to view and administrate the versions of validation flows.
+
+         A flow has the same lifecycle as a rule, see ValidationRuleVersionService. A flow version
+         pins exact rule versions, see RuleFlowItem.
   - name: ValidationRuleService
     description: The gRPC service to view and administrate validation rules.
+  - name: ValidationRuleVersionService
+    description: |-
+        The gRPC service to view and administrate the versions of validation rules.
+
+         A rule's lifecycle is DRAFT, IN_REVIEW, optionally SHADOW, ACTIVE, DEPRECATED, RETIRED, see
+         VersionStatus. Only a DRAFT can be edited; every other change goes through a new version.
   - name: ValidationRunService
     description: The gRPC service to request validation runs of specific validation
         rules.

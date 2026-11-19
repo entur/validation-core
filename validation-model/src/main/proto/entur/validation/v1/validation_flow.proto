@@ -4,6 +4,7 @@ package entur.validation.v1;
 
 import "entur/validation/v1/enum.proto";
 import "entur/validation/v1/validation_rule.proto";
+import "entur/validation/v1/validation_version.proto";
 import "gnostic/openapi/v3/annotations.proto";
 import "google/api/field_behavior.proto";
 import "google/protobuf/timestamp.proto";
@@ -55,6 +56,10 @@ message ValidationFlow {
       example: {yaml: "2"}
     }
   ];
+  // Which version of the validation flow this message carries and its lifecycle status. Always
+  // populated by the server; a value set by the client is ignored, not an error.
+  VersionInfo version_info = 7 [(google.api.field_behavior) = OUTPUT_ONLY];
+
   // The timestamp the validation flow was last updated. Always populated by the server; a
   // value set by the client is ignored, not an error.
   google.protobuf.Timestamp updated_at = 100 [
@@ -103,12 +108,21 @@ message RuleFlowItem {
       example: {yaml: "1"}
     }
   ];
-  // The full validation rule. Populated on a deep read (GetValidationFlow,
-  // GetPayloadTypeFlow); absent on a shallow listing (ListValidationFlows).
+  // The full validation rule, at the pinned `version`. Populated on a deep read
+  // (GetValidationFlow, GetPayloadTypeFlow); absent on a shallow listing (ListValidationFlows).
   optional ValidationRule validation_rule = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
   // If present, overrides the rule's own default_severity for this inclusion only.
   optional Severity severity_override = 3 [(gnostic.openapi.v3.property) = {
     example: {yaml: "\"WARNING\""}
+  }];
+  // The version of the rule this item pins. A flow keeps running the pinned version when newer
+  // versions of the rule are activated, until the pin is moved in a new flow version. When
+  // absent on create or update, the server pins the rule's ACTIVE version, or its working
+  // version if it has no ACTIVE one; on update, an item that already pins a version keeps it.
+  // A flow version can only be submitted for review if every pinned version is ACTIVE or
+  // DEPRECATED.
+  optional int32 version = 4 [(gnostic.openapi.v3.property) = {
+    example: {yaml: "2"}
   }];
 }
 
