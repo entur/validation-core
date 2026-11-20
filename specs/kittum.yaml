@@ -1986,8 +1986,9 @@ components:
                     allOf:
                       - $ref: '#/components/schemas/ValidationRule'
                     description: |-
-                        The full validation rule. Populated on a deep read (GetValidationFlow,
-                         GetPayloadTypeFlow); absent on a shallow listing (ListValidationFlows).
+                        The full validation rule. Populated when the enclosing flow is returned
+                         deep; absent when it is returned shallow. Each operation's documentation
+                         states which of the two it returns.
                 severityOverride:
                     example: WARNING
                     enum:
@@ -2070,9 +2071,10 @@ components:
                     allOf:
                       - $ref: '#/components/schemas/ValidationFlow'
                     description: |-
-                        The full flow. Populated on a deep read (GetValidationFlow,
-                         GetPayloadTypeFlow), recursively for every sub-flow it contains in turn;
-                         absent on a shallow listing (ListValidationFlows).
+                        The full flow. Populated when the enclosing flow is returned deep,
+                         recursively for every sub-flow it contains in turn; absent when it is
+                         returned shallow. Each operation's documentation states which of the two
+                         it returns.
             description: |-
                 A flow item that runs another ValidationFlow in its entirety, letting
                  flows be composed into a tree.
