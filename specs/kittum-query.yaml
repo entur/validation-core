@@ -1,0 +1,672 @@
+# Generated with protoc-gen-openapi and OpenApiAugmentationPipeline
+# https://github.com/google/gnostic/tree/master/cmd/protoc-gen-openapi
+# https://github.com/entur/validation-core/tree/master/buildSrc/src/main/kotlin/no/entur/http/OpenApiAugmentationPipeline.kt
+
+openapi: 3.0.3
+info:
+    title: kittum-query
+    description: OpenAPI contract for kittum's read-only query API - what runtime
+        consumers such as misharum call.
+    version: 0.0.1
+    x-entur-metadata:
+        id: kittum-query
+        audience: internal
+        owner: team-validering
+    x-stability-level: draft
+servers:
+  - url: https://kittum.entur.io
+paths:
+    /v3/api-docs:
+        get:
+            tags:
+              - OpenApi
+            summary: Get the OpenAPI specification for this service
+            description: Returns this specification itself, as YAML by default or
+                JSON when requested via the Accept header.
+            operationId: getOpenApiSpec
+            parameters:
+              - name: Accept
+                in: header
+                description: The desired response format - `application/yaml` (the
+                    default) or `application/json`.
+                required: false
+                schema:
+                    type: string
+            responses:
+                '200':
+                    description: The OpenAPI specification
+                    content:
+                        application/yaml:
+                            schema:
+                                type: string
+                                example: |
+                                    openapi: 3.0.3
+                                    info:
+                                        title: api-name
+                                        version: 0.0.1
+                                    paths: {}
+                                    components:
+                                        schemas: {}
+                        application/json:
+                            schema:
+                                type: object
+                                example:
+                                    openapi: 3.0.3
+                                    info:
+                                        title: api-name
+                                        version: 0.0.1
+                                    paths: {}
+                                    components:
+                                        schemas: {}
+    /validation/v1/query/payload-types/{payloadType}/flows/{stage}:
+        get:
+            tags:
+              - ValidationQueryService
+            summary: List the flows connected to a payload type for one stage, across
+                every area.
+            description: |-
+                List every validation flow connected to a payload type for one stage, across every area
+                 that has one assigned. Each returned flow is deep: every rule and sub-flow item it
+                 contains, recursively, carries both the database id of what it refers to and the
+                 referred-to ValidationRule/ValidationFlow itself.
+            operationId: ValidationQueryService_ListPayloadTypeFlows
+            parameters:
+              - name: payloadType
+                in: path
+                description: The name of the payload type to list flows for.
+                required: true
+                schema:
+                    type: string
+              - name: stage
+                in: path
+                description: |-
+                    The stage of the flows to list.
+
+                     This field is case insensitive.
+                required: true
+                schema:
+                    enum:
+                      - VALIDATION_STAGE_UNSPECIFIED
+                      - STRUCTURAL
+                      - LOCAL
+                      - GLOBAL
+                    type: string
+                    format: enum
+            responses:
+                '200':
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ListPayloadTypeFlowsResponse'
+                '404':
+                    description: The payload type does not exist.
+                    content:
+                        application/problem+json:
+                            schema:
+                                $ref: '#/components/schemas/ProblemDetail'
+    /validation/v1/query/rules/{id}:
+        get:
+            tags:
+              - ValidationQueryService
+            summary: Get one validation rule by its id.
+            description: Get one validation rule by its id, whether or not a flow
+                includes it.
+            operationId: ValidationQueryService_GetValidationRule
+            parameters:
+              - name: id
+                in: path
+                description: The database id of the validation rule to lookup.
+                required: true
+                schema:
+                    type: integer
+                    format: int32
+            responses:
+                '200':
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ValidationRule'
+                '404':
+                    description: No validation rule exists with the given id.
+                    content:
+                        application/problem+json:
+                            schema:
+                                $ref: '#/components/schemas/ProblemDetail'
+components:
+    schemas:
+        FieldViolation:
+            description: One request field that failed validation.
+            required:
+              - field
+              - message
+            type: object
+            properties:
+                field:
+                    type: string
+                    description: The offending field, e.g. "name" or "items[2].severity_override".
+                    example: name
+                message:
+                    type: string
+                    description: A human-readable explanation of why this field is
+                        invalid.
+                    example: must not be blank
+            example:
+                field: name
+                message: must not be blank
+        FlowItem:
+            type: object
+            properties:
+                id:
+                    example: 1
+                    type: integer
+                    description: The database id of the flow item.
+                    format: int32
+                ruleFlowItem:
+                    allOf:
+                      - $ref: '#/components/schemas/RuleFlowItem'
+                    description: A rule inside the flow.
+                subFlowItem:
+                    allOf:
+                      - $ref: '#/components/schemas/SubFlowItem'
+                    description: A flow inside the flow.
+                updatedAt:
+                    readOnly: true
+                    example: '2026-01-01T00:00:00Z'
+                    type: string
+                    description: |-
+                        The timestamp the flow item was last updated. Always populated by the server; a value
+                         set by the client is ignored, not an error.
+                    format: date-time
+            description: One item in a ValidationFlow's ordered list.
+            example:
+                id: 1
+                ruleFlowItem:
+                    id: 1
+                    validationRule:
+                        id: 1
+                        area: 7
+                        defaultSeverity: ERROR
+                        stage: STRUCTURAL
+                        name: netex-xsd
+                        description: Validates the file against its XSD.
+                        xsdRule:
+                            message: File does not match its XSD.
+                            schemas:
+                              - versionPattern: 1\.15:NO-NeTEx-networktimetable:1\.5
+                                xsdPath: xsd/netex/NeTEx_publication.xsd
+                            fileFilter: .*\.xml
+                        updatedAt: '2026-01-01T00:00:00Z'
+                    severityOverride: WARNING
+                updatedAt: '2026-01-01T00:00:00Z'
+        ListPayloadTypeFlowsResponse:
+            type: object
+            properties:
+                items:
+                    type: object
+                    additionalProperties:
+                        $ref: '#/components/schemas/ValidationFlow'
+                    description: |-
+                        Keyed by area name - one entry per area that has a flow assigned for the requested
+                         (payload_type, stage). Area names are unique, so this loses no information relative to a list.
+            description: Response for ListPayloadTypeFlows.
+            example:
+                items:
+                    additionalProp1:
+                        id: 1
+                        name: netex-structural
+                        description: Runs structural checks for NeTEx deliveries.
+                        stage: STRUCTURAL
+                        items:
+                          - id: 1
+                            ruleFlowItem:
+                                id: 1
+                                validationRule:
+                                    id: 1
+                                    area: 7
+                                    defaultSeverity: ERROR
+                                    stage: STRUCTURAL
+                                    name: netex-xsd
+                                    description: Validates the file against its XSD.
+                                    xsdRule:
+                                        message: File does not match its XSD.
+                                        schemas:
+                                          - versionPattern: 1\.15:NO-NeTEx-networktimetable:1\.5
+                                            xsdPath: xsd/netex/NeTEx_publication.xsd
+                                        fileFilter: .*\.xml
+                                    updatedAt: '2026-01-01T00:00:00Z'
+                                severityOverride: WARNING
+                            updatedAt: '2026-01-01T00:00:00Z'
+                        owner: 2
+                        updatedAt: '2026-01-01T00:00:00Z'
+        ProblemDetail:
+            description: RFC 9457 Problem Details for HTTP APIs.
+            required:
+              - title
+              - status
+            type: object
+            properties:
+                title:
+                    type: string
+                    description: A short, human-readable summary of the problem type.
+                    example: Not Found
+                status:
+                    type: integer
+                    format: int32
+                    description: The HTTP status code.
+                    example: 404
+                detail:
+                    type: string
+                    description: A human-readable explanation specific to this occurrence.
+                    example: No payload type exists with the name 'rutedata'.
+                errors:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/FieldViolation'
+                    description: |-
+                        Field-level validation errors that caused this problem, if any. This is an RFC 9457 extension
+                         member; it is absent when the problem isn't a per-field validation failure.
+            example:
+                title: Not Found
+                status: 404
+                detail: No payload type exists with the name 'rutedata'.
+                errors:
+                  - field: name
+                    message: must not be blank
+        RuleFlowItem:
+            type: object
+            properties:
+                id:
+                    example: 1
+                    type: integer
+                    description: The database id of the ValidationRule this item runs.
+                    format: int32
+                validationRule:
+                    readOnly: true
+                    allOf:
+                      - $ref: '#/components/schemas/ValidationRule'
+                    description: |-
+                        The full validation rule. Populated on a deep read (GetValidationFlow,
+                         GetPayloadTypeFlow); absent on a shallow listing (ListValidationFlows).
+                severityOverride:
+                    example: WARNING
+                    enum:
+                      - SEVERITY_UNSPECIFIED
+                      - CRITICAL
+                      - ERROR
+                      - WARNING
+                      - INFO
+                    type: string
+                    description: If present, overrides the rule's own default_severity
+                        for this inclusion only.
+                    format: enum
+            description: |-
+                A flow item that runs one concrete ValidationRule, optionally overriding
+                 its default severity for this inclusion only.
+            example:
+                id: 1
+                validationRule:
+                    id: 1
+                    area: 7
+                    defaultSeverity: ERROR
+                    stage: STRUCTURAL
+                    name: netex-xsd
+                    description: Validates the file against its XSD.
+                    xsdRule:
+                        message: File does not match its XSD.
+                        schemas:
+                          - versionPattern: 1\.15:NO-NeTEx-networktimetable:1\.5
+                            xsdPath: xsd/netex/NeTEx_publication.xsd
+                        fileFilter: .*\.xml
+                    updatedAt: '2026-01-01T00:00:00Z'
+                severityOverride: WARNING
+        SqlRule:
+            required:
+              - message
+              - sqlExpression
+              - cardinality
+            type: object
+            properties:
+                message:
+                    example: Data does not match the SQL statement.
+                    type: string
+                    description: The message to print if the validation rule fails.
+                sqlExpression:
+                    example: SELECT e.full_id FROM entities e WHERE e.entity_type='ServiceJourney'
+                        AND e.wrapper_path='vehicleJourneys';
+                    type: string
+                    description: A SQL expression to run against the database. The
+                        returned rows are checked against `cardinality` below.
+                cardinality:
+                    example: EXACTLY_ONE
+                    enum:
+                      - CARDINALITY_UNSPECIFIED
+                      - NONE
+                      - EXACTLY_ONE
+                      - AT_LEAST_ONE
+                      - EXACTLY_TWO
+                    type: string
+                    description: The cardinality the returned row set must resolve
+                        to for the validation to succeed.
+                    format: enum
+            description: |-
+                A validation rule that runs a SQL statement against a database. Stage is either LOCAL or GLOBAL.
+                 (The database implementation and exact SQL language is intentionally undefined.)
+            example:
+                message: Data does not match the SQL statement.
+                sqlExpression: SELECT e.full_id FROM entities e WHERE e.entity_type='ServiceJourney'
+                    AND e.wrapper_path='vehicleJourneys';
+                cardinality: EXACTLY_ONE
+        SubFlowItem:
+            type: object
+            properties:
+                id:
+                    example: 1
+                    type: integer
+                    description: The database id of the flow to run.
+                    format: int32
+                flow:
+                    readOnly: true
+                    allOf:
+                      - $ref: '#/components/schemas/ValidationFlow'
+                    description: |-
+                        The full flow. Populated on a deep read (GetValidationFlow,
+                         GetPayloadTypeFlow), recursively for every sub-flow it contains in turn;
+                         absent on a shallow listing (ListValidationFlows).
+            description: |-
+                A flow item that runs another ValidationFlow in its entirety, letting
+                 flows be composed into a tree.
+            example:
+                id: 1
+                flow:
+                    id: 1
+                    name: netex-structural
+                    description: Runs structural checks for NeTEx deliveries.
+                    stage: STRUCTURAL
+                    items:
+                      - id: 1
+                        ruleFlowItem:
+                            id: 1
+                            validationRule:
+                                id: 1
+                                area: 7
+                                defaultSeverity: ERROR
+                                stage: STRUCTURAL
+                                name: netex-xsd
+                                description: Validates the file against its XSD.
+                                xsdRule:
+                                    message: File does not match its XSD.
+                                    schemas:
+                                      - versionPattern: 1\.15:NO-NeTEx-networktimetable:1\.5
+                                        xsdPath: xsd/netex/NeTEx_publication.xsd
+                                    fileFilter: .*\.xml
+                                updatedAt: '2026-01-01T00:00:00Z'
+                            severityOverride: WARNING
+                        updatedAt: '2026-01-01T00:00:00Z'
+                    owner: 2
+                    updatedAt: '2026-01-01T00:00:00Z'
+        ValidationFlow:
+            required:
+              - name
+              - description
+              - stage
+              - owner
+            type: object
+            properties:
+                id:
+                    example: 1
+                    type: integer
+                    description: The database id of the validation flow.
+                    format: int32
+                name:
+                    example: netex-structural
+                    type: string
+                    description: The name of the validation flow.
+                description:
+                    example: Runs structural checks for NeTEx deliveries.
+                    type: string
+                    description: A textual description of the validation flow.
+                stage:
+                    example: STRUCTURAL
+                    enum:
+                      - VALIDATION_STAGE_UNSPECIFIED
+                      - STRUCTURAL
+                      - LOCAL
+                      - GLOBAL
+                    type: string
+                    description: |-
+                        The stage the validation flow runs in. All items in the validation
+                         flow must have the same stage.
+                    format: enum
+                items:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/FlowItem'
+                    description: The validation flow's items, in execution order.
+                owner:
+                    example: 2
+                    type: integer
+                    description: The database id of the owner of the validation flow.
+                    format: int32
+                updatedAt:
+                    readOnly: true
+                    example: '2026-01-01T00:00:00Z'
+                    type: string
+                    description: |-
+                        The timestamp the validation flow was last updated. Always populated by the server; a
+                         value set by the client is ignored, not an error.
+                    format: date-time
+            description: |-
+                A named, ordered tree of validation rules. A validation flow belongs to
+                 exactly one validation stage; every rule and sub-flow it contains must
+                 belong to that same stage.
+            example:
+                id: 1
+                name: netex-structural
+                description: Runs structural checks for NeTEx deliveries.
+                stage: STRUCTURAL
+                items:
+                  - id: 1
+                    ruleFlowItem:
+                        id: 1
+                        validationRule:
+                            id: 1
+                            area: 7
+                            defaultSeverity: ERROR
+                            stage: STRUCTURAL
+                            name: netex-xsd
+                            description: Validates the file against its XSD.
+                            xsdRule:
+                                message: File does not match its XSD.
+                                schemas:
+                                  - versionPattern: 1\.15:NO-NeTEx-networktimetable:1\.5
+                                    xsdPath: xsd/netex/NeTEx_publication.xsd
+                                fileFilter: .*\.xml
+                            updatedAt: '2026-01-01T00:00:00Z'
+                        severityOverride: WARNING
+                    updatedAt: '2026-01-01T00:00:00Z'
+                owner: 2
+                updatedAt: '2026-01-01T00:00:00Z'
+        ValidationRule:
+            required:
+              - area
+              - defaultSeverity
+              - stage
+              - name
+              - description
+            type: object
+            properties:
+                id:
+                    example: 1
+                    type: integer
+                    description: The database id of the validation rule.
+                    format: int32
+                area:
+                    example: 7
+                    type: integer
+                    description: The database id of the area that owns the validation
+                        rule.
+                    format: int32
+                defaultSeverity:
+                    example: ERROR
+                    enum:
+                      - SEVERITY_UNSPECIFIED
+                      - CRITICAL
+                      - ERROR
+                      - WARNING
+                      - INFO
+                    type: string
+                    description: The default severity of the validation rule.
+                    format: enum
+                stage:
+                    example: STRUCTURAL
+                    enum:
+                      - VALIDATION_STAGE_UNSPECIFIED
+                      - STRUCTURAL
+                      - LOCAL
+                      - GLOBAL
+                    type: string
+                    description: The stage the validation rule runs in.
+                    format: enum
+                name:
+                    example: netex-xsd
+                    type: string
+                    description: The name of the validation rule.
+                description:
+                    example: Validates the file against its XSD.
+                    type: string
+                    description: A textual description of the validation rule.
+                xsdRule:
+                    allOf:
+                      - $ref: '#/components/schemas/XsdRule'
+                    description: An XSD rule.
+                xpathRule:
+                    allOf:
+                      - $ref: '#/components/schemas/XPathRule'
+                    description: An XPath rule.
+                sqlRule:
+                    allOf:
+                      - $ref: '#/components/schemas/SqlRule'
+                    description: A SQL rule.
+                updatedAt:
+                    readOnly: true
+                    example: '2026-01-01T00:00:00Z'
+                    type: string
+                    description: |-
+                        The timestamp the validation rule was last updated. Always populated by the server; a
+                         value set by the client is ignored, not an error.
+                    format: date-time
+            description: A single validation rule, owned by one Area.
+            example:
+                id: 1
+                area: 7
+                defaultSeverity: ERROR
+                stage: STRUCTURAL
+                name: netex-xsd
+                description: Validates the file against its XSD.
+                xsdRule:
+                    message: File does not match its XSD.
+                    schemas:
+                      - versionPattern: 1\.15:NO-NeTEx-networktimetable:1\.5
+                        xsdPath: xsd/netex/NeTEx_publication.xsd
+                    fileFilter: .*\.xml
+                updatedAt: '2026-01-01T00:00:00Z'
+        XPathRule:
+            required:
+              - message
+              - xpathExpression
+              - cardinality
+            type: object
+            properties:
+                message:
+                    example: File does not match the XPath expression.
+                    type: string
+                    description: The message to print if the validation rule fails.
+                xpathExpression:
+                    example: ServiceFrame[validityConditions or ValidBetween]
+                    type: string
+                    description: An XPath expression to run against the file. The
+                        returned nodes are checked against `cardinality` below.
+                cardinality:
+                    example: EXACTLY_ONE
+                    enum:
+                      - CARDINALITY_UNSPECIFIED
+                      - NONE
+                      - EXACTLY_ONE
+                      - AT_LEAST_ONE
+                      - EXACTLY_TWO
+                    type: string
+                    description: The cardinality the expression must resolve to for
+                        the validation to succeed.
+                    format: enum
+                fileFilter:
+                    example: .*\.xml
+                    type: string
+                    description: A regexp a file's name must match to be processed
+                        by this rule. Runs against every file when absent.
+            description: A validation rule that runs an XPath expression against one
+                or more XML files and checks the number of matches. Always stage LOCAL.
+            example:
+                message: File does not match the XPath expression.
+                xpathExpression: ServiceFrame[validityConditions or ValidBetween]
+                cardinality: EXACTLY_ONE
+                fileFilter: .*\.xml
+        XsdRule:
+            required:
+              - message
+              - schemas
+            type: object
+            properties:
+                message:
+                    example: File does not match its XSD.
+                    type: string
+                    description: The message to print if the validation rule fails.
+                schemas:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/XsdSchema'
+                    description: |-
+                        The XSDs to validate a file against, chosen by the version the file declares. Tried in order;
+                         the first whose `version_pattern` matches is used. If no pattern matches a file, the file fails
+                         validation.
+                fileFilter:
+                    example: .*\.xml
+                    type: string
+                    description: A regexp a file's name must match to be processed
+                        by this rule. Runs against every file when absent.
+            description: A validation rule that checks a file against an XSD. Always
+                stage STRUCTURAL.
+            example:
+                message: File does not match its XSD.
+                schemas:
+                  - versionPattern: 1\.15:NO-NeTEx-networktimetable:1\.5
+                    xsdPath: xsd/netex/NeTEx_publication.xsd
+                fileFilter: .*\.xml
+        XsdSchema:
+            required:
+              - versionPattern
+              - xsdPath
+            type: object
+            properties:
+                versionPattern:
+                    example: 1\.15:NO-NeTEx-networktimetable:1\.5
+                    type: string
+                    description: |-
+                        A regexp that must match the whole of a file's PublicationDelivery/@version, e.g.
+                         "1.15:NO-NeTEx-networktimetable:1.5". A file without one is matched as the empty string, so
+                         ".*" matches every file.
+                xsdPath:
+                    example: xsd/netex/NeTEx_publication.xsd
+                    type: string
+                    description: The path to the XSD, relative to some externally
+                        configured root.
+            description: An XSD to validate files against, for the files whose declared
+                version matches a pattern.
+            example:
+                versionPattern: 1\.15:NO-NeTEx-networktimetable:1\.5
+                xsdPath: xsd/netex/NeTEx_publication.xsd
+tags:
+  - name: OpenApi
+    description: This service's own generated OpenAPI specification.
+  - name: ValidationQueryService

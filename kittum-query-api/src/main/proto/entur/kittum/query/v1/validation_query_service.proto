@@ -1,0 +1,84 @@
+syntax = "proto3";
+
+package entur.kittum.query.v1;
+
+import "entur/http/v1/failure.proto";
+import "entur/validation/v1/enum.proto";
+import "entur/validation/v1/validation_flow.proto";
+import "entur/validation/v1/validation_rule.proto";
+import "gnostic/openapi/v3/annotations.proto";
+import "google/api/annotations.proto";
+import "google/api/client.proto";
+import "google/api/field_behavior.proto";
+
+option go_package = "github.com/entur/validation-core/gen/entur/kittum/query/v1;kittumqueryv1";
+option java_multiple_files = true;
+option java_package = "no.entur.kittum.query.proto.v1";
+
+// The gRPC service runtime consumers, such as misharum, use to read what to validate with. It is
+// read-only and deliberately separate from the kittum.v1 API that kittum's frontend manages rules
+// and flows through, so that API can grow without every runtime consumer having to follow.
+service ValidationQueryService {
+  option (google.api.default_host) = "kittum.entur.io";
+
+  // List every validation flow connected to a payload type for one stage, across every area
+  // that has one assigned. Each returned flow is deep: every rule and sub-flow item it
+  // contains, recursively, carries both the database id of what it refers to and the
+  // referred-to ValidationRule/ValidationFlow itself.
+  rpc ListPayloadTypeFlows(ListPayloadTypeFlowsRequest) returns (ListPayloadTypeFlowsResponse) {
+    option (google.api.http) = {get: "/validation/v1/query/payload-types/{payload_type}/flows/{stage}"};
+    option (gnostic.openapi.v3.operation) = {summary: "List the flows connected to a payload type for one stage, across every area."};
+    option (entur.http.v1.failure) = {
+      code: "404"
+      description: "The payload type does not exist."
+    };
+  }
+
+  // Get one validation rule by its id, whether or not a flow includes it.
+  rpc GetValidationRule(GetValidationRuleRequest) returns (entur.validation.v1.ValidationRule) {
+    option (google.api.http) = {get: "/validation/v1/query/rules/{id}"};
+    option (gnostic.openapi.v3.operation) = {summary: "Get one validation rule by its id."};
+    option (entur.http.v1.failure) = {
+      code: "404"
+      description: "No validation rule exists with the given id."
+    };
+  }
+}
+
+// Request for ListPayloadTypeFlows.
+message ListPayloadTypeFlowsRequest {
+  // The name of the payload type to list flows for.
+  string payload_type = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (gnostic.openapi.v3.property) = {
+      example: {yaml: "\"rutedata\""}
+    }
+  ];
+  // The stage of the flows to list.
+  //
+  // This field is case insensitive.
+  entur.validation.v1.ValidationStage stage = 2 [
+    (google.api.field_behavior) = REQUIRED,
+    (gnostic.openapi.v3.property) = {
+      example: {yaml: "\"STRUCTURAL\""}
+    }
+  ];
+}
+
+// Response for ListPayloadTypeFlows.
+message ListPayloadTypeFlowsResponse {
+  // Keyed by area name - one entry per area that has a flow assigned for the requested
+  // (payload_type, stage). Area names are unique, so this loses no information relative to a list.
+  map<string, entur.validation.v1.ValidationFlow> items = 1;
+}
+
+// Request for GetValidationRule.
+message GetValidationRuleRequest {
+  // The database id of the validation rule to lookup.
+  int32 id = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (gnostic.openapi.v3.property) = {
+      example: {yaml: "1"}
+    }
+  ];
+}
