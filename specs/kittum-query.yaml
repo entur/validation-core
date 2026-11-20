@@ -80,7 +80,7 @@ paths:
               - name: stage
                 in: path
                 description: |-
-                    The stage of the flows to list.
+                    The stage of the flows to list. `VALIDATION_STAGE_UNSPECIFIED` is not a valid stage here.
 
                      This field is case insensitive.
                 required: true
@@ -99,6 +99,13 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/ListPayloadTypeFlowsResponse'
+                '400':
+                    description: The stage is `VALIDATION_STAGE_UNSPECIFIED` or not
+                        a known stage.
+                    content:
+                        application/problem+json:
+                            schema:
+                                $ref: '#/components/schemas/ProblemDetail'
                 '404':
                     description: The payload type does not exist.
                     content:
@@ -128,8 +135,15 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/ValidationRule'
+                '400':
+                    description: The id is not a valid integer.
+                    content:
+                        application/problem+json:
+                            schema:
+                                $ref: '#/components/schemas/ProblemDetail'
                 '404':
-                    description: No validation rule exists with the given id.
+                    description: No validation rule exists with the given id, including
+                        zero or a negative id.
                     content:
                         application/problem+json:
                             schema:
