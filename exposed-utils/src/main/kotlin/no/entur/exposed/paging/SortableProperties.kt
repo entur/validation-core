@@ -14,19 +14,22 @@ import java.util.Collections
  *     .id("id", ValidationRuleTable.id)
  *     .field("area", ValidationRuleTable.areaId)
  *     .fieldNullsLast("nullable", ValidationRuleTable.nullable)
+ *     .oneofKind("ruleKind", "rule", ValidationRuleTable.ruleKind)
  *     .build()
  * ```
+ * The last line is for a `oneof`'s own case, e.g. which variant of `ValidationRule`'s `rule` oneof
+ * (`xsd_rule`/`xpath_rule`/`sql_rule`) is set - see [Builder.oneofKind].
  */
 class SortableProperties<T : Message> internal constructor(
     /** The resource's id properties, appended as the tie-break by [PagingSupport.parseOrderBy]. */
-    val ids: List<SortableProperty<T>>,
-    private val fields: List<SortableProperty<T>>,
+    val ids: List<Orderable<T>>,
+    private val fields: List<Orderable<T>>,
 ) {
     /** Whether [name] is a known `order_by` property name. */
     operator fun contains(name: String): Boolean = (ids.asSequence() + fields).any { it.name == name }
 
     /** The property with the `order_by` name [name]. */
-    fun byName(name: String): SortableProperty<T> =
+    fun byName(name: String): Orderable<T> =
         requireNotNull((ids.asSequence() + fields).find { it.name == name }) { "Unsupported order_by field: $name" }
 
     /**
@@ -39,8 +42,8 @@ class SortableProperties<T : Message> internal constructor(
     class Builder<T : Message> internal constructor(
         private val descriptor: Descriptor,
     ) {
-        private val ids = mutableListOf<SortableProperty<T>>()
-        private val fields = mutableListOf<SortableProperty<T>>()
+        private val ids = mutableListOf<Orderable<T>>()
+        private val fields = mutableListOf<Orderable<T>>()
 
         /**
          * A column that is (part of) this resource's id. [decode] is for a column type the field type
@@ -85,6 +88,25 @@ class SortableProperties<T : Message> internal constructor(
             name: String,
             column: Column<V?>,
         ): Builder<T> = apply { fields += SortableNullableProperty.create(pathNamed(name), column, NullsOrder.LAST) }
+
+        /**
+         * A `oneof`'s case, stored as [column] - e.g. which variant of a oneof-typed resource is set,
+         * the way [no.entur.proto.oneof.OneofSerialization] persists it. Unlike [field], [name] is the
+         * client-facing `order_by` name directly (there's no proto field to derive a JSON name from), and
+         * [oneofFieldName] is the oneof's own proto name.
+         */
+        fun oneofKind(
+            name: String,
+            oneofFieldName: String,
+            column: Column<String>,
+        ): Builder<T> =
+            apply {
+                val oneof =
+                    requireNotNull(descriptor.oneofs.find { it.name == oneofFieldName }) {
+                        "Unknown oneof '$oneofFieldName' on ${descriptor.fullName}"
+                    }
+                fields += SortableOneofKindProperty(name, column, oneof)
+            }
 
         /** The finished, immutable [SortableProperties]. */
         fun build(): SortableProperties<T> =

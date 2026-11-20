@@ -36,6 +36,19 @@ object PagingSupport {
         return orders.values.toList()
     }
 
+    /**
+     * Parses `filter` into the `WHERE` condition it describes, restricted to a subset of
+     * https://google.aip.dev/160: `=` (enum equality), `AND`/`OR`, and parenthesized grouping. A
+     * blank or null [filter] matches every row.
+     *
+     * @throws IllegalArgumentException if [filter] is malformed, names an unsupported field, or
+     * compares a field against a value that isn't one of its proto enum's declared values.
+     */
+    fun <T : Message> parseFilter(
+        filter: String?,
+        filterableProperties: FilterableProperties<T>,
+    ): Op<Boolean> = if (filter.isNullOrBlank()) Op.TRUE else FilterParser(filter, filterableProperties).parse()
+
     /** The keyset predicate for rows after [after]: `(k1 > v1) OR (k1 = v1 AND k2 > v2) ...`. */
     fun <T : Message> keysetCondition(
         sortableProperties: SortableProperties<T>,

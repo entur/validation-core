@@ -192,6 +192,12 @@ message ListValidationFlowsRequest {
   string order_by = 3 [(gnostic.openapi.v3.property) = {
     example: {yaml: "\"name\""}
   }];
+  // A boolean filter expression restricted to a subset of https://google.aip.dev/160: the `=`
+  // comparator (enum equality, case-sensitive), the `AND`/`OR` logical operators, and parenthesized
+  // grouping. Field names are camelCase, not the proto's own snake_case field names. Supported fields: stage.
+  string filter = 4 [(gnostic.openapi.v3.property) = {
+    example: {yaml: "\"stage = STRUCTURAL\""}
+  }];
 }
 
 // Response for ListValidationFlows.

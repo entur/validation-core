@@ -20,12 +20,19 @@ message Widget {
   bytes raw_id = 7;
   // An optional field - covers SortableProperty's nullable-field support.
   optional bool active = 8;
+  // A oneof - covers SortableOneofKindProperty's/FilterableOneofKindProperty's own-case support.
+  oneof variant {
+    Part part_variant = 9;
+    Detail detail_variant = 10;
+  }
 }
 
 // Progress statistics nested inside Widget - exists only to cover a *nested* sortable field, the
 // way Widget.updated_at (a top-level one) covers a top-level one.
 message WidgetStats {
   google.protobuf.Timestamp last_updated_at = 1;
+  // Covers FilterableProperty's traversal support, the way last_updated_at covers SortableProperty's.
+  WidgetStatus nested_status = 2;
 }
 
 enum WidgetStatus {
