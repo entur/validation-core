@@ -30,7 +30,8 @@ https://github.com/entur/ai/blob/main/AGENTS.md
 
 - Owning team: `team-validering`
 - Artifacts: `no.entur.validation:http-model`, `no.entur.validation:validation-model`,
-  `no.entur.validation:kittum-api`, `no.entur.validation:zagar-api`,
+  `no.entur.validation:kittum-api`, `no.entur.validation:kittum-query-api`,
+  `no.entur.validation:zagar-api`,
   `no.entur.validation:proto-utils`, `no.entur.validation:exposed-utils`,
   `no.entur.validation:api-utils`, `no.entur.validation:kafka-utils`
 - Published to Entur's JFrog Artifactory (`entur-release-standard`) via `entur/gha-artifactory`.
