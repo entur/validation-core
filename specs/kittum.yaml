@@ -275,6 +275,14 @@ paths:
                      for descending order (ascending is the default). See https://google.aip.dev/132.
                 schema:
                     type: string
+              - name: filter
+                in: query
+                description: |-
+                    A boolean filter expression restricted to a subset of https://google.aip.dev/160: the `=`
+                     comparator (enum equality, case-sensitive), the `AND`/`OR` logical operators, and parenthesized
+                     grouping. Field names are camelCase, not the proto's own snake_case field names. Supported fields: stage.
+                schema:
+                    type: string
             responses:
                 '200':
                     description: OK
@@ -1169,6 +1177,15 @@ paths:
                 description: |-
                     A comma-separated list of fields to order by, each optionally suffixed with " desc"
                      for descending order (ascending is the default). See https://google.aip.dev/132.
+                schema:
+                    type: string
+              - name: filter
+                in: query
+                description: |-
+                    A boolean filter expression restricted to a subset of https://google.aip.dev/160: the `=`
+                     comparator (enum equality, case-sensitive), the `AND`/`OR` logical operators, and parenthesized
+                     grouping. Field names are camelCase, not the proto's own snake_case field names. Supported fields:
+                     defaultSeverity, stage, ruleKind (the rule's own kind - one of XSD_RULE, XPATH_RULE, SQL_RULE).
                 schema:
                     type: string
             responses:

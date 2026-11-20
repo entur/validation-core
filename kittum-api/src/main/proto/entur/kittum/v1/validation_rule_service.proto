@@ -111,6 +111,13 @@ message ListValidationRulesRequest {
   string order_by = 3 [(gnostic.openapi.v3.property) = {
     example: {yaml: "\"description\""}
   }];
+  // A boolean filter expression restricted to a subset of https://google.aip.dev/160: the `=`
+  // comparator (enum equality, case-sensitive), the `AND`/`OR` logical operators, and parenthesized
+  // grouping. Field names are camelCase, not the proto's own snake_case field names. Supported fields:
+  // defaultSeverity, stage, ruleKind (the rule's own kind - one of XSD_RULE, XPATH_RULE, SQL_RULE).
+  string filter = 4 [(gnostic.openapi.v3.property) = {
+    example: {yaml: "\"stage = STRUCTURAL AND defaultSeverity = ERROR\""}
+  }];
 }
 
 // Response for ListValidationRules.

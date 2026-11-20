@@ -51,6 +51,39 @@ enum class NullsOrder {
 }
 
 /**
+ * The `order_by`-able, keyset-scrollable contract [PagingSupport] and [SortableProperties] need.
+ */
+interface Orderable<T : Message> {
+    /** The `order_by` name clients use for this property. */
+    val name: String
+
+    /** The column to `ORDER BY`. */
+    val column: Column<*>
+
+    /** This property's value on [value], for the next cursor; `null` only for an absent nullable field. */
+    fun valueOf(value: T): Any?
+
+    /**
+     * Parses a cursor value a client sent back: the inverse of [valueOf]'s `toString()`.
+     *
+     * @throws IllegalArgumentException if [raw] is malformed.
+     */
+    fun decode(raw: String?): Any?
+
+    /** `column < value` (see [PagingSupport.keysetCondition]); `value` is null only for a nullable property. */
+    fun lessCondition(value: Any?): Op<Boolean>
+
+    /** `column > value` (see [PagingSupport.keysetCondition]); `value` is null only for a nullable property. */
+    fun greaterCondition(value: Any?): Op<Boolean>
+
+    /** `column = value`, the ties so far in [PagingSupport.keysetCondition]; `value` is null only for a nullable property. */
+    fun equalCondition(value: Any?): Op<Boolean>
+
+    /** The `ORDER BY` direction for [ascending]. */
+    fun sortOrder(ascending: Boolean): SortOrder
+}
+
+/**
  * One `order_by`-able, keyset-scrollable field of a paginated resource, fed to [PagingSupport].
  * Its [name] is the dotted JSON names of [path] (e.g. `statistics.lastProgressReceivedAt`).
  *
@@ -63,15 +96,15 @@ sealed class SortableProperty<T : Message>(
     /** The proto fields from the resource's message down to the sortable leaf field. */
     val path: List<FieldDescriptor>,
     /** The column to `ORDER BY`. */
-    val column: Column<*>,
+    override val column: Column<*>,
     /** Overrides [decode]'s built-in per-[JavaType] parsing when set. */
     private val decoder: ((String) -> Any)? = null,
-) {
+) : Orderable<T> {
     /** This property's (leaf) field. */
     val descriptor: FieldDescriptor get() = path.last()
 
     /** The `order_by` name clients use for this property. */
-    val name: String = path.joinToString(".") { it.jsonName }
+    override val name: String = path.joinToString(".") { it.jsonName }
 
     /** Non-null only for a property built via [SortableNullableProperty.create] - see [NullsOrder]. */
     open val nullsOrder: NullsOrder? = null
@@ -82,7 +115,7 @@ sealed class SortableProperty<T : Message>(
     }
 
     /** This property's value on [value], for the next cursor; `null` only for an absent [nullsOrder] field. */
-    fun valueOf(value: T): Any? {
+    override fun valueOf(value: T): Any? {
         val leaf = path.subList(0, path.lastIndex).fold(value as Message) { message, field -> message.getField(field) as Message }
         if (nullsOrder != null && !leaf.hasField(descriptor)) return null
         return when (descriptor.javaType) {
@@ -99,7 +132,7 @@ sealed class SortableProperty<T : Message>(
      *
      * @throws IllegalArgumentException if [raw] is malformed.
      */
-    fun decode(raw: String?): Any? {
+    override fun decode(raw: String?): Any? {
         if (raw == null) return null
         decoder?.let { return it(raw) }
         return when (descriptor.javaType) {
@@ -126,19 +159,19 @@ sealed class SortableProperty<T : Message>(
         }
 
     /** `column < value` (see [PagingSupport.keysetCondition]); `value` is null only for a [nullsOrder] property. */
-    abstract fun lessCondition(value: Any?): Op<Boolean>
+    abstract override fun lessCondition(value: Any?): Op<Boolean>
 
     /** `column > value` (see [PagingSupport.keysetCondition]); `value` is null only for a [nullsOrder] property. */
-    abstract fun greaterCondition(value: Any?): Op<Boolean>
+    abstract override fun greaterCondition(value: Any?): Op<Boolean>
 
     /** `column = value`, the ties so far in [PagingSupport.keysetCondition]; `value` is null only for a [nullsOrder] property. */
-    abstract fun equalCondition(value: Any?): Op<Boolean>
+    abstract override fun equalCondition(value: Any?): Op<Boolean>
 
     /**
      * The `ORDER BY` direction for [ascending], with [nullsOrder] spelled out: SQL's default null placement flips with
      * the direction, but reversing [ascending] must not move the absent values.
      */
-    fun sortOrder(ascending: Boolean): SortOrder =
+    override fun sortOrder(ascending: Boolean): SortOrder =
         when (nullsOrder) {
             null -> if (ascending) SortOrder.ASC else SortOrder.DESC
             NullsOrder.FIRST -> if (ascending) SortOrder.ASC_NULLS_FIRST else SortOrder.DESC_NULLS_FIRST
