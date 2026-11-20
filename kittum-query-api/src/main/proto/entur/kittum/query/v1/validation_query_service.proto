@@ -29,6 +29,10 @@ service ValidationQueryService {
     option (google.api.http) = {get: "/validation/v1/query/payload-types/{payload_type}/flows/{stage}"};
     option (gnostic.openapi.v3.operation) = {summary: "List the flows connected to a payload type for one stage, across every area."};
     option (entur.http.v1.failure) = {
+      code: "400"
+      description: "The stage is `VALIDATION_STAGE_UNSPECIFIED` or not a known stage."
+    };
+    option (entur.http.v1.failure) = {
       code: "404"
       description: "The payload type does not exist."
     };
@@ -39,8 +43,12 @@ service ValidationQueryService {
     option (google.api.http) = {get: "/validation/v1/query/rules/{id}"};
     option (gnostic.openapi.v3.operation) = {summary: "Get one validation rule by its id."};
     option (entur.http.v1.failure) = {
+      code: "400"
+      description: "The id is not a valid integer."
+    };
+    option (entur.http.v1.failure) = {
       code: "404"
-      description: "No validation rule exists with the given id."
+      description: "No validation rule exists with the given id, including zero or a negative id."
     };
   }
 }
@@ -54,7 +62,7 @@ message ListPayloadTypeFlowsRequest {
       example: {yaml: "\"rutedata\""}
     }
   ];
-  // The stage of the flows to list.
+  // The stage of the flows to list. `VALIDATION_STAGE_UNSPECIFIED` is not a valid stage here.
   //
   // This field is case insensitive.
   entur.validation.v1.ValidationStage stage = 2 [
