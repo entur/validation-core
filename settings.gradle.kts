@@ -1,4 +1,5 @@
 pluginManagement {
+    includeBuild("grpc-openapi-plugin")
     plugins {
         kotlin("jvm") version "2.4.21"
     }

@@ -25,7 +25,7 @@ class OpenApiAugmentationPipeline {
         return buildString {
             append("# Generated with protoc-gen-openapi and OpenApiAugmentationPipeline\n")
             append("# https://github.com/google/gnostic/tree/master/cmd/protoc-gen-openapi\n")
-            append("# https://github.com/entur/validation-core/tree/master/buildSrc/src/main/kotlin/no/entur/http/OpenApiAugmentationPipeline.kt\n\n")
+            append("# https://github.com/entur/validation-core/tree/main/grpc-openapi-plugin/src/main/kotlin/no/entur/http/OpenApiAugmentationPipeline.kt\n\n")
             append(yaml.dump(spec))
         }
     }

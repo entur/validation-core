@@ -1,6 +1,6 @@
 # Generated with protoc-gen-openapi and OpenApiAugmentationPipeline
 # https://github.com/google/gnostic/tree/master/cmd/protoc-gen-openapi
-# https://github.com/entur/validation-core/tree/master/buildSrc/src/main/kotlin/no/entur/http/OpenApiAugmentationPipeline.kt
+# https://github.com/entur/validation-core/tree/main/grpc-openapi-plugin/src/main/kotlin/no/entur/http/OpenApiAugmentationPipeline.kt
 
 openapi: 3.0.3
 info:
