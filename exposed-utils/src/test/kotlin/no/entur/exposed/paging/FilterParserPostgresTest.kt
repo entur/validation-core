@@ -92,8 +92,14 @@ internal class FilterParserPostgresTest {
             assertEquals(setOf("active-active", "active-inactive"), names)
         }
 
+    /**
+     * Per https://google.aip.dev/160's own "Logical Operators" section: "the `OR` operator has
+     * higher precedence than `AND`, unlike what is found in most programming languages" - and its
+     * own worked example, "The expression `a AND b OR c` evaluates: `a AND (b OR c)`." This and the
+     * next test apply that with `AND` appearing first, then `OR` first, in the raw filter string.
+     */
     @Test
-    fun `without parentheses, OR binds tighter than AND, per AIP-160's own precedence`() =
+    fun `AND before OR in the input - without parentheses, OR still binds tighter, per AIP-160`() =
         runTest {
             // "status = ACTIVE AND stats.nestedStatus = ACTIVE OR stats.nestedStatus = INACTIVE" must mean
             // "status = ACTIVE AND (stats.nestedStatus = ACTIVE OR stats.nestedStatus = INACTIVE)", matching
@@ -105,6 +111,21 @@ internal class FilterParserPostgresTest {
                 )
 
             assertEquals(setOf("active-active", "active-inactive"), names)
+        }
+
+    @Test
+    fun `OR before AND in the input - without parentheses, OR still binds tighter, per AIP-160`() =
+        runTest {
+            // "status = INACTIVE OR status = ACTIVE AND stats.nestedStatus = ACTIVE" must mean
+            // "(status = INACTIVE OR status = ACTIVE) AND stats.nestedStatus = ACTIVE", matching only
+            // active-active and inactive-active - not "status = INACTIVE OR (status = ACTIVE AND
+            // stats.nestedStatus = ACTIVE)", which would also match inactive-inactive.
+            val names =
+                namesMatching(
+                    "status = WIDGET_STATUS_INACTIVE OR status = WIDGET_STATUS_ACTIVE AND stats.nestedStatus = WIDGET_STATUS_ACTIVE",
+                )
+
+            assertEquals(setOf("active-active", "inactive-active"), names)
         }
 
     @Test
