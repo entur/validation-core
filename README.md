@@ -16,6 +16,7 @@ Several Gradle modules, each published as its own Maven artifact, sharing one ve
 | [`http-model`](http-model) | `entur.http.v1` | `no.entur.validation:http-model` | `Failure`/`ProblemDetail`, the RFC 9457-style types used to document and render rpc failure responses. |
 | [`validation-model`](validation-model) | `entur.validation.v1` | `no.entur.validation:validation-model` | The domain messages. |
 | [`kittum-api`](kittum-api) | `entur.kittum.v1` | `no.entur.validation:kittum-api` | Kittum's gRPC/REST service definitions and their Request/Response messages. |
+| [`kittum-query-api`](kittum-query-api) | `entur.kittum.query.v1` | `no.entur.validation:kittum-query-api` | Kittum's read-only query API for runtime consumers such as misharum, kept apart from `kittum-api` (what the frontend manages rules and flows through). |
 | [`zagar-api`](zagar-api) | `entur.zagar.v1` | `no.entur.validation:zagar-api` | Zagar's gRPC/REST service definitions and their Request/Response messages. |
 | [`ishum-api`](ishum-api) | `entur.ishum.v1` | `no.entur.validation:ishum-api` | Ishum's gRPC/REST service definitions and their Request/Response messages. |
 | [`proto-utils`](proto-utils) | — (hand-written, not proto-generated) | `no.entur.validation:proto-utils` | Domain-agnostic proto/HTTP plumbing (update masks, id checks, oneof serialization, timestamps, schema-registry sanitizing). See "Non-schema modules" below. |
