@@ -11,7 +11,7 @@ plugins {
 }
 
 interface GrpcOpenApiModuleExtension {
-    // e.g. "kittum.yaml", committed as specs/kittum.yaml.
+    // e.g. "zagar.yaml", committed as specs/zagar.yaml.
     val specFileName: Property<String>
 }
 

@@ -3,8 +3,8 @@ syntax = "proto3";
 package othermodule;
 
 // Exists purely so OpenApiExampleAugmenterTest can check that a schema short name colliding with
-// a message from another module's own .proto files (as kittum-api's and ishum-api's identically
-// named Parquet messages do) is resolved via ownFiles rather than rejected outright. Never
+// a message from another module's own .proto files (as ishum-api's and kittum's identically
+// named Parquet messages did) is resolved via ownFiles rather than rejected outright. Never
 // imported by mock/example_messages.proto - a real cross-module collision isn't either.
 
 message Leaf {

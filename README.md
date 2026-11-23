@@ -15,8 +15,7 @@ Several Gradle modules, each published as its own Maven artifact, sharing one ve
 |--------|---------------|----------|----------|
 | [`http-model`](http-model) | `entur.http.v1` | `no.entur.validation:http-model` | `Failure`/`ProblemDetail`, the RFC 9457-style types used to document and render rpc failure responses. |
 | [`validation-model`](validation-model) | `entur.validation.v1` | `no.entur.validation:validation-model` | The domain messages. |
-| [`kittum-api`](kittum-api) | `entur.kittum.v1` | `no.entur.validation:kittum-api` | Kittum's gRPC/REST service definitions and their Request/Response messages. |
-| [`kittum-query-api`](kittum-query-api) | `entur.kittum.query.v1` | `no.entur.validation:kittum-query-api` | Kittum's read-only query API for runtime consumers such as misharum, kept apart from `kittum-api` (what the frontend manages rules and flows through). |
+| [`kittum-query-api`](kittum-query-api) | `entur.kittum.query.v1` | `no.entur.validation:kittum-query-api` | Kittum's read-only query API for runtime consumers such as misharum. The frontend-facing `entur.kittum.v1` API is owned by `entur/kittum`. |
 | [`zagar-api`](zagar-api) | `entur.zagar.v1` | `no.entur.validation:zagar-api` | Zagar's gRPC/REST service definitions and their Request/Response messages. |
 | [`ishum-api`](ishum-api) | `entur.ishum.v1` | `no.entur.validation:ishum-api` | Ishum's gRPC/REST service definitions and their Request/Response messages. |
 | [`proto-utils`](proto-utils) | — (hand-written, not proto-generated) | `no.entur.validation:proto-utils` | Domain-agnostic proto/HTTP plumbing (update masks, id checks, oneof serialization, timestamps, schema-registry sanitizing). See "Non-schema modules" below. |
@@ -99,11 +98,11 @@ generated from.
 (currently `entur/api-guidelines@v3.4.0`). To reproduce a CI failure locally:
 
 ```shell
-npx @stoplight/spectral-cli lint specs/kittum.yaml \
+npx @stoplight/spectral-cli lint specs/zagar.yaml \
   --ruleset https://raw.githubusercontent.com/entur/api-guidelines/refs/tags/v3.4.0/.spectral.yml
 ```
 
-(Regenerate `specs/kittum.yaml` first (`./gradlew build`) if you've just changed a `.proto` file.)
+(Regenerate `specs/zagar.yaml` first (`./gradlew build`) if you've just changed a `.proto` file.)
 
 These specs are generated, never hand-maintained, and are committed for one reason: so that a schema
 change shows up in review as a diff of the HTTP contract it produces, next to the `.proto` change
@@ -111,7 +110,7 @@ that caused it.
 
 ### Adding a new API module
 
-Copy the pattern from [`kittum-api`](kittum-api):
+Copy the pattern from [`zagar-api`](zagar-api):
 
 1. `include` the module in [`settings.gradle.kts`](settings.gradle.kts) and add its proto path to the
    root [`buf.yaml`](buf.yaml) workspace, with whatever lint exceptions that API needs.

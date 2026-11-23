@@ -2,8 +2,8 @@
 
 Shared protobuf schema for Entur's validation platform, published as Java/Kotlin libraries. Eight
 Gradle modules - `http-model` (the shared `entur.http.v1` `Failure`/`ProblemDetail` types),
-`validation-model` (the `entur.validation.v1` domain messages), `kittum-api` (Kittum's
-`entur.kittum.v1` service definitions), `zagar-api` (Zagar's `entur.zagar.v1` service
+`validation-model` (the `entur.validation.v1` domain messages), `kittum-query-api` (Kittum's
+read-only `entur.kittum.query.v1` service definitions for runtime consumers), `zagar-api` (Zagar's `entur.zagar.v1` service
 definitions), `proto-utils` (hand-written, domain-agnostic proto/HTTP plumbing built on the other
 three), `exposed-utils` (persistence support for the Exposed SQL library - ETag concurrency,
 cursor paging - built on `proto-utils`), `api-utils` (hand-written Spring WebFlux/Security
@@ -30,7 +30,7 @@ https://github.com/entur/ai/blob/main/AGENTS.md
 
 - Owning team: `team-validering`
 - Artifacts: `no.entur.validation:http-model`, `no.entur.validation:validation-model`,
-  `no.entur.validation:kittum-api`, `no.entur.validation:kittum-query-api`,
+  `no.entur.validation:kittum-query-api`,
   `no.entur.validation:zagar-api`,
   `no.entur.validation:proto-utils`, `no.entur.validation:exposed-utils`,
   `no.entur.validation:api-utils`, `no.entur.validation:kafka-utils`
@@ -43,9 +43,9 @@ https://github.com/entur/ai/blob/main/AGENTS.md
 - `buf` and `protoc` are pinned in `.mise.toml`. Gradle's `Exec` resolves an executable against the
   Gradle JVM's own `PATH`, not the environment it hands the child process, so `bufGenerate` names
   the mise shim by absolute path. A bare `buf` works in CI but fails in a mise-based local setup.
-- Every team-validering service consumes these artifacts. Kittum (`entur/kittum`, infrastructure in
-  `entur/kittum-infrastructure`) and Zagar additionally have their APIs defined here (`kittum-api`,
-  `zagar-api`).
+- Every team-validering service consumes these artifacts. Zagar additionally has its API defined here (`zagar-api`). Kittum's
+  frontend-facing API (`entur.kittum.v1`) is owned by `entur/kittum` itself (infrastructure in
+  `entur/kittum-infrastructure`); only its read-only query API (`kittum-query-api`) lives here.
 
 ## Deviations from the golden path
 
@@ -54,7 +54,7 @@ https://github.com/entur/ai/blob/main/AGENTS.md
   `specs/*.yaml` is generated from them by `buf generate`, then copied into the source tree so a
   schema change produces a reviewable diff of the resulting HTTP contract. The location matches the
   standard; the direction of authorship is inverted.
-- **No tests in the schema modules.** `http-model`, `validation-model` and `kittum-api` all report
+- **No tests in the schema modules.** `http-model`, `validation-model` and `kittum-query-api` all report
   `test NO-SOURCE`; there is no hand-written code to exercise. This is a known gap rather than a
   decision - a smoke test proving the generated classes load and round-trip would be cheap insurance
   that codegen actually produces working output. (`buildSrc`'s own build logic, e.g.
