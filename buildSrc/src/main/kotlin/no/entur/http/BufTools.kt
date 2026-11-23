@@ -66,17 +66,12 @@ class BufTools private constructor(
             val target = File(bin, "buf")
             outputs.file(target)
             doLast {
-                val platform = Platform.current()
-                val expected =
-                    BUF_SHA256["$version/${platform.buf}"]
-                        ?: error("No SHA-256 pinned for buf $version/${platform.buf}; add it to BufTools, or install buf (mise install).")
-                val bytes =
-                    URI("https://github.com/bufbuild/buf/releases/download/v$version/buf-${platform.buf}")
-                        .toURL()
-                        .openStream()
-                        .use { it.readBytes() }
+                checkLinuxX86()
+                // SHA-256 of buf-Linux-x86_64 from the release's sha256.txt. Update it when bumping buf.
+                check(version == BUF_VERSION) { "Update BUF_VERSION and BUF_SHA256 in BufTools for buf $version." }
+                val bytes = URI("https://github.com/bufbuild/buf/releases/download/v$version/buf-Linux-x86_64").toURL().readBytes()
                 val actual = MessageDigest.getInstance("SHA-256").digest(bytes).joinToString("") { "%02x".format(it) }
-                check(actual == expected) { "buf-${platform.buf} checksum mismatch: expected $expected but got $actual" }
+                check(actual == BUF_SHA256) { "buf checksum mismatch: expected $BUF_SHA256 but got $actual" }
                 target.parentFile.mkdirs()
                 target.writeBytes(bytes)
                 target.setExecutable(true)
@@ -94,10 +89,11 @@ class BufTools private constructor(
             outputs.dir(include)
             doLast {
                 // Gradle verifies the artifact against Maven Central's published checksums.
+                checkLinuxX86()
                 val exe =
                     root.configurations
                         .detachedConfiguration(
-                            root.dependencies.create("com.google.protobuf:protoc:$version:${Platform.current().protoc}@exe"),
+                            root.dependencies.create("com.google.protobuf:protoc:$version:linux-x86_64@exe"),
                         ).singleFile
                 target.parentFile.mkdirs()
                 exe.copyTo(target, overwrite = true)
@@ -121,42 +117,17 @@ class BufTools private constructor(
             }
         }.get()
 
-    private enum class Platform(
-        val buf: String,
-        val protoc: String,
-    ) {
-        LINUX_X86_64("Linux-x86_64", "linux-x86_64"),
-        LINUX_AARCH64("Linux-aarch64", "linux-aarch_64"),
-        MAC_X86_64("Darwin-x86_64", "osx-x86_64"),
-        MAC_AARCH64("Darwin-arm64", "osx-aarch_64"),
-        ;
-
-        companion object {
-            fun current(): Platform {
-                val os = System.getProperty("os.name").lowercase()
-                val arch = System.getProperty("os.arch").lowercase()
-                val arm = "aarch64" in arch || "arm64" in arch
-                return when {
-                    "linux" in os -> if (arm) LINUX_AARCH64 else LINUX_X86_64
-                    "mac" in os -> if (arm) MAC_AARCH64 else MAC_X86_64
-                    else -> error("buf and protoc are not fetched for $os/$arch; install them (mise install).")
-                }
-            }
-        }
-    }
-
     companion object {
         private const val FETCH_BUF = "fetchBuf"
         private const val FETCH_PROTOC = "fetchProtoc"
 
-        // SHA-256 of buf-<platform> from each release's sha256.txt. Add the entries when bumping buf.
-        private val BUF_SHA256 =
-            mapOf(
-                "1.73.0/Linux-x86_64" to "8f2986298ad08f0cc1bf999b9797b7c383adf32d7edf0f73d6f1e1a701baeac1",
-                "1.73.0/Linux-aarch64" to "902b75267db7f4391e99b7fa0756050e5354234cc0437ef50eee9c788950c7a3",
-                "1.73.0/Darwin-arm64" to "6e6df0fef4522e4e43dfe7c341873c3f2c29ceb45a9dfa5e0bad5580b8b2022f",
-                "1.73.0/Darwin-x86_64" to "ff78d0ebf34180ebfa81d370275851ec630fcb088bf33e213fd723d0fd7444a6",
-            )
+        private const val BUF_VERSION = "1.73.0"
+        private const val BUF_SHA256 = "8f2986298ad08f0cc1bf999b9797b7c383adf32d7edf0f73d6f1e1a701baeac1"
+
+        private fun checkLinuxX86() =
+            check("linux" in System.getProperty("os.name").lowercase() && System.getProperty("os.arch") in listOf("amd64", "x86_64")) {
+                "buf and protoc are only fetched for Linux x86_64; install them (mise install)."
+            }
 
         /** The tools for the build rooted at [project], pinned by the `.mise.toml` in [workspace]. */
         fun of(
