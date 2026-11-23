@@ -9,7 +9,7 @@
  */
 
 import no.entur.http.AugmentOpenApi
-import no.entur.http.miseExecutable
+import no.entur.http.BufTools
 
 plugins {
     `java-library`
@@ -35,6 +35,10 @@ val grpcOpenApiModule = extensions.create<GrpcOpenApiModuleExtension>("grpcOpenA
 grpcOpenApiModule.workspaceDir.convention(rootProject.layout.projectDirectory)
 grpcOpenApiModule.specsDir.convention(grpcOpenApiModule.workspaceDir.dir("specs"))
 
+// buf and protoc from the PATH or mise, else fetched at the versions pinned in the workspace's .mise.toml.
+// Lazy because the workspace is only known once the build script has configured the extension.
+val bufTools by lazy { BufTools.of(project, grpcOpenApiModule.workspaceDir.get().asFile) }
+
 fun File.relativeToWorkspace(): String =
     relativeTo(grpcOpenApiModule.workspaceDir.get().asFile).invariantSeparatorsPath
 
@@ -44,6 +48,7 @@ val bufGenerate =
         group = "build"
         val workspace = grpcOpenApiModule.workspaceDir.get().asFile
         workingDir = workspace
+        bufTools.configure(this)
         inputs.dir("src/main/proto")
         inputs.files(grpcOpenApiModule.importProtoDirs)
         inputs.files(File(workspace, "buf.yaml"), File(workspace, "buf.lock"), File(workspace, ".mise.toml"), "buf.gen.yaml")
@@ -51,7 +56,7 @@ val bufGenerate =
         outputs.dir("build/generated/source/proto/main/kotlin")
         outputs.dir("build/generated/openapi")
         commandLine(
-            miseExecutable("buf"),
+            bufTools.bufExecutable,
             "generate",
             projectDir.resolve("src/main/proto").relativeToWorkspace(),
             "--template",
@@ -81,6 +86,7 @@ val bufBuildDescriptorSet =
         dependsOn(rootProject.tasks.matching { it.name == "bufFormat" })
         val workspace = grpcOpenApiModule.workspaceDir.get().asFile
         workingDir = workspace
+        bufTools.configure(this)
         inputs.dir("src/main/proto")
         inputs.files(grpcOpenApiModule.importProtoDirs)
         inputs.files(File(workspace, "buf.yaml"), File(workspace, "buf.lock"), File(workspace, ".mise.toml"))
@@ -90,7 +96,7 @@ val bufBuildDescriptorSet =
             layout.buildDirectory.dir("generated/descriptor-set").get().asFile.mkdirs()
         }
         commandLine(
-            miseExecutable("buf"), "build", "-o", layout.buildDirectory.file("generated/descriptor-set/descriptor.binpb").get().asFile.path,
+            bufTools.bufExecutable, "build", "-o", layout.buildDirectory.file("generated/descriptor-set/descriptor.binpb").get().asFile.path,
             "--as-file-descriptor-set",
         )
     }
