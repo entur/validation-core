@@ -1,9 +1,23 @@
+import java.util.Properties
+
 plugins {
     `kotlin-dsl`
     `maven-publish`
 }
 
 group = "no.entur.validation"
+
+// The same version as the schema modules. CD rewrites the version line of the root gradle.properties
+// (entur/gha-artifactory's maven-publish) and this build, being separate, doesn't read that file on
+// its own - so read it here, unless -Pversion says otherwise.
+version =
+    providers
+        .gradleProperty("version")
+        .orElse(
+            providers.provider {
+                Properties().apply { file("../gradle.properties").inputStream().use { load(it) } }.getProperty("version")
+            },
+        ).get()
 
 description = "Gradle plugin no.entur.validation.grpc-openapi: buf codegen plus the augmented OpenAPI spec for a gRPC module with google.api.http bindings."
 
