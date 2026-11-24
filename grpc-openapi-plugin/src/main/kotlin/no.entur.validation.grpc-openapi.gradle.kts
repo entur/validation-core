@@ -87,7 +87,13 @@ val bufBuildDescriptorSet =
         val workspace = grpcOpenApiModule.workspaceDir.get().asFile
         workingDir = workspace
         bufTools.configure(this)
-        inputs.dir("src/main/proto")
+        // The image spans the whole workspace, so a .proto change in any module invalidates it.
+        inputs.files(
+            fileTree(workspace) {
+                include("src/main/proto/**/*.proto", "*/src/main/proto/**/*.proto")
+                exclude("**/build/**")
+            },
+        )
         inputs.files(grpcOpenApiModule.importProtoDirs)
         inputs.files(File(workspace, "buf.yaml"), File(workspace, "buf.lock"), File(workspace, ".mise.toml"))
         // Not under build/generated/openapi: `buf generate --clean` wipes that directory.

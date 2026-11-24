@@ -117,8 +117,10 @@ Copy the pattern from [`zagar-api`](zagar-api):
    root [`buf.yaml`](buf.yaml) workspace, with whatever lint exceptions that API needs.
 2. Give it a `buf.gen.yaml` with the `protoc_builtin` java/kotlin plugins and the
    `google-gnostic-openapi` plugin, setting `title`, `version` and `description` for the new API.
-3. Give its `build.gradle.kts` a `bufGenerate` task, a `copyOpenApiSpec` task writing to
-   `specs/<api>.yaml`, and a `processResources` that depends on it and pulls that file into the jar.
+3. Apply the `no.entur.validation.grpc-openapi` plugin (see [`grpc-openapi-plugin`](grpc-openapi-plugin))
+   in its `build.gradle.kts` and configure `grpcOpenApiModule { specFileName = "<api>.yaml" }`, plus
+   `importProtoDirs` for the workspace modules it imports (as in `zagar-api`). The plugin supplies
+   `bufGenerate`, `copyOpenApiSpec` (writing `specs/<api>.yaml`) and the `processResources` wiring.
 4. Add the new spec to the matrix in [`lint-api.yml`](.github/workflows/lint-api.yml) - the
    `gha-api` `path` input takes no globs, so each spec needs its own entry.
 5. Commit the spec the first build produces, and add the module to the Modules table at the top.
