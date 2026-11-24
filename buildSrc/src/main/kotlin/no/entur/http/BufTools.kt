@@ -64,6 +64,7 @@ class BufTools private constructor(
             group = "build"
             val version = pinnedVersion("buf")
             val target = File(bin, "buf")
+            inputs.property("version", version)
             outputs.file(target)
             doLast {
                 checkLinuxX86()
@@ -85,6 +86,7 @@ class BufTools private constructor(
             // protoc 36.1 is published to Maven Central as com.google.protobuf:protoc:4.36.1.
             val version = "4.${pinnedVersion("protoc")}"
             val target = File(bin, "protoc")
+            inputs.property("version", version)
             outputs.file(target)
             outputs.dir(include)
             doLast {

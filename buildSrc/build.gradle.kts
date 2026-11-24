@@ -18,6 +18,8 @@ dependencies {
 tasks.test {
     useJUnitPlatform()
     systemProperty("fixtureDir", layout.projectDirectory.dir("src/test/resources/fixture").asFile.absolutePath)
+    // Where BufTools fetches protoc when none is installed; run the root build first on a bare runner.
+    systemProperty("fetchedProtoc", layout.projectDirectory.file("../build/tools/bin/protoc").asFile.canonicalPath)
     // buildSrc is a separate build, so http-model is reached by path, not project reference.
     systemProperty("httpModelProtoDir", layout.projectDirectory.dir("../http-model/src/main/proto").asFile.canonicalPath)
 }

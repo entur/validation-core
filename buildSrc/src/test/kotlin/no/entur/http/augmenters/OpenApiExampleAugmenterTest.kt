@@ -93,8 +93,7 @@ class OpenApiExampleAugmenterTest {
 
     private fun compileFixtures(vararg protoFiles: String): DescriptorProtos.FileDescriptorSet {
         val descriptorSetFile = File.createTempFile("fixture", ".binpb").apply { deleteOnExit() }
-        val protoc = File(System.getProperty("user.home"), ".local/share/mise/shims/protoc")
-            .let { if (it.canExecute()) it.absolutePath else "protoc" }
+        val protoc = protocExecutable()
 
         val process =
             ProcessBuilder(
