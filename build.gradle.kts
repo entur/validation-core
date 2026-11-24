@@ -10,6 +10,12 @@ allprojects {
     }
 }
 
+// grpc-openapi-plugin is a separate (included) build, so subprojects' own `publish` tasks don't cover it.
+// Publishing it alongside them keeps it on the same tag-driven version as the schema modules.
+val grpcOpenApiPlugin = gradle.includedBuild("grpc-openapi-plugin")
+tasks.register("publish") { dependsOn(grpcOpenApiPlugin.task(":publish")) }
+tasks.register("publishToMavenLocal") { dependsOn(grpcOpenApiPlugin.task(":publishToMavenLocal")) }
+
 val protoDirs = provider { subprojects.map { it.projectDir.resolve("src/main/proto") } }
 
 // Root-level: `buf format` rewrites the whole workspace in one shot.

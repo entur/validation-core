@@ -57,15 +57,16 @@ https://github.com/entur/ai/blob/main/AGENTS.md
 - **No tests in the schema modules.** `http-model`, `validation-model` and `kittum-query-api` all report
   `test NO-SOURCE`; there is no hand-written code to exercise. This is a known gap rather than a
   decision - a smoke test proving the generated classes load and round-trip would be cheap insurance
-  that codegen actually produces working output. (`buildSrc`'s own build logic, e.g.
-  `OpenApiFailureAugmenter`, does have unit tests - run separately via `./gradlew :buildSrc:test`,
-  since buildSrc is compiled and jar'd automatically before every build but not tested as a side
-  effect of it.) `proto-utils` and `exposed-utils` are the exception: they're hand-written, so
+  that codegen actually produces working output. (The `grpc-openapi-plugin` build's own
+  logic, e.g. `OpenApiFailureAugmenter`, does have unit tests - run separately via
+  `./gradlew :grpc-openapi-plugin:test`, since it is a separate included build and `./gradlew build`
+  doesn't run its tests.) `proto-utils` and `exposed-utils` are the exception: they're hand-written, so
   they're fully tested - `exposed-utils`'s tests include Postgres-backed integration tests via
   Testcontainers.
 - **`proto-utils`/`exposed-utils` are not API modules, but both use `buf` for codegen like the
   others.** Neither has a `src/main/proto`, and neither needs `copyOpenApiSpec`/the
-  `entur.grpc-openapi-module` convention plugin the other API modules use. Each has its own
+  `no.entur.validation.grpc-openapi` plugin the other API modules use (built from `grpc-openapi-plugin`, published
+  alongside the schema modules). Each has its own
   test-fixtures `.proto` (`<module>/src/test/proto/no/entur/{proto,exposed}/testfixtures/v1/test.proto`)
   that goes through `bufGenerate` - `buf` + `protoc_builtin`, the same mechanism every other module
   uses, extracted into the `entur.test-proto-module` convention plugin

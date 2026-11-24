@@ -63,8 +63,8 @@ jobs:
         run: ./gradlew build
 
       - name: Test build logic
-        # buildSrc is a separate build; `./gradlew build` doesn't run its tests.
-        run: ./gradlew :buildSrc:test
+        # grpc-openapi-plugin is a separate (included) build; `./gradlew build` doesn't run its tests.
+        run: ./gradlew :grpc-openapi-plugin:test
 
       - name: Verify generated OpenAPI specs are committed
         run: git diff --exit-code -- specs/

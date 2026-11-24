@@ -6,20 +6,13 @@ repositories {
     mavenCentral()
 }
 
-dependencies {
-    implementation("com.google.protobuf:protobuf-java:4.36.2")
-    implementation("org.yaml:snakeyaml:2.7")
+// BufTools (buf/protoc from the PATH or mise, else fetched) lives in grpc-openapi-plugin, which is a
+// separate build that buildSrc cannot depend on; compile that one file here too so miseExecutable()
+// has the same fallback as the plugin's tasks.
+val copyBufTools =
+    tasks.register<Copy>("copyBufTools") {
+        from(layout.projectDirectory.file("../grpc-openapi-plugin/src/main/kotlin/no/entur/http/BufTools.kt"))
+        into(layout.buildDirectory.dir("generated/bufTools/no/entur/http"))
+    }
 
-    testImplementation("org.jetbrains.kotlin:kotlin-test-junit5:2.4.21")
-    testImplementation("org.junit.jupiter:junit-jupiter:6.1.3")
-    testRuntimeOnly("org.junit.platform:junit-platform-launcher:6.1.3")
-}
-
-tasks.test {
-    useJUnitPlatform()
-    systemProperty("fixtureDir", layout.projectDirectory.dir("src/test/resources/fixture").asFile.absolutePath)
-    // Where BufTools fetches protoc when none is installed; run the root build first on a bare runner.
-    systemProperty("fetchedProtoc", layout.projectDirectory.file("../build/tools/bin/protoc").asFile.canonicalPath)
-    // buildSrc is a separate build, so http-model is reached by path, not project reference.
-    systemProperty("httpModelProtoDir", layout.projectDirectory.dir("../http-model/src/main/proto").asFile.canonicalPath)
-}
+kotlin.sourceSets.getByName("main").kotlin.srcDir(copyBufTools.map { layout.buildDirectory.dir("generated/bufTools") })
