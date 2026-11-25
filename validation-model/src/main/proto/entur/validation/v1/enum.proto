@@ -20,7 +20,7 @@ enum Severity {
   INFO = 4;
 }
 
-// A validation stage a rule or flow applies to.
+// A validation stage a rule applies to.
 enum ValidationStage {
   // Unspecified validation stage. This is an invalid value.
   VALIDATION_STAGE_UNSPECIFIED = 0;

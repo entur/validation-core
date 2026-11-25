@@ -35,11 +35,21 @@ message Area {
       example: {yaml: "2"}
     }
   ];
-  // The validation rules scoped to the area. A rule can belong to several areas.
-  repeated ValidationRule rules = 4 [
-    (google.api.field_behavior) = REQUIRED,
+  // The database ids of the validation rules scoped to the area. A rule can belong to several
+  // areas. Set by the client on create and update; the server returns the rules themselves in
+  // rules instead.
+  repeated int32 rule_ids = 7 [
+    (google.api.field_behavior) = INPUT_ONLY,
     (gnostic.openapi.v3.property) = {
-      example: {yaml: "[{\"id\": 1, \"areas\": [7], \"default_severity\": \"ERROR\", \"stage\": \"STRUCTURAL\", \"name\": \"netex-xsd\", \"description\": \"Validates the file against its XSD.\"}]"}
+      example: {yaml: "[1]"}
+    }
+  ];
+  // The validation rules scoped to the area, as referenced by rule_ids. Always populated by the
+  // server.
+  repeated ValidationRule rules = 4 [
+    (google.api.field_behavior) = OUTPUT_ONLY,
+    (gnostic.openapi.v3.property) = {
+      example: {yaml: "[{\"id\": 1, \"areas\": [7], \"defaultSeverity\": \"ERROR\", \"stage\": \"STRUCTURAL\", \"name\": \"netex-xsd\", \"description\": \"Validates the file against its XSD.\"}]"}
     }
   ];
   // The database id of the payload type the area validates. Set by the client on create and
@@ -55,7 +65,7 @@ message Area {
   PayloadType payload_type = 6 [
     (google.api.field_behavior) = OUTPUT_ONLY,
     (gnostic.openapi.v3.property) = {
-      example: {yaml: "{\"id\": 42, \"name\": \"rutedata\", \"owner\": 3, \"updated_at\": \"2026-01-01T00:00:00Z\"}"}
+      example: {yaml: "{\"id\": 42, \"name\": \"rutedata\", \"owner\": 3, \"updatedAt\": \"2026-01-01T00:00:00Z\"}"}
     }
   ];
 

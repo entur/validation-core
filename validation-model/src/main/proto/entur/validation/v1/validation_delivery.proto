@@ -28,7 +28,7 @@ message ValidationDelivery {
   // The single stage to validate. (VALIDATION_STAGE_UNSPECIFIED is invalid.)
   ValidationStage stage = 5;
 
-  // If specified, only run these rules instead of the payload type's flows. Every rule belongs to
+  // If specified, only run these rules instead of the payload type's rules for this stage. Every rule belongs to
   // this delivery's stage.
   repeated int32 specific_rules = 6;
 

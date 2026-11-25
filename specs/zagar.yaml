@@ -612,8 +612,8 @@ components:
                     items:
                         type: integer
                         format: int32
-                    description: The database id of the area that owns the validation
-                        rule.
+                    description: The database ids of the areas the validation rule
+                        is scoped to.
                 defaultSeverity:
                     example: ERROR
                     enum:
@@ -663,7 +663,7 @@ components:
                         The timestamp the validation rule was last updated. Always populated by the server; a
                          value set by the client is ignored, not an error.
                     format: date-time
-            description: A single validation rule, owned by one Area.
+            description: A single validation rule, scoped to one or more Areas.
             example:
                 id: 1
                 areas:

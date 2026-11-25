@@ -58,7 +58,7 @@ paths:
                                     paths: {}
                                     components:
                                         schemas: {}
-    /validation/v1/query/rules:
+    /validation/v1/query/payload-types/{payloadType}/rules/{stage}:
         get:
             tags:
               - ValidationQueryService
@@ -68,9 +68,21 @@ paths:
                  payload type. A rule in several such areas is returned once.
             operationId: ValidationQueryService_GetValidationRulesForStage
             parameters:
+              - name: payloadType
+                in: path
+                description: |-
+                    The name of the payload type to get validation rules for, as carried by
+                     ValidationDelivery.payload_type.
+                required: true
+                schema:
+                    type: string
               - name: stage
-                in: query
-                description: The stage to get validation rules for.
+                in: path
+                description: |-
+                    The stage to get validation rules for. `VALIDATION_STAGE_UNSPECIFIED` is not a valid stage here.
+
+                     This field is case insensitive.
+                required: true
                 schema:
                     enum:
                       - VALIDATION_STAGE_UNSPECIFIED
@@ -79,12 +91,6 @@ paths:
                       - GLOBAL
                     type: string
                     format: enum
-              - name: payloadType
-                in: query
-                description: The database id of the payload type to get validation
-                    rules for.
-                schema:
-                    type: string
             responses:
                 '200':
                     description: OK
@@ -92,13 +98,25 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/GetValidationRulesForStageResponse'
+                '400':
+                    description: The stage is `VALIDATION_STAGE_UNSPECIFIED` or not
+                        a known stage.
+                    content:
+                        application/problem+json:
+                            schema:
+                                $ref: '#/components/schemas/ProblemDetail'
+                '404':
+                    description: The payload type does not exist.
+                    content:
+                        application/problem+json:
+                            schema:
+                                $ref: '#/components/schemas/ProblemDetail'
     /validation/v1/query/rules/{id}:
         get:
             tags:
               - ValidationQueryService
             summary: Get one validation rule by its id.
-            description: Get one validation rule by its id, whether or not a flow
-                includes it.
+            description: Get one validation rule by its id.
             operationId: ValidationQueryService_GetValidationRule
             parameters:
               - name: id
@@ -150,8 +168,6 @@ components:
                 field: name
                 message: must not be blank
         GetValidationRulesForStageResponse:
-            required:
-              - validationRules
             type: object
             properties:
                 validationRules:
@@ -159,7 +175,7 @@ components:
                       - id: 1
                         areas:
                           - 7
-                        default_severity: ERROR
+                        defaultSeverity: ERROR
                         stage: STRUCTURAL
                         name: netex-xsd
                         description: Validates the file against its XSD.
@@ -174,7 +190,7 @@ components:
                   - id: 1
                     areas:
                       - 7
-                    default_severity: ERROR
+                    defaultSeverity: ERROR
                     stage: STRUCTURAL
                     name: netex-xsd
                     description: Validates the file against its XSD.
@@ -270,8 +286,8 @@ components:
                     items:
                         type: integer
                         format: int32
-                    description: The database id of the area that owns the validation
-                        rule.
+                    description: The database ids of the areas the validation rule
+                        is scoped to.
                 defaultSeverity:
                     example: ERROR
                     enum:
@@ -321,7 +337,7 @@ components:
                         The timestamp the validation rule was last updated. Always populated by the server; a
                          value set by the client is ignored, not an error.
                     format: date-time
-            description: A single validation rule, owned by one Area.
+            description: A single validation rule, scoped to one or more Areas.
             example:
                 id: 1
                 areas:
