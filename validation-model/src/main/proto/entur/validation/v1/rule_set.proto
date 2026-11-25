@@ -27,8 +27,8 @@ message RuleSet {
       example: {yaml: "\"nordic-profile\""}
     }
   ];
-  // The database ids of the validation rules in the set. Set by the client on create and update;
-  // the server returns the rules themselves in rules instead.
+  // The ids of the rules in the set. Only read on create and update; responses carry the full
+  // rules in rules.
   repeated int32 rule_ids = 3 [
     (google.api.field_behavior) = INPUT_ONLY,
     (gnostic.openapi.v3.property) = {

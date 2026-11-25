@@ -36,9 +36,8 @@ message Area {
       example: {yaml: "2"}
     }
   ];
-  // The database ids of the validation rules scoped to the area. A rule can belong to several
-  // areas. Set by the client on create and update; the server returns the rules themselves in
-  // rules instead.
+  // The ids of the rules scoped directly to the area. A rule can belong to several areas. Only
+  // read on create and update; responses carry the full rules in rules.
   repeated int32 rule_ids = 7 [
     (google.api.field_behavior) = INPUT_ONLY,
     (gnostic.openapi.v3.property) = {
@@ -53,8 +52,8 @@ message Area {
       example: {yaml: "[{\"id\": 1, \"defaultSeverity\": \"ERROR\", \"stage\": \"STRUCTURAL\", \"name\": \"netex-xsd\", \"description\": \"Validates the file against its XSD.\", \"owner\": 2}]"}
     }
   ];
-  // The database id of the payload type the area validates. Set by the client on create and
-  // update; the server returns the payload type itself in payload_type instead.
+  // The id of the payload type the area validates. Only read on create and update; responses
+  // carry the full payload type in payload_type.
   int32 payload_type_id = 5 [
     (google.api.field_behavior) = INPUT_ONLY,
     (gnostic.openapi.v3.property) = {
@@ -69,8 +68,8 @@ message Area {
       example: {yaml: "{\"id\": 42, \"name\": \"rutedata\", \"owner\": 3, \"updatedAt\": \"2026-01-01T00:00:00Z\"}"}
     }
   ];
-  // The database ids of the rule sets scoped to the area. Set by the client on create and
-  // update; the server returns the rule sets themselves in rule_sets instead.
+  // The ids of the rule sets scoped to the area. Only read on create and update; responses carry
+  // the full rule sets in rule_sets.
   repeated int32 rule_set_ids = 9 [
     (google.api.field_behavior) = INPUT_ONLY,
     (gnostic.openapi.v3.property) = {
