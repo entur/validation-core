@@ -135,8 +135,6 @@ class BufTools private constructor(
                     checkNotNull(PROTOC_GEN_OPENAPI_SHA256[platform]) {
                         "protoc-gen-openapi is only published for ${PROTOC_GEN_OPENAPI_SHA256.keys.joinToString()}, not $platform."
                     }
-                // Already there, e.g. after the build's task history was lost: nothing to download.
-                if (target.isFile && sha256(target.readBytes()) == expected) return@doLast
                 val bytes =
                     URI(
                         "https://github.com/entur/validation-core/releases/download/" +
