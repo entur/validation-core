@@ -6,7 +6,11 @@ description = "Kittum's read-only query API (entur.kittum.query.v1) for runtime 
 
 grpcOpenApiModule {
     specFileName = "kittum-query.yaml"
-    importProtoDirs.from(rootProject.file("http-model/src/main/proto"), rootProject.file("validation-model/src/main/proto"))
+    importProtoDirs.from(
+        rootProject.file("http-model/src/main/proto"),
+        rootProject.file("validation-model/src/main/proto"),
+        rootProject.file("third_party/proto"),
+    )
 }
 
 dependencies {

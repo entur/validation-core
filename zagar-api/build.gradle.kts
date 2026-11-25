@@ -6,7 +6,11 @@ description = "Zagar's gRPC/REST service definitions (entur.zagar.v1) and their 
 
 grpcOpenApiModule {
     specFileName = "zagar.yaml"
-    importProtoDirs.from(rootProject.file("http-model/src/main/proto"), rootProject.file("validation-model/src/main/proto"))
+    importProtoDirs.from(
+        rootProject.file("http-model/src/main/proto"),
+        rootProject.file("validation-model/src/main/proto"),
+        rootProject.file("third_party/proto"),
+    )
 }
 
 dependencies {

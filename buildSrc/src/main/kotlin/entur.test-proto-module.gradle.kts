@@ -17,6 +17,7 @@ val bufGenerate =
         group = "build"
         workingDir = rootProject.projectDir
         inputs.dir("src/test/proto")
+        inputs.dir(rootProject.file("third_party/proto"))
         inputs.files(rootProject.file("buf.yaml"), rootProject.file(".mise.toml"), bufGenYaml)
         outputs.dir("build/generated/source/proto/test/java")
         outputs.dir("build/generated/source/proto/test/kotlin")

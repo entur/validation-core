@@ -9,6 +9,7 @@ val bufGenerate = tasks.register<Exec>("bufGenerate") {
     group = "build"
     workingDir = rootProject.projectDir
     inputs.dir("src/main/proto")
+    inputs.dir(rootProject.file("third_party/proto"))
     inputs.files(rootProject.file("buf.yaml"), rootProject.file(".mise.toml"), "buf.gen.yaml")
     outputs.dir("build/generated/source/proto/main/java")
     outputs.dir("build/generated/source/proto/main/kotlin")
