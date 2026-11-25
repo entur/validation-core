@@ -1,0 +1,70 @@
+syntax = "proto3";
+
+package entur.validation.v1;
+
+import "entur/validation/v1/validation_rule.proto";
+import "gnostic/openapi/v3/annotations.proto";
+import "google/api/field_behavior.proto";
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/entur/validation-core/gen/entur/validation/v1;validationv1";
+option java_multiple_files = true;
+option java_package = "no.entur.validation.proto.v1";
+
+// A named set of validation rules, scoped to areas as a whole.
+message RuleSet {
+  // The database id of the rule set.
+  int32 id = 1 [
+    (google.api.field_behavior) = IDENTIFIER,
+    (gnostic.openapi.v3.property) = {
+      example: {yaml: "1"}
+    }
+  ];
+  // The name of the rule set.
+  string name = 2 [
+    (google.api.field_behavior) = REQUIRED,
+    (gnostic.openapi.v3.property) = {
+      example: {yaml: "\"nordic-profile\""}
+    }
+  ];
+  // The database ids of the validation rules in the set. Set by the client on create and update;
+  // the server returns the rules themselves in rules instead.
+  repeated int32 rule_ids = 3 [
+    (google.api.field_behavior) = INPUT_ONLY,
+    (gnostic.openapi.v3.property) = {
+      example: {yaml: "[1, 2, 3]"}
+    }
+  ];
+  // The validation rules in the set, as referenced by rule_ids. Always populated by the server.
+  repeated ValidationRule rules = 4 [
+    (google.api.field_behavior) = OUTPUT_ONLY,
+    (gnostic.openapi.v3.property) = {
+      example: {yaml: "[{\"id\": 1, \"defaultSeverity\": \"ERROR\", \"stage\": \"STRUCTURAL\", \"name\": \"netex-xsd\", \"description\": \"Validates the file against its XSD.\"}]"}
+    }
+  ];
+  // The id external systems identify the rule set by, so they can update it. Unique across rule
+  // sets.
+  string external_id = 5 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.field_behavior) = IMMUTABLE,
+    (gnostic.openapi.v3.property) = {
+      example: {yaml: "\"nordic-profile\""}
+    }
+  ];
+  // The database id of the owner of the rule set. Must be the owner of every rule in the set, and
+  // the creator must have permission to create rule sets for it.
+  int32 owner = 6 [
+    (google.api.field_behavior) = REQUIRED,
+    (gnostic.openapi.v3.property) = {
+      example: {yaml: "2"}
+    }
+  ];
+  // The timestamp the rule set was last updated. Always populated by the server; a value set by
+  // the client is ignored, not an error.
+  google.protobuf.Timestamp updated_at = 100 [
+    (google.api.field_behavior) = OUTPUT_ONLY,
+    (gnostic.openapi.v3.property) = {
+      example: {yaml: "\"2026-01-01T00:00:00Z\""}
+    }
+  ];
+}

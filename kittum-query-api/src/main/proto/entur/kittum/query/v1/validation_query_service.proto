@@ -20,8 +20,9 @@ option java_package = "no.entur.kittum.query.proto.v1";
 service ValidationQueryService {
   option (google.api.default_host) = "kittum.entur.io";
 
-  // List every validation rule for one stage that belongs to an area assigned to the given
-  // payload type. A rule in several such areas is returned once.
+  // List every validation rule for one stage that an area assigned to the given payload type
+  // includes, either directly or through one of the area's rule sets. A rule reached more than
+  // once is returned once.
   rpc GetValidationRulesForStage(GetValidationRulesForStageRequest) returns (GetValidationRulesForStageResponse) {
     option (google.api.http) = {get: "/validation/v1/query/payload-types/{payload_type}/rules/{stage}"};
     option (gnostic.openapi.v3.operation) = {summary: "Get all validation rules for a given stage and payload type."};

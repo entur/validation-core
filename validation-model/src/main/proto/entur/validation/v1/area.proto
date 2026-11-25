@@ -3,6 +3,7 @@ syntax = "proto3";
 package entur.validation.v1;
 
 import "entur/validation/v1/payload_type.proto";
+import "entur/validation/v1/rule_set.proto";
 import "entur/validation/v1/validation_rule.proto";
 import "gnostic/openapi/v3/annotations.proto";
 import "google/api/field_behavior.proto";
@@ -44,12 +45,12 @@ message Area {
       example: {yaml: "[1]"}
     }
   ];
-  // The validation rules scoped to the area, as referenced by rule_ids. Always populated by the
-  // server.
+  // The validation rules scoped directly to the area, as referenced by rule_ids. Always populated
+  // by the server. Rules the area gets through a rule set are only listed in rule_sets.
   repeated ValidationRule rules = 4 [
     (google.api.field_behavior) = OUTPUT_ONLY,
     (gnostic.openapi.v3.property) = {
-      example: {yaml: "[{\"id\": 1, \"areas\": [7], \"defaultSeverity\": \"ERROR\", \"stage\": \"STRUCTURAL\", \"name\": \"netex-xsd\", \"description\": \"Validates the file against its XSD.\"}]"}
+      example: {yaml: "[{\"id\": 1, \"defaultSeverity\": \"ERROR\", \"stage\": \"STRUCTURAL\", \"name\": \"netex-xsd\", \"description\": \"Validates the file against its XSD.\"}]"}
     }
   ];
   // The database id of the payload type the area validates. Set by the client on create and
@@ -66,6 +67,22 @@ message Area {
     (google.api.field_behavior) = OUTPUT_ONLY,
     (gnostic.openapi.v3.property) = {
       example: {yaml: "{\"id\": 42, \"name\": \"rutedata\", \"owner\": 3, \"updatedAt\": \"2026-01-01T00:00:00Z\"}"}
+    }
+  ];
+  // The database ids of the rule sets scoped to the area. Set by the client on create and
+  // update; the server returns the rule sets themselves in rule_sets instead.
+  repeated int32 rule_set_ids = 9 [
+    (google.api.field_behavior) = INPUT_ONLY,
+    (gnostic.openapi.v3.property) = {
+      example: {yaml: "[1]"}
+    }
+  ];
+  // The rule sets scoped to the area, as referenced by rule_set_ids, each with its rules. Always
+  // populated by the server.
+  repeated RuleSet rule_sets = 8 [
+    (google.api.field_behavior) = OUTPUT_ONLY,
+    (gnostic.openapi.v3.property) = {
+      example: {yaml: "[{\"id\": 1, \"name\": \"nordic-profile\", \"rules\": [{\"id\": 1, \"defaultSeverity\": \"ERROR\", \"stage\": \"STRUCTURAL\", \"name\": \"netex-xsd\", \"description\": \"Validates the file against its XSD.\"}], \"externalId\": \"nordic-profile\", \"owner\": 2, \"updatedAt\": \"2026-01-01T00:00:00Z\"}]"}
     }
   ];
 

@@ -294,8 +294,6 @@ components:
                 items:
                   - validationRule:
                         id: 1
-                        areas:
-                          - 7
                         defaultSeverity: ERROR
                         stage: STRUCTURAL
                         name: netex-xsd
@@ -457,8 +455,6 @@ components:
             example:
                 validationRule:
                     id: 1
-                    areas:
-                      - 7
                     defaultSeverity: ERROR
                     stage: STRUCTURAL
                     name: netex-xsd
@@ -604,16 +600,6 @@ components:
                     type: integer
                     description: The database id of the validation rule.
                     format: int32
-                areas:
-                    readOnly: true
-                    example:
-                      - 7
-                    type: array
-                    items:
-                        type: integer
-                        format: int32
-                    description: The database ids of the areas the validation rule
-                        is scoped to.
                 defaultSeverity:
                     example: ERROR
                     enum:
@@ -666,8 +652,6 @@ components:
             description: A single validation rule, scoped to one or more Areas.
             example:
                 id: 1
-                areas:
-                  - 7
                 defaultSeverity: ERROR
                 stage: STRUCTURAL
                 name: netex-xsd

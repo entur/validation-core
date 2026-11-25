@@ -20,22 +20,15 @@ message ValidationRule {
       example: {yaml: "1"}
     }
   ];
-  // The database ids of the areas the validation rule is scoped to.
-  repeated int32 areas = 2 [
-    (google.api.field_behavior) = OUTPUT_ONLY,
-    (gnostic.openapi.v3.property) = {
-      example: {yaml: "[7]"}
-    }
-  ];
   // The default severity of the validation rule.
-  Severity default_severity = 3 [
+  Severity default_severity = 2 [
     (google.api.field_behavior) = REQUIRED,
     (gnostic.openapi.v3.property) = {
       example: {yaml: "\"ERROR\""}
     }
   ];
   // The stage the validation rule runs in.
-  ValidationStage stage = 4 [
+  ValidationStage stage = 3 [
     (google.api.field_behavior) = REQUIRED,
     (google.api.field_behavior) = IMMUTABLE,
     (gnostic.openapi.v3.property) = {
@@ -43,7 +36,7 @@ message ValidationRule {
     }
   ];
   // The name of the validation rule.
-  string name = 9 [
+  string name = 4 [
     (google.api.field_behavior) = REQUIRED,
     (gnostic.openapi.v3.property) = {
       example: {yaml: "\"netex-xsd\""}
