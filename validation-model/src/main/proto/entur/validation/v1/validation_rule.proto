@@ -21,10 +21,10 @@ message ValidationRule {
     }
   ];
   // The database id of the area that owns the validation rule.
-  int32 area = 2 [
-    (google.api.field_behavior) = REQUIRED,
+  repeated int32 areas = 2 [
+    (google.api.field_behavior) = OUTPUT_ONLY,
     (gnostic.openapi.v3.property) = {
-      example: {yaml: "7"}
+      example: {yaml: "[7]"}
     }
   ];
   // The default severity of the validation rule.

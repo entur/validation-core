@@ -2,6 +2,8 @@ syntax = "proto3";
 
 package entur.validation.v1;
 
+import "entur/validation/v1/payload_type.proto";
+import "entur/validation/v1/validation_rule.proto";
 import "gnostic/openapi/v3/annotations.proto";
 import "google/api/field_behavior.proto";
 import "google/protobuf/timestamp.proto";
@@ -33,6 +35,30 @@ message Area {
       example: {yaml: "2"}
     }
   ];
+  // The validation rules scoped to the area. A rule can belong to several areas.
+  repeated ValidationRule rules = 4 [
+    (google.api.field_behavior) = REQUIRED,
+    (gnostic.openapi.v3.property) = {
+      example: {yaml: "[{\"id\": 1, \"areas\": [7], \"default_severity\": \"ERROR\", \"stage\": \"STRUCTURAL\", \"name\": \"netex-xsd\", \"description\": \"Validates the file against its XSD.\"}]"}
+    }
+  ];
+  // The database id of the payload type the area validates. Set by the client on create and
+  // update; the server returns the payload type itself in payload_type instead.
+  int32 payload_type_id = 5 [
+    (google.api.field_behavior) = INPUT_ONLY,
+    (gnostic.openapi.v3.property) = {
+      example: {yaml: "42"}
+    }
+  ];
+  // The payload type the area validates, as referenced by payload_type_id. Always populated by
+  // the server.
+  PayloadType payload_type = 6 [
+    (google.api.field_behavior) = OUTPUT_ONLY,
+    (gnostic.openapi.v3.property) = {
+      example: {yaml: "{\"id\": 42, \"name\": \"rutedata\", \"owner\": 3, \"updated_at\": \"2026-01-01T00:00:00Z\"}"}
+    }
+  ];
+
   // The timestamp the area was last updated. Always populated by the server; a value set by
   // the client is ignored, not an error.
   google.protobuf.Timestamp updated_at = 100 [

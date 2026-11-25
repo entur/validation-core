@@ -4,7 +4,6 @@ package entur.kittum.query.v1;
 
 import "entur/http/v1/failure.proto";
 import "entur/validation/v1/enum.proto";
-import "entur/validation/v1/validation_flow.proto";
 import "entur/validation/v1/validation_rule.proto";
 import "gnostic/openapi/v3/annotations.proto";
 import "google/api/annotations.proto";
@@ -21,21 +20,11 @@ option java_package = "no.entur.kittum.query.proto.v1";
 service ValidationQueryService {
   option (google.api.default_host) = "kittum.entur.io";
 
-  // List every validation flow connected to a payload type for one stage, across every area
-  // that has one assigned. Each returned flow is deep: every rule and sub-flow item it
-  // contains, recursively, carries both the database id of what it refers to and the
-  // referred-to ValidationRule/ValidationFlow itself.
-  rpc ListPayloadTypeFlows(ListPayloadTypeFlowsRequest) returns (ListPayloadTypeFlowsResponse) {
-    option (google.api.http) = {get: "/validation/v1/query/payload-types/{payload_type}/flows/{stage}"};
-    option (gnostic.openapi.v3.operation) = {summary: "List the flows connected to a payload type for one stage, across every area."};
-    option (entur.http.v1.failure) = {
-      code: "400"
-      description: "The stage is `VALIDATION_STAGE_UNSPECIFIED` or not a known stage."
-    };
-    option (entur.http.v1.failure) = {
-      code: "404"
-      description: "The payload type does not exist."
-    };
+  // List every validation rule for one stage that belongs to an area assigned to the given
+  // payload type. A rule in several such areas is returned once.
+  rpc GetValidationRulesForStage(GetValidationRulesForStageRequest) returns (GetValidationRulesForStageResponse) {
+    option (google.api.http) = {get: "/validation/v1/query/rules"};
+    option (gnostic.openapi.v3.operation) = {summary: "Get all validation rules for a given stage and payload type."};
   }
 
   // Get one validation rule by its id, whether or not a flow includes it.
@@ -53,33 +42,6 @@ service ValidationQueryService {
   }
 }
 
-// Request for ListPayloadTypeFlows.
-message ListPayloadTypeFlowsRequest {
-  // The name of the payload type to list flows for.
-  string payload_type = 1 [
-    (google.api.field_behavior) = REQUIRED,
-    (gnostic.openapi.v3.property) = {
-      example: {yaml: "\"rutedata\""}
-    }
-  ];
-  // The stage of the flows to list. `VALIDATION_STAGE_UNSPECIFIED` is not a valid stage here.
-  //
-  // This field is case insensitive.
-  entur.validation.v1.ValidationStage stage = 2 [
-    (google.api.field_behavior) = REQUIRED,
-    (gnostic.openapi.v3.property) = {
-      example: {yaml: "\"STRUCTURAL\""}
-    }
-  ];
-}
-
-// Response for ListPayloadTypeFlows.
-message ListPayloadTypeFlowsResponse {
-  // Keyed by area name - one entry per area that has a flow assigned for the requested
-  // (payload_type, stage). Area names are unique, so this loses no information relative to a list.
-  map<string, entur.validation.v1.ValidationFlow> items = 1;
-}
-
 // Request for GetValidationRule.
 message GetValidationRuleRequest {
   // The database id of the validation rule to lookup.
@@ -87,6 +49,35 @@ message GetValidationRuleRequest {
     (google.api.field_behavior) = REQUIRED,
     (gnostic.openapi.v3.property) = {
       example: {yaml: "1"}
+    }
+  ];
+}
+
+// Request for GetValidationRulesForStage. Both fields are sent as query parameters.
+message GetValidationRulesForStageRequest {
+  // The stage to get validation rules for.
+  entur.validation.v1.ValidationStage stage = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (gnostic.openapi.v3.property) = {
+      example: {yaml: "\"STRUCTURAL\""}
+    }
+  ];
+  // The database id of the payload type to get validation rules for.
+  string payload_type = 2 [
+    (google.api.field_behavior) = REQUIRED,
+    (gnostic.openapi.v3.property) = {
+      example: {yaml: "42"}
+    }
+  ];
+}
+
+// Response for GetValidationRulesForStage.
+message GetValidationRulesForStageResponse {
+  // The validation rules for the requested stage and payload type, in no particular order.
+  repeated entur.validation.v1.ValidationRule validation_rules = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (gnostic.openapi.v3.property) = {
+      example: {yaml: "[{\"id\": 1, \"areas\": [7], \"default_severity\": \"ERROR\", \"stage\": \"STRUCTURAL\", \"name\": \"netex-xsd\", \"description\": \"Validates the file against its XSD.\"}]"}
     }
   ];
 }

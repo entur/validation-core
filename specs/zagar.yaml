@@ -294,7 +294,8 @@ components:
                 items:
                   - validationRule:
                         id: 1
-                        area: 7
+                        areas:
+                          - 7
                         defaultSeverity: ERROR
                         stage: STRUCTURAL
                         name: netex-xsd
@@ -456,7 +457,8 @@ components:
             example:
                 validationRule:
                     id: 1
-                    area: 7
+                    areas:
+                      - 7
                     defaultSeverity: ERROR
                     stage: STRUCTURAL
                     name: netex-xsd
@@ -591,7 +593,6 @@ components:
                 isDryRun: false
         ValidationRule:
             required:
-              - area
               - defaultSeverity
               - stage
               - name
@@ -603,12 +604,16 @@ components:
                     type: integer
                     description: The database id of the validation rule.
                     format: int32
-                area:
-                    example: 7
-                    type: integer
+                areas:
+                    readOnly: true
+                    example:
+                      - 7
+                    type: array
+                    items:
+                        type: integer
+                        format: int32
                     description: The database id of the area that owns the validation
                         rule.
-                    format: int32
                 defaultSeverity:
                     example: ERROR
                     enum:
@@ -661,7 +666,8 @@ components:
             description: A single validation rule, owned by one Area.
             example:
                 id: 1
-                area: 7
+                areas:
+                  - 7
                 defaultSeverity: ERROR
                 stage: STRUCTURAL
                 name: netex-xsd
