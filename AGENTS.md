@@ -43,6 +43,12 @@ https://github.com/entur/ai/blob/main/AGENTS.md
 - `buf` and `protoc` are pinned in `.mise.toml`. Gradle's `Exec` resolves an executable against the
   Gradle JVM's own `PATH`, not the environment it hands the child process, so `bufGenerate` names
   the mise shim by absolute path. A bare `buf` works in CI but fails in a mise-based local setup.
+- The build never calls the Buf Schema Registry (buf.build). googleapis' and gnostic's protos are
+  vendored in `third_party/proto` (see its README) instead of being `buf.yaml` `deps`, and gnostic's
+  `protoc-gen-openapi` is a `local:` plugin that the grpc-openapi plugin's `BufTools` downloads from
+  this repo's own GitHub release, built by `.github/workflows/protoc-gen-openapi.yml`, and checks
+  against a pinned SHA-256. Don't add a `deps:` entry or a `remote:` plugin; vendor the files or
+  release the binary the same way instead.
 - Every team-validering service consumes these artifacts. Zagar additionally has its API defined here (`zagar-api`). Kittum's
   frontend-facing API (`entur.kittum.v1`) is owned by `entur/kittum` itself (infrastructure in
   `entur/kittum-infrastructure`); only its read-only query API (`kittum-query-api`) lives here.

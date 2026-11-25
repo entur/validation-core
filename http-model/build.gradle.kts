@@ -9,7 +9,7 @@ val bufGenerate = tasks.register<Exec>("bufGenerate") {
     group = "build"
     workingDir = rootProject.projectDir
     inputs.dir("src/main/proto")
-    inputs.files(rootProject.file("buf.yaml"), rootProject.file("buf.lock"), rootProject.file(".mise.toml"), "buf.gen.yaml")
+    inputs.files(rootProject.file("buf.yaml"), rootProject.file(".mise.toml"), "buf.gen.yaml")
     outputs.dir("build/generated/source/proto/main/java")
     outputs.dir("build/generated/source/proto/main/kotlin")
     commandLine(miseExecutable("buf"), "generate", "http-model/src/main/proto", "--template", "http-model/buf.gen.yaml", "--clean")
@@ -17,24 +17,17 @@ val bufGenerate = tasks.register<Exec>("bufGenerate") {
 
 // ProblemDetail's fields use (gnostic.openapi.v3.property), and the generated code references the
 // descriptor of every file whose options it uses, so gnostic's annotations need Java/Kotlin classes too.
-val gnosticCommit =
-    rootProject.file("buf.lock").readText()
-        .substringAfter("name: buf.build/gnostic/gnostic")
-        .substringAfter("commit:")
-        .substringBefore("\n")
-        .trim()
-
 val bufGenerateGnosticAnnotations = tasks.register<Exec>("bufGenerateGnosticAnnotations") {
-    description = "Vendors Java/Kotlin classes for gnostic's openapiv3 proto options (buf.build/gnostic/gnostic)."
+    description = "Generates Java/Kotlin classes for gnostic's openapiv3 proto options from third_party/proto."
     group = "build"
     workingDir = rootProject.projectDir
-    inputs.files(rootProject.file("buf.yaml"), rootProject.file("buf.lock"), rootProject.file(".mise.toml"), "buf.gen.gnostic.yaml")
+    inputs.dir(rootProject.file("third_party/proto/gnostic"))
+    inputs.files(rootProject.file("buf.yaml"), rootProject.file(".mise.toml"), "buf.gen.gnostic.yaml")
     outputs.dir("build/generated/source/gnostic/main/java")
     outputs.dir("build/generated/source/gnostic/main/kotlin")
-    // Pinned to buf.lock's resolved commit. Use "buf dep update" to update.
     commandLine(
-        miseExecutable("buf"), "generate", "buf.build/gnostic/gnostic:$gnosticCommit",
-        "--path", "gnostic/openapi/v3", "--template", "http-model/buf.gen.gnostic.yaml", "--clean",
+        miseExecutable("buf"), "generate", "third_party/proto",
+        "--path", "third_party/proto/gnostic/openapi/v3", "--template", "http-model/buf.gen.gnostic.yaml", "--clean",
     )
 }
 
@@ -47,6 +40,12 @@ sourceSets {
         // Ship the .proto sources in the jar so other buf workspaces can import them.
         resources.srcDir("src/main/proto")
     }
+}
+
+// Also ship the vendored googleapis/gnostic protos ours import, with their licenses, so other buf
+// workspaces don't need buf.build either (see third_party/proto/README.md).
+tasks.named<ProcessResources>("processResources") {
+    from(rootProject.file("third_party/proto")) { include("**/*.proto", "**/LICENSE") }
 }
 
 tasks.named("compileJava") { dependsOn(bufGenerate, bufGenerateGnosticAnnotations) }

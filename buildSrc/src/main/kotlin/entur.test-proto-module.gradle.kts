@@ -17,7 +17,7 @@ val bufGenerate =
         group = "build"
         workingDir = rootProject.projectDir
         inputs.dir("src/test/proto")
-        inputs.files(rootProject.file("buf.yaml"), rootProject.file("buf.lock"), rootProject.file(".mise.toml"), bufGenYaml)
+        inputs.files(rootProject.file("buf.yaml"), rootProject.file(".mise.toml"), bufGenYaml)
         outputs.dir("build/generated/source/proto/test/java")
         outputs.dir("build/generated/source/proto/test/kotlin")
         commandLine(miseExecutable("buf"), "generate", moduleTestProtoPath, "--template", bufGenYaml, "--clean")

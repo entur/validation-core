@@ -11,6 +11,9 @@ lint:
     # Simple get RPCs are allowed to return simple data objects.
     - RPC_RESPONSE_STANDARD_NAME
     - RPC_REQUEST_RESPONSE_UNIQUE
+  # Vendored upstream protos; see third_party/proto/README.md.
+  ignore:
+    - third_party/proto
 modules:
   - path: http-model/src/main/proto
   - path: validation-model/src/main/proto
@@ -35,8 +38,10 @@ modules:
         - STANDARD
     breaking:
       use: []
-deps:
-  - buf.build/googleapis/googleapis
-  - buf.build/gnostic/gnostic
+  # googleapis' and gnostic's protos, vendored instead of fetched from buf.build as deps. See
+  # third_party/proto/README.md.
+  - path: third_party/proto
 breaking:
   use: [FILE]
+  ignore:
+    - third_party/proto

@@ -10,7 +10,7 @@ val bufGenerate = tasks.register<Exec>("bufGenerate") {
     group = "build"
     workingDir = rootProject.projectDir
     inputs.dir("src/main/proto")
-    inputs.files(rootProject.file("buf.yaml"), rootProject.file("buf.lock"), rootProject.file(".mise.toml"), "buf.gen.yaml")
+    inputs.files(rootProject.file("buf.yaml"), rootProject.file(".mise.toml"), "buf.gen.yaml")
     outputs.dir("build/generated/source/proto/main/java")
     outputs.dir("build/generated/source/proto/main/kotlin")
     commandLine(miseExecutable("buf"), "generate", "validation-model/src/main/proto", "--template", "validation-model/buf.gen.yaml", "--clean")

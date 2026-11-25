@@ -1,5 +1,5 @@
 version: v2
-# Vendors Java/Kotlin classes for gnostic's openapiv3 proto options (buf.build/gnostic/gnostic) -
+# Generates Java/Kotlin classes for gnostic's openapiv3 proto options (third_party/proto/gnostic) -
 # see the bufGenerateGnosticAnnotations task in build.gradle.kts for why this exists.
 plugins:
   - protoc_builtin: java

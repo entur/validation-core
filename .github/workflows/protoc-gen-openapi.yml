@@ -1,0 +1,53 @@
+name: protoc-gen-openapi release
+
+# gnostic's protoc-gen-openapi, which generates the specs/*.yaml OpenAPI contracts, publishes no
+# binaries. This builds it for the platforms BufTools (grpc-openapi-plugin) supports and attaches
+# the binaries to a GitHub release, which BufTools downloads and checks against pinned SHA-256s.
+#
+# Run it by pushing a protoc-gen-openapi-v<gnostic version> tag, e.g. protoc-gen-openapi-v0.7.0.
+# The build is reproducible (pinned Go, -trimpath, no build id), so rebuilding a version gives
+# the same checksums.
+on:
+  push:
+    tags:
+      - "protoc-gen-openapi-v*"
+
+jobs:
+  release:
+    if: github.repository == 'entur/validation-core'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/setup-go@v7
+        with:
+          go-version: "1.27.4"
+          cache: false
+
+      - name: Build
+        run: |
+          set -euo pipefail
+          version="${GITHUB_REF_NAME#protoc-gen-openapi-}"
+          dist="$RUNNER_TEMP/dist"
+          mkdir -p "$dist"
+          cd "$(mktemp -d)"
+          go mod init build
+          go get "github.com/google/gnostic/cmd/protoc-gen-openapi@$version"
+          for target in linux/amd64 linux/arm64 darwin/amd64 darwin/arm64; do
+            GOOS="${target%/*}" GOARCH="${target#*/}" CGO_ENABLED=0 \
+              go build -trimpath -ldflags="-s -w -buildid=" \
+              -o "$dist/protoc-gen-openapi-${target%/*}-${target#*/}" \
+              github.com/google/gnostic/cmd/protoc-gen-openapi
+          done
+          cd "$dist"
+          sha256sum protoc-gen-openapi-* | tee SHA256SUMS
+
+      - name: Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" "$RUNNER_TEMP"/dist/* \
+            --repo "$GITHUB_REPOSITORY" \
+            --title "$GITHUB_REF_NAME" \
+            --latest=false \
+            --notes "gnostic's protoc-gen-openapi ${GITHUB_REF_NAME#protoc-gen-openapi-}, built with Go 1.27.4 for the grpc-openapi plugin's BufTools. Not a validation-core library release."

@@ -23,7 +23,8 @@ val bufFormat = tasks.register<Exec>("bufFormat") {
     description = "Formats all .proto files in place via `buf format -w`."
     group = "build"
     inputs.files(protoDirs)
-    inputs.files("buf.yaml", "buf.lock")
+    inputs.dir("third_party/proto")
+    inputs.files("buf.yaml")
     commandLine(miseExecutable("buf"), "format", "-w")
 }
 
@@ -33,7 +34,8 @@ val bufLint = tasks.register<Exec>("bufLint") {
     group = "verification"
     dependsOn(bufFormat)
     inputs.files(protoDirs)
-    inputs.files("buf.yaml", "buf.lock")
+    inputs.dir("third_party/proto")
+    inputs.files("buf.yaml")
     commandLine(miseExecutable("buf"), "lint")
 }
 

@@ -11,7 +11,8 @@ plugins:
   # Generates the OpenAPI 3 contract from the `google.api.http` bindings on the
   # rpcs above. `version` is the API contract version and is deliberately NOT
   # gradle.properties' library version.
-  - remote: buf.build/community/google-gnostic-openapi:v0.7.0
+  # protoc-gen-openapi is downloaded by the grpc-openapi plugin's BufTools.
+  - local: protoc-gen-openapi
     out: ishum-api/build/generated/openapi
     opt:
       - title=ishum

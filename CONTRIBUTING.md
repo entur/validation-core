@@ -27,7 +27,9 @@ reserved "old_field_name";
 ## Tooling
 
 `buf` and `protoc` are pinned in [`.mise.toml`](.mise.toml); run `mise install` to match the pinned
-versions. The Gradle build invokes `buf` through the mise shim by absolute path.
+versions. The Gradle build invokes `buf` through the mise shim by absolute path. It doesn't use the
+Buf Schema Registry: imported third-party protos are vendored in `third_party/proto`, and
+`protoc-gen-openapi` is downloaded from this repo's GitHub release.
 
 ## Pull requests
 
