@@ -62,12 +62,12 @@ paths:
         get:
             tags:
               - ValidationQueryService
-            summary: Get all validation rules for a given stage and payload type.
+            summary: List all validation rules for a given stage and payload type.
             description: |-
                 List every validation rule for one stage that an area assigned to the given payload type
                  includes, either directly or through one of the area's rule sets. A rule reached more than
                  once is returned once.
-            operationId: ValidationQueryService_GetValidationRulesForStage
+            operationId: ValidationQueryService_ListValidationRulesForStage
             parameters:
               - name: payloadType
                 in: path
@@ -98,7 +98,7 @@ paths:
                     content:
                         application/json:
                             schema:
-                                $ref: '#/components/schemas/GetValidationRulesForStageResponse'
+                                $ref: '#/components/schemas/ListValidationRulesForStageResponse'
                 '400':
                     description: The stage is `VALIDATION_STAGE_UNSPECIFIED` or not
                         a known stage.
@@ -168,7 +168,7 @@ components:
             example:
                 field: name
                 message: must not be blank
-        GetValidationRulesForStageResponse:
+        ListValidationRulesForStageResponse:
             type: object
             properties:
                 validationRules:
@@ -186,7 +186,7 @@ components:
                         $ref: '#/components/schemas/ValidationRule'
                     description: The validation rules for the requested stage and
                         payload type, in no particular order.
-            description: Response for GetValidationRulesForStage.
+            description: Response for ListValidationRulesForStage.
             example:
                 validationRules:
                   - id: 1

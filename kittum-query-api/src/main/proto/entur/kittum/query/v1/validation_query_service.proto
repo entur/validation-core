@@ -23,9 +23,9 @@ service ValidationQueryService {
   // List every validation rule for one stage that an area assigned to the given payload type
   // includes, either directly or through one of the area's rule sets. A rule reached more than
   // once is returned once.
-  rpc GetValidationRulesForStage(GetValidationRulesForStageRequest) returns (GetValidationRulesForStageResponse) {
+  rpc ListValidationRulesForStage(ListValidationRulesForStageRequest) returns (ListValidationRulesForStageResponse) {
     option (google.api.http) = {get: "/validation/v1/query/payload-types/{payload_type}/rules/{stage}"};
-    option (gnostic.openapi.v3.operation) = {summary: "Get all validation rules for a given stage and payload type."};
+    option (gnostic.openapi.v3.operation) = {summary: "List all validation rules for a given stage and payload type."};
     option (entur.http.v1.failure) = {
       code: "400"
       description: "The stage is `VALIDATION_STAGE_UNSPECIFIED` or not a known stage."
@@ -62,8 +62,8 @@ message GetValidationRuleRequest {
   ];
 }
 
-// Request for GetValidationRulesForStage.
-message GetValidationRulesForStageRequest {
+// Request for ListValidationRulesForStage.
+message ListValidationRulesForStageRequest {
   // The stage to get validation rules for. `VALIDATION_STAGE_UNSPECIFIED` is not a valid stage here.
   //
   // This field is case insensitive.
@@ -83,8 +83,8 @@ message GetValidationRulesForStageRequest {
   ];
 }
 
-// Response for GetValidationRulesForStage.
-message GetValidationRulesForStageResponse {
+// Response for ListValidationRulesForStage.
+message ListValidationRulesForStageResponse {
   // The validation rules for the requested stage and payload type, in no particular order.
   repeated entur.validation.v1.ValidationRule validation_rules = 1 [(gnostic.openapi.v3.property) = {
     example: {yaml: "[{\"id\": 1, \"areas\": [7], \"defaultSeverity\": \"ERROR\", \"stage\": \"STRUCTURAL\", \"name\": \"netex-xsd\", \"description\": \"Validates the file against its XSD.\", \"owner\": 2}]"}
