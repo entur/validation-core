@@ -180,6 +180,7 @@ components:
                         stage: STRUCTURAL
                         name: netex-xsd
                         description: Validates the file against its XSD.
+                        owner: 2
                     type: array
                     items:
                         $ref: '#/components/schemas/ValidationRule'
@@ -195,6 +196,7 @@ components:
                     stage: STRUCTURAL
                     name: netex-xsd
                     description: Validates the file against its XSD.
+                    owner: 2
         ProblemDetail:
             description: RFC 9457 Problem Details for HTTP APIs.
             required:
@@ -272,6 +274,7 @@ components:
               - stage
               - name
               - description
+              - owner
             type: object
             properties:
                 id:
@@ -308,6 +311,11 @@ components:
                     example: Validates the file against its XSD.
                     type: string
                     description: A textual description of the validation rule.
+                owner:
+                    example: 2
+                    type: integer
+                    description: The database id of the owner of the validation rule.
+                    format: int32
                 xsdRule:
                     allOf:
                       - $ref: '#/components/schemas/XsdRule'
@@ -335,6 +343,7 @@ components:
                 stage: STRUCTURAL
                 name: netex-xsd
                 description: Validates the file against its XSD.
+                owner: 2
                 xsdRule:
                     message: File does not match its XSD.
                     schemas:

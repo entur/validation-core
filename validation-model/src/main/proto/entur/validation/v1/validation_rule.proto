@@ -49,6 +49,13 @@ message ValidationRule {
       example: {yaml: "\"Validates the file against its XSD.\""}
     }
   ];
+  // The database id of the owner of the validation rule.
+  int32 owner = 9 [
+    (google.api.field_behavior) = REQUIRED,
+    (gnostic.openapi.v3.property) = {
+      example: {yaml: "2"}
+    }
+  ];
 
   // The concrete instances of this validation rule, with specialized fields.
   oneof rule {

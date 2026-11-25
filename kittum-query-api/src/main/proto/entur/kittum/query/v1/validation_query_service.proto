@@ -87,6 +87,6 @@ message GetValidationRulesForStageRequest {
 message GetValidationRulesForStageResponse {
   // The validation rules for the requested stage and payload type, in no particular order.
   repeated entur.validation.v1.ValidationRule validation_rules = 1 [(gnostic.openapi.v3.property) = {
-    example: {yaml: "[{\"id\": 1, \"areas\": [7], \"defaultSeverity\": \"ERROR\", \"stage\": \"STRUCTURAL\", \"name\": \"netex-xsd\", \"description\": \"Validates the file against its XSD.\"}]"}
+    example: {yaml: "[{\"id\": 1, \"areas\": [7], \"defaultSeverity\": \"ERROR\", \"stage\": \"STRUCTURAL\", \"name\": \"netex-xsd\", \"description\": \"Validates the file against its XSD.\", \"owner\": 2}]"}
   }];
 }
