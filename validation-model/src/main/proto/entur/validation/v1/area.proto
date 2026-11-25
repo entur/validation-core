@@ -81,7 +81,7 @@ message Area {
   repeated RuleSet rule_sets = 8 [
     (google.api.field_behavior) = OUTPUT_ONLY,
     (gnostic.openapi.v3.property) = {
-      example: {yaml: "[{\"id\": 1, \"name\": \"nordic-profile\", \"rules\": [{\"id\": 1, \"defaultSeverity\": \"ERROR\", \"stage\": \"STRUCTURAL\", \"name\": \"netex-xsd\", \"description\": \"Validates the file against its XSD.\", \"owner\": 2}], \"externalId\": \"nordic-profile\", \"owner\": 2, \"updatedAt\": \"2026-01-01T00:00:00Z\"}]"}
+      example: {yaml: "[{\"id\": 1, \"name\": \"nordic-profile\", \"rules\": [{\"id\": 1, \"defaultSeverity\": \"ERROR\", \"stage\": \"STRUCTURAL\", \"name\": \"netex-xsd\", \"description\": \"Validates the file against its XSD.\", \"owner\": 2}], \"externalId\": \"019abcde-1234-7abc-8def-0123456789ab\", \"owner\": 2, \"updatedAt\": \"2026-01-01T00:00:00Z\"}]"}
     }
   ];
 
