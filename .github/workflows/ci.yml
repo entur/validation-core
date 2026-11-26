@@ -11,6 +11,10 @@ jobs:
     permissions:
       contents: read
       pull-requests: read
+    env:
+      # Logged-in buf.build calls aren't rate-limited like anonymous ones. Also read by the buf
+      # that Gradle runs.
+      BUF_TOKEN: ${{ secrets.BUF_TOKEN }}
     steps:
       - uses: actions/checkout@v7
 
@@ -18,6 +22,11 @@ jobs:
         with:
           distribution: temurin
           java-version: "25"
+
+      - uses: actions/cache@v6
+        with:
+          path: ~/.cache/buf
+          key: buf-${{ hashFiles('buf.lock') }}
 
       - uses: bufbuild/buf-setup-action@v1
         with:
@@ -56,6 +65,7 @@ jobs:
         uses: bufbuild/buf-breaking-action@v1
         with:
           input: "."
+          buf_token: ${{ secrets.BUF_TOKEN }}
           against: "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git#branch=main"
 
       - name: Build and test
