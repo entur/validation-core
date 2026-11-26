@@ -141,10 +141,13 @@ paths:
                      Supported fields: importDateTime (the default, desc), externalId, originator, payloadType.
                 schema:
                     type: string
-              - name: originator
+              - name: filter
                 in: query
-                description: Only return data from this originator. Unset returns
-                    data from every originator.
+                description: |-
+                    A boolean filter expression restricted to a subset of https://google.aip.dev/160: the `=`
+                     comparator (equality, case-sensitive), the `AND`/`OR` logical operators, and parenthesized
+                     grouping. Field names are camelCase, not the proto's own snake_case field names. Supported
+                     fields: originator, mode (ValidationDataMode: OFFICIAL, TEST).
                 schema:
                     type: string
             responses:

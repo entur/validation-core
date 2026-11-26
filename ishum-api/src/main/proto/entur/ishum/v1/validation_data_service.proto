@@ -53,9 +53,12 @@ message ListValidationDataRequest {
   string order_by = 3 [(gnostic.openapi.v3.property) = {
     example: {yaml: "\"importDateTime desc\""}
   }];
-  // Only return data from this originator. Unset returns data from every originator.
-  optional string originator = 4 [(gnostic.openapi.v3.property) = {
-    example: {yaml: "\"RUT\""}
+  // A boolean filter expression restricted to a subset of https://google.aip.dev/160: the `=`
+  // comparator (equality, case-sensitive), the `AND`/`OR` logical operators, and parenthesized
+  // grouping. Field names are camelCase, not the proto's own snake_case field names. Supported
+  // fields: originator, mode.
+  string filter = 4 [(gnostic.openapi.v3.property) = {
+    example: {yaml: "\"originator = RUT AND mode = TEST\""}
   }];
 }
 
