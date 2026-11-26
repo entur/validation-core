@@ -68,4 +68,12 @@ internal class FilterParserTest {
     fun `a quoted string value is accepted, same as a bare one - no exception either way`() {
         PagingSupport.parseFilter("status = \"WIDGET_STATUS_ACTIVE\"", WIDGET_FILTERABLE_PROPERTIES)
     }
+
+    @Test
+    fun `a string field accepts any value, unlike an enum field's fixed set`() {
+        // No declared-values check to fail here, unlike "an unsupported enum value is rejected"
+        // above - any identifier or quoted string is a well-formed restriction on a string field.
+        PagingSupport.parseFilter("name = anything_at_all", WIDGET_FILTERABLE_PROPERTIES)
+        PagingSupport.parseFilter("name = \"anything at all\"", WIDGET_FILTERABLE_PROPERTIES)
+    }
 }

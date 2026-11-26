@@ -45,6 +45,7 @@ internal val WIDGET_FILTERABLE_PROPERTIES: FilterableProperties<Widget> =
         .field("status", WidgetTable.status)
         .field("stats.nested_status", WidgetTable.statsNestedStatus)
         .oneofKind("variantKind", "variant", WidgetTable.variantKind)
+        .stringField("name", WidgetTable.name)
         .build()
 
 /** `test.proto`'s `LineItem`: the composite-id case. */

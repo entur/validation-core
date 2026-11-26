@@ -144,6 +144,22 @@ internal class FilterParserPostgresTest {
             assertEquals(setOf("inactive-active"), names)
         }
 
+    @Test
+    fun `a string-field restriction matches only the row with that exact value`() =
+        runTest {
+            val names = namesMatching("name = \"active-inactive\"")
+
+            assertEquals(setOf("active-inactive"), names)
+        }
+
+    @Test
+    fun `a string-field restriction composes with an enum one via AND`() =
+        runTest {
+            val names = namesMatching("name = \"active-inactive\" AND status = WIDGET_STATUS_ACTIVE")
+
+            assertEquals(setOf("active-inactive"), names)
+        }
+
     private suspend fun namesMatching(filter: String): Set<String> =
         suspendTransaction(db = database) {
             WidgetTable

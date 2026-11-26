@@ -17,8 +17,9 @@ import org.jetbrains.exposed.v1.core.Column
  * The last line is for a `oneof`'s own case, e.g. which variant of `ValidationRule`'s `rule` oneof
  * (`xsd_rule`/`xpath_rule`/`sql_rule`) is set - see [Builder.oneofKind].
  *
- * Restricted to enum-column equality (see [FilterableEnumProperty]) - the subset of
- * https://google.aip.dev/160 this library supports: `=`, `AND`, `OR`, and parenthesized grouping.
+ * Restricted to equality (see [FilterableEnumProperty] for an enum column, [FilterableStringProperty]
+ * for a plain string column via [Builder.stringField]) - the subset of https://google.aip.dev/160
+ * this library supports: `=`, `AND`, `OR`, and parenthesized grouping.
  */
 class FilterableProperties<T : Message> internal constructor(
     private val fields: List<Filterable<T>>,
@@ -45,6 +46,12 @@ class FilterableProperties<T : Message> internal constructor(
             name: String,
             column: Column<String>,
         ): Builder<T> = apply { fields += FilterableEnumProperty(pathNamed(name), column) }
+
+        /** A string-typed field's column, equality-filterable against any value - see [FilterableStringProperty]. */
+        fun stringField(
+            name: String,
+            column: Column<String>,
+        ): Builder<T> = apply { fields += FilterableStringProperty(pathNamed(name), column) }
 
         /**
          * A `oneof`'s own case, stored as [column] - see [SortableProperties.Builder.oneofKind]'s KDoc,

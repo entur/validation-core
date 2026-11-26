@@ -147,7 +147,7 @@ paths:
                     A boolean filter expression restricted to a subset of https://google.aip.dev/160: the `=`
                      comparator (equality, case-sensitive), the `AND`/`OR` logical operators, and parenthesized
                      grouping. Field names are camelCase, not the proto's own snake_case field names. Supported
-                     fields: originator, mode (ValidationDataMode: OFFICIAL, TEST).
+                     fields: originator, mode.
                 schema:
                     type: string
             responses:
