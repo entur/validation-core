@@ -248,6 +248,7 @@ components:
                         rawGcsUri: gs://norway-netex-raw-inbound/codespace=RUT/dataset.zip#1234567890123456
                         localParquetGcsUri: gs://norway-netex-parquet/local/RUT/
                         globalParquetGcsUri: gs://norway-netex-parquet/aggregated/RUT/
+                    mode: OFFICIAL
                 cursor: eyJpZCI6NjJ9
         ParquetColumn:
             type: object
@@ -422,6 +423,7 @@ components:
             required:
               - originator
               - payloadType
+              - mode
             type: object
             properties:
                 originator:
@@ -447,6 +449,16 @@ components:
                     allOf:
                       - $ref: '#/components/schemas/ValidationData_Location'
                     description: The location of the data.
+                mode:
+                    example: OFFICIAL
+                    enum:
+                      - VALIDATION_DATA_MODE_UNSPECIFIED
+                      - OFFICIAL
+                      - TEST
+                    type: string
+                    description: Whether this is an official delivery or non-production
+                        data uploaded for testing.
+                    format: enum
             description: Information about the data to be validated.
             example:
                 originator: RUT
@@ -457,6 +469,7 @@ components:
                     rawGcsUri: gs://norway-netex-raw-inbound/codespace=RUT/dataset.zip#1234567890123456
                     localParquetGcsUri: gs://norway-netex-parquet/local/RUT/
                     globalParquetGcsUri: gs://norway-netex-parquet/aggregated/RUT/
+                mode: OFFICIAL
         ValidationData_Location:
             type: object
             properties:

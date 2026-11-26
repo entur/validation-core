@@ -45,3 +45,14 @@ enum Cardinality {
   // The specified field should exist exactly twice.
   EXACTLY_TWO = 4;
 }
+
+// Whether a piece of validation data is real, officially delivered data, or non-production data
+// uploaded for testing purposes.
+enum ValidationDataMode {
+  // Unspecified mode. This is an invalid value.
+  VALIDATION_DATA_MODE_UNSPECIFIED = 0;
+  // Data that was officially delivered by its originator.
+  OFFICIAL = 1;
+  // Synthetic data uploaded by a user for testing.
+  TEST = 2;
+}

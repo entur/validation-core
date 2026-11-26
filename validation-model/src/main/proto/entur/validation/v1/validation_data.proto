@@ -2,6 +2,7 @@ syntax = "proto3";
 
 package entur.validation.v1;
 
+import "entur/validation/v1/enum.proto";
 import "gnostic/openapi/v3/annotations.proto";
 import "google/api/field_behavior.proto";
 import "google/protobuf/timestamp.proto";
@@ -39,6 +40,13 @@ message ValidationData {
   ];
   // The location of the data.
   Location location = 5;
+  // Whether this is an official delivery or non-production data uploaded for testing.
+  ValidationDataMode mode = 6 [
+    (google.api.field_behavior) = REQUIRED,
+    (gnostic.openapi.v3.property) = {
+      example: {yaml: "\"OFFICIAL\""}
+    }
+  ];
   // Various places where the data can be stored. One or more must be set.
   message Location {
     // A GCS uri to the raw data (XML, ZIP or a folder).
