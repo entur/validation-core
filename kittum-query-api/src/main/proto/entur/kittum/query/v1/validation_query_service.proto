@@ -120,7 +120,7 @@ message ListAreasForRulesRequest {
 message ListAreasForRulesResponse {
   // The areas of each requested validation rule that exists, in no particular order.
   repeated RuleAreas rule_areas = 1 [(gnostic.openapi.v3.property) = {
-    example: {yaml: "[{\"ruleId\": 1, \"areaIds\": [7, 9]}, {\"ruleId\": 2, \"areaIds\": []}]"}
+    example: {yaml: "[{\"ruleId\": 1, \"areas\": [{\"id\": 7, \"name\": \"Rutedata\"}, {\"id\": 9, \"name\": \"Holdeplasser\"}]}, {\"ruleId\": 2, \"areas\": []}]"}
   }];
 }
 
@@ -128,7 +128,15 @@ message ListAreasForRulesResponse {
 message RuleAreas {
   // The database id of the validation rule.
   int32 rule_id = 1 [(google.api.field_behavior) = REQUIRED];
-  // The database ids of the areas the rule is scoped to, directly or through a rule set. Empty
-  // when the rule is in no area.
-  repeated int32 area_ids = 2;
+  // The areas the rule is scoped to, directly or through a rule set. Empty when the rule is in no
+  // area.
+  repeated AreaRef areas = 2;
+}
+
+// An area a validation rule is scoped to.
+message AreaRef {
+  // The database id of the area.
+  int32 id = 1 [(google.api.field_behavior) = REQUIRED];
+  // The area's name, as it is when the request is answered.
+  string name = 2 [(google.api.field_behavior) = REQUIRED];
 }

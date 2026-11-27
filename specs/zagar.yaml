@@ -237,6 +237,7 @@ components:
             required:
               - areaId
               - score
+              - areaName
             type: object
             properties:
                 areaId:
@@ -298,6 +299,10 @@ components:
                     type: string
                     description: When the area was scored.
                     format: date-time
+                areaName:
+                    example: Rutedata
+                    type: string
+                    description: The area's name in kittum when it was scored.
             description: How well one area scored in a validation job.
             example:
                 areaId: 7
@@ -306,6 +311,7 @@ components:
                 totalRules: 12
                 failedRules: 2
                 warningFindings: 5
+                areaName: Rutedata
         FieldViolation:
             description: One request field that failed validation.
             required:
@@ -404,6 +410,7 @@ components:
                     totalRules: 12
                     failedRules: 2
                     warningFindings: 5
+                    areaName: Rutedata
         ListResultsResponse:
             type: object
             properties:

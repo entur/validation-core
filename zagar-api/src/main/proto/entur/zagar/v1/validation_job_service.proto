@@ -221,4 +221,11 @@ message AreaScore {
   int32 info_findings = 9;
   // When the area was scored.
   google.protobuf.Timestamp scored_at = 10 [(google.api.field_behavior) = OUTPUT_ONLY];
+  // The area's name in kittum when it was scored.
+  string area_name = 11 [
+    (google.api.field_behavior) = REQUIRED,
+    (gnostic.openapi.v3.property) = {
+      example: {yaml: "\"Rutedata\""}
+    }
+  ];
 }
