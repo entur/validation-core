@@ -185,6 +185,20 @@ paths:
                                 $ref: '#/components/schemas/ProblemDetail'
 components:
     schemas:
+        AreaRef:
+            required:
+              - id
+              - name
+            type: object
+            properties:
+                id:
+                    type: integer
+                    description: The database id of the area.
+                    format: int32
+                name:
+                    type: string
+                    description: The area's name, as it is when the request is answered.
+            description: An area a validation rule is scoped to.
         FieldViolation:
             description: One request field that failed validation.
             required:
@@ -210,11 +224,13 @@ components:
                 ruleAreas:
                     example:
                       - ruleId: 1
-                        areaIds:
-                          - 7
-                          - 9
+                        areas:
+                          - id: 7
+                            name: Rutedata
+                          - id: 9
+                            name: Holdeplasser
                       - ruleId: 2
-                        areaIds: []
+                        areas: []
                     type: array
                     items:
                         $ref: '#/components/schemas/RuleAreas'
@@ -224,11 +240,13 @@ components:
             example:
                 ruleAreas:
                   - ruleId: 1
-                    areaIds:
-                      - 7
-                      - 9
+                    areas:
+                      - id: 7
+                        name: Rutedata
+                      - id: 9
+                        name: Holdeplasser
                   - ruleId: 2
-                    areaIds: []
+                    areas: []
         ListValidationRulesForStageResponse:
             type: object
             properties:
@@ -297,14 +315,13 @@ components:
                     type: integer
                     description: The database id of the validation rule.
                     format: int32
-                areaIds:
+                areas:
                     type: array
                     items:
-                        type: integer
-                        format: int32
+                        $ref: '#/components/schemas/AreaRef'
                     description: |-
-                        The database ids of the areas the rule is scoped to, directly or through a rule set. Empty
-                         when the rule is in no area.
+                        The areas the rule is scoped to, directly or through a rule set. Empty when the rule is in no
+                         area.
             description: The areas one validation rule is scoped to.
         SqlRule:
             required:
