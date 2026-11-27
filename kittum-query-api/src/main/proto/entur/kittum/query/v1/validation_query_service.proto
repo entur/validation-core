@@ -128,11 +128,9 @@ message ListAreasForRulesResponse {
 message RuleAreas {
   // The database id of the validation rule.
   int32 rule_id = 1 [(google.api.field_behavior) = REQUIRED];
-  reserved 2;
-  reserved "area_ids";
   // The areas the rule is scoped to, directly or through a rule set. Empty when the rule is in no
   // area.
-  repeated AreaRef areas = 3;
+  repeated AreaRef areas = 2;
 }
 
 // An area a validation rule is scoped to.
