@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+package mock;
+
+import "gnostic/openapi/v3/annotations.proto";
+import "google/api/field_behavior.proto";
+
+// Exercises OpenApiQueryParameterAugmenter: which query parameters get `required` and `minItems`.
+
+message SearchRequest {
+  repeated int32 thing_ids = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (gnostic.openapi.v3.property) = {min_items: 1}
+  ];
+  string optional_filter = 2;
+  string path_id = 3 [(google.api.field_behavior) = REQUIRED];
+}
+
+message SearchResponse {}
+
+service QueryService {
+  rpc Search(SearchRequest) returns (SearchResponse) {}
+}

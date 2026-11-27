@@ -133,6 +133,8 @@ paths:
                     items:
                         type: integer
                         format: int32
+                    minItems: 1
+                required: true
             responses:
                 '200':
                     description: OK
