@@ -138,6 +138,44 @@ paths:
                         application/problem+json:
                             schema:
                                 $ref: '#/components/schemas/ProblemDetail'
+    /validation/v1/jobs/{validationJob}/area-scores:
+        get:
+            tags:
+              - ValidationJobService
+            summary: List how well each area scored in a validation job.
+            description: |-
+                List how well each area scored in a validation job, from 0 to 100. An area is scored on the
+                 rules it includes that ran in the job, directly or through a rule set, as they were scoped
+                 when the job was scored. Failing rules lower the score by the weight of their worst finding's
+                 severity (CRITICAL 10, ERROR 5, WARNING 1, INFO 0), out of what every rule the area ran could
+                 lose: its default severity's weight, or its worst finding's when that is higher. A rule counts
+                 once however many findings it has. The score is then
+                 capped by the area's worst finding: 0 for CRITICAL, at most 59 for ERROR and at most 89 for
+                 WARNING. No findings, or only INFO ones, scores 100.
+
+                 Empty until every stage of the job is complete and the job has been scored. A dry run is
+                 never scored.
+            operationId: ValidationJobService_ListAreaScores
+            parameters:
+              - name: validationJob
+                in: path
+                description: The id of the validation job to list area scores for.
+                required: true
+                schema:
+                    type: string
+            responses:
+                '200':
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ListAreaScoresResponse'
+                '404':
+                    description: No validation job exists with the given id.
+                    content:
+                        application/problem+json:
+                            schema:
+                                $ref: '#/components/schemas/ProblemDetail'
     /validation/v1/jobs/{validationJob}/results:
         get:
             tags:
@@ -195,6 +233,79 @@ paths:
                                 $ref: '#/components/schemas/ProblemDetail'
 components:
     schemas:
+        AreaScore:
+            required:
+              - areaId
+              - score
+            type: object
+            properties:
+                areaId:
+                    example: 7
+                    type: integer
+                    description: The kittum database id of the area.
+                    format: int32
+                score:
+                    example: 82
+                    maximum: 100.0
+                    type: integer
+                    description: The score from 0 to 100, where 100 means no rule
+                        of the area found anything above INFO.
+                    format: int32
+                worstSeverity:
+                    example: WARNING
+                    enum:
+                      - SEVERITY_UNSPECIFIED
+                      - CRITICAL
+                      - ERROR
+                      - WARNING
+                      - INFO
+                    type: string
+                    description: The most severe finding of the area's rules. Unset
+                        when they found nothing.
+                    format: enum
+                totalRules:
+                    example: 12
+                    type: integer
+                    description: The number of the area's rules that ran in the job.
+                    format: int32
+                failedRules:
+                    example: 2
+                    type: integer
+                    description: The number of the area's rules that found something
+                        above INFO.
+                    format: int32
+                criticalFindings:
+                    type: integer
+                    description: |-
+                        The number of CRITICAL findings of the area's rules. A truncated rule result only counts the
+                         findings it carries.
+                    format: int32
+                errorFindings:
+                    type: integer
+                    description: The number of ERROR findings of the area's rules.
+                    format: int32
+                warningFindings:
+                    example: 5
+                    type: integer
+                    description: The number of WARNING findings of the area's rules.
+                    format: int32
+                infoFindings:
+                    type: integer
+                    description: The number of INFO findings of the area's rules.
+                    format: int32
+                scoredAt:
+                    readOnly: true
+                    type: string
+                    description: When the area was scored.
+                    format: date-time
+            description: How well one area scored in a validation job.
+            example:
+                areaId: 7
+                score: 82
+                worstSeverity: WARNING
+                totalRules: 12
+                failedRules: 2
+                warningFindings: 5
         FieldViolation:
             description: One request field that failed validation.
             required:
@@ -275,6 +386,24 @@ components:
                 skippedRules: 0
                 firstProgressReceivedAt: '2026-01-01T00:00:00Z'
                 lastProgressReceivedAt: '2026-01-01T00:05:00Z'
+        ListAreaScoresResponse:
+            type: object
+            properties:
+                items:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/AreaScore'
+                    description: The score of each area with at least one rule that
+                        ran in the job, ordered by area id.
+            description: Response for ListAreaScores.
+            example:
+                items:
+                  - areaId: 7
+                    score: 82
+                    worstSeverity: WARNING
+                    totalRules: 12
+                    failedRules: 2
+                    warningFindings: 5
         ListResultsResponse:
             type: object
             properties:

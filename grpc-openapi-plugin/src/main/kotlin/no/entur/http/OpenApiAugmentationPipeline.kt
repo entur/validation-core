@@ -4,6 +4,7 @@ import com.google.protobuf.DescriptorProtos
 import no.entur.http.augmenters.OpenApiExampleAugmenter
 import no.entur.http.augmenters.OpenApiFailureAugmenter
 import no.entur.http.augmenters.OpenApiMetaPathAugmenter
+import no.entur.http.augmenters.OpenApiQueryParameterAugmenter
 
 /** Runs the augmenters in order over one parse of gnostic's openapi.yaml; each mutates it in place. */
 class OpenApiAugmentationPipeline {
@@ -20,6 +21,7 @@ class OpenApiAugmentationPipeline {
 
         OpenApiFailureAugmenter().augment(files, registry, spec)
         OpenApiExampleAugmenter().augment(files, registry, spec, ownFiles)
+        OpenApiQueryParameterAugmenter().augment(files, registry, spec)
         OpenApiMetaPathAugmenter().augment(spec)
 
         return buildString {
